@@ -131,7 +131,7 @@ export const About: FC = function About() {
                         {t('about.aboutTitle', { defaultValue: 'About' })}
                     </Typography>
                     <Typography component="p" sx={{ fontSize: textVar.lg, color: 'text.secondary', lineHeight: 1.65, m: 0, maxWidth: 640 }}>
-                        {t('about.aboutBody', { defaultValue: 'Datly is a local workspace for looking at tables. You load data, ask a question in plain language, and read the chart next to the rows it came from. The work stays on this computer.' })}
+                        {t('about.aboutBody', { defaultValue: 'A table can hold the answer and still hide it. The rows are in one program, the chart is in another, and the question is gone. Datly keeps the table, the question, and the chart in one project on this computer, so the line can be checked against the rows it came from.' })}
                     </Typography>
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 1.5, mt: 2 }}>
                         {[

@@ -1,80 +1,83 @@
 # Datly
 
-Datly is a workspace for a table you already have. You load the rows, you write the question in ordinary language, and the chart opens beside the rows it was drawn from.
+A table already holds the answer, and it is still hard to see. The numbers sit in a grid. The question is in someone's head. The chart, when it exists, is in another program, and nobody can point at the row the line came from.
 
-This page is the illustrated overview. The pictures are the running app. Each one is described underneath.
+Datly is the workspace for that job. The table stays here. The question is written in ordinary language. The chart opens on the same screen as the rows it was drawn from, and the question is kept next to both of them.
 
-## About
+This page is the app. The pictures are the running window. The text under each one says what that part is doing.
 
-A spreadsheet can hold the numbers and still hide the comparison. Datly keeps the question, the chart, and the table in one place. The project stays on this computer. A language model sees a small sample with the prompt, not a copy of the file uploaded to a hosted notebook.
+## What we are trying to solve
 
-The window is three regions. The left card is the project: a new workspace, the documentation, saved sessions, the tables, and the rules the agent should follow. The middle is the analysis. Each question becomes a thread, and the prompt that asks the next question stays at the bottom. The right side is the canvas. It appears when a chart or a table is opened, and it closes from the same bar that holds Explore, Reports, and Dashboard.
+The usual path splits the work into three tools.
 
-The mark in the header is a forest-green tile with a rising line. The type is Segoe UI. Code and identifiers use Roboto Mono.
+A spreadsheet or a database holds the rows. A charting tool wants the columns dragged onto shelves before the question is clear. A chat window will draw a picture and then forget which rows it used. The person checking the result has to trust the picture, or go back and find the cells by hand.
 
-The sample that ships with the app is **Stock prices**: 6,000 daily rows, 30 September 2024 through 28 September 2026, twelve large US companies. The columns are date, symbol, company, sector, open, high, low, close, and volume. Prices are adjusted for splits, so a line does not jump when the shares split. The source is Yahoo Finance.
+That split is the problem.
 
-## The window, as it is open on a stock project
+* The question is lost. A file named `chart-final-v3` does not say what was asked.
+* The chart is separated from the rows. A line can be wrong and still look smooth.
+* The path is gone. The second question ("now just Apple, and add volume") has no record of the first.
+* The file has to leave the machine before any of this can start, if the tool is a hosted notebook.
 
-The picture is one session, named Stock Prices. Sample datasets is connected, Stock prices is ticked as loaded, two questions have already been asked, and the canvas is showing the second of them.
+Datly keeps those pieces in one project, on this computer.
 
-![The Datly window: project rail, two analysis threads, and the Explore canvas for Alphabet and Microsoft](docs/images/workspace.png)
+You load the table once. You ask in a sentence. The answer comes back as a thread: the words, the chart, and the table behind the chart. The next question is another thread, or a follow-up on the same one, and both stay in the project. When the line looks surprising, the rows are on the same screen. A language model helps build the chart. It receives a sample with the prompt, not a copy of the file stored on someone else's server.
 
-On the left, **+ New project** is the green pill. It clears the screen and starts an empty workspace. The session you leave is not deleted. It remains under Sessions. **Docs** opens the guide. The arrow to the right of Docs collapses this card to a thin rail of icons, and the arrow on that rail opens the card again.
+The picture below is that job, already in progress. The project is named Stock Prices. The table is loaded. Two questions have been asked. The canvas is showing the second answer, and the grid under the line is the data the line was drawn from.
 
-Under those buttons, **Sessions**, **Data**, and **Knowledge** switch the body of the card. Data is the one selected here. The title is Data Connectors. The plus beside that title adds a database connection. The pin keeps the card open. Search filters the list. **Sample datasets** is marked Active. Under it, **Stock prices** has a tick, which means those rows are already in this project. A circle beside the tick refreshes the table.
+![The Datly window on a stock project: the table is loaded on the left, two questions sit in the middle, and the chart of Alphabet and Microsoft is open on the right with its rows underneath](docs/images/workspace.png)
 
-The middle begins with the Datly mark and the name. **Stock Prices**, in the top bar, is the project menu. That is where the workspace is renamed. **Analysis** says there are two threads. Thread 1 is `stock-metr`. Thread 2, drawn in green, is `stock-close1`, and that is the thread the canvas is showing.
+## The app, from the left of that picture
 
-Thread 1 is the column of cards. `stock-close` is a small chart of several symbols. Under it is the question that asked for 20-day and 60-day moving averages of close, by symbol. `stock-ma` is that result. The next question asked for daily return, 20-day volatility, and volume. `stock-metr` is the chart of those series, the noisy lines at the bottom of the column. A thread is the record of one question: the words, the table it used, and the chart that came back.
+The left card is how a project is opened and how a table gets in.
 
-The white box at the bottom of the middle is the prompt. It is aimed at `@stock-hist`, the history table. The placeholder reads “Ask questions or describe what to explore.” The model on this session is Claude Sonnet 4. The arrow sends the question. The pencil and the bulb beside it are the other actions on that box. There is no fade painted behind the prompt. The sage field of the window shows through.
+**+ New project** starts an empty workspace. The session on screen is cleared. It is not deleted. It remains in the session list, so the stock work in this picture can be opened again later. **Docs** is the guide inside the app, the same account of the product as this page. The arrow beside Docs folds the card down to a strip of icons, so the chart can use the width. The arrow on that strip opens the card again.
 
-The right side is the canvas. **Explore** is selected. **Reports (1)** is the written report already saved for this project. **Dashboard** is where charts are pinned. The cross on that same bar closes the canvas, and the threads then use the full width. The plot is closing price. The green line is GOOGL. It starts near 190 in early August and finishes near 330 in January. The orange line is MSFT. It stays between about 450 and 530, with a high in late October and a lower close in January. The dates along the bottom run from 3 August to 18 January. **Curve**, **Step**, and **Points** change the mark. The bin deletes the focused chart. Under the plot, the line “AI generated results can be inaccurate, inspect it!” is the reminder to read the table, not only the line.
+**Sessions**, **Data**, and **Knowledge** are the three jobs of the card. Sessions is the list of projects saved on this computer. Data is where tables come from. Knowledge is the standing instruction for the agent, the rules it should keep on later questions. In the picture, Data is selected.
 
-The table under the chart is the rows the line was drawn from. The columns in view are the row number, date, symbol, and close. The first rows are GOOGL: 31 July 2025 at 191.6, 1 August at 188.84, then 194.74, 194.37, 195.79, and on upward through December. The header of that grid is white, the same as the card, so it sits clear of the sage field. Quick chart and Download CSV sit under the rows when the table is the thing in focus, so they do not cover the cells.
+Under Data Connectors, search filters the list. The plus adds a database. The pin holds the card open instead of letting it close when you click back into the analysis. **Sample datasets** is already connected, and it is marked Active. **Stock prices** has a tick, so those rows are in the project. The circle beside the tick loads the table again.
 
-## The same canvas, closer
+That sample is the stand-in for a file of your own. It is 6,000 daily prices, 30 September 2024 through 28 September 2026, for twelve large US companies across technology, consumer, financials, health, energy, and industrials. The columns are date, symbol, company, sector, open, high, low, close, and volume. Prices are adjusted for splits, so a line does not jump when the shares split. The source is Yahoo Finance. A spreadsheet or an export uses the plus on the collapsed rail, or **Add more data** inside a thread. A database uses the plus beside Data Connectors.
 
-This is the right-hand side of that window, cropped so the plot and the grid can be read.
+Nothing on this card draws the chart. It only answers the first half of the problem: the rows are here, named, and still on this machine.
 
-![Explore canvas: GOOGL rising, MSFT near 500, and the close table underneath](docs/images/canvas.png)
+## The middle: the question is not thrown away
 
-Explore is the view for checking a result. The plot is on top. The table is on the bottom. They are the same answer. GOOGL’s close on 31 July 2025 is 191.6, and the green line leaves the axis at about that height. By 13 August the table shows 201.65, and the line has stepped up. MSFT is the orange line that never comes down to meet it. The legend is at the top right of the plot.
+The middle of the picture is the analysis. **Stock Prices**, in the top bar, is this project. The menu renames it. The Datly mark sits at the left of that bar.
 
-Curve is the smooth join between points. Step would draw the close as a staircase, one value until the next date. Points would mark each day without insisting on a line. The switch beside Points turns that layer on. The dates are trading days, so the axis skips weekends. The table is scrolled to the start of the series. Later rows continue the same three columns for both symbols.
+**Analysis** says two threads. A thread is one question and everything that came back from it. Thread 1 is `stock-metr`. Thread 2, drawn in green, is `stock-close1`. The canvas on the right is showing thread 2, which is why that pill is filled.
 
-A report, the item counted as Reports (1), keeps writing next to a chart. The dashboard is the place those charts are pinned when more than one should stay visible. Closing the canvas does not delete the thread. The chart card remains in the middle, and the canvas can be opened from it again.
+Thread 1 is the column of cards. One card is a small chart of several symbols, named `stock-close`. Under it is the question in the words that were typed: 20-day and 60-day moving averages of close, by symbol. The next card, `stock-ma`, is the chart of that question. The question after that asks for daily return, 20-day volatility, and volume. `stock-metr` is the noisy chart at the bottom of the column. The path is the column. You can read what was asked without opening another file.
 
-## The guide
+The white box at the bottom is where the next question is typed. It is pointed at `@stock-hist`, the history table, so the question is about those rows and not about a table that happens to be focused by accident. The line in the box says “Ask questions or describe what to explore.” The model chosen for this session is Claude Sonnet 4, shown on the left of the box. The arrow sends. A useful question names the columns. The lines on the right are what came back from a question of that kind: closing price by date for Alphabet and Microsoft.
 
-Docs is a page in the app, not a separate site. It opens from the left rail, and from the top bar when you are not inside a workspace.
+The prompt sits on the sage field of the window. There is no fade behind it.
 
-![The documentation page, opened from Docs, beginning with how to start a project](docs/images/documentation.png)
+## The right: the chart has to face the rows
 
-The mark and the word Documentation are at the top. The sentence under them is the order of the page: open a project, bring in a table, ask for a chart, read the result. **Open workspace** returns to the window in the first picture. **Watch a short tour** plays the overview video further down the page.
+The canvas is the check. **Explore** is selected. **Reports (1)** is a written page already saved from this project, the chart with the sentences around it. **Dashboard** is where more than one chart is pinned so they stay in view together. The cross closes the canvas. The threads are not deleted. They spread into the width the canvas was using, and the same chart can be opened again from its card.
 
-The pills are the sections, in the order a first session uses them.
+The plot is closing price. Green is GOOGL. It leaves the left of the axis near 190 in early August and is near 330 by the middle of January. Orange is MSFT. It stays between about 450 and 530, highest in late October, lower in January. The dates run from 3 August to 18 January, weekdays only, because the table is trading days. **Curve** joins the days with a line. **Step** would hold each close flat until the next date. **Points** marks the days themselves. The bin removes the focused chart. Under the plot, the sentence “AI generated results can be inaccurate, inspect it!” is the reason the table is on the same screen.
 
-**Start a project.** New project clears what is on screen. The session you were in remains under Sessions. The arrow beside Docs collapses the rail. On the thin rail the arrow expands it. The folder is Sessions, the database is Data, the bulb is Knowledge, and the plus adds a file.
+The grid under the line is that inspection. The columns in view are the row number, the date, the symbol, and the close. Row 1 is GOOGL on 31 July 2025 at 191.6, which is the height the green line starts from. Row 2 is 188.84 the next day. By 13 August the close is 201.65 and the line has moved up. The header is white, on the white card, so the grid is not lost in the sage field. When the table is what you are looking at, Quick chart and Download CSV sit under the rows. They do not cover the cells. Download CSV writes out the table on screen.
 
-**The three areas.** The middle holds the threads. The prompt stays at the bottom of that area. The canvas is the right side, and it is absent until a chart or a table is opened. The project name in the top bar is the rename menu.
+The closer crop is the same canvas, so the plot and the first rows can be read together.
 
-**Load a table.** Data, then Sample datasets, then Stock prices, then Load. The page states the size of that file: 6,000 rows, 30 September 2024 through 28 September 2026, twelve companies, and the column list above. A file of your own uses the plus on the rail, or Add more data inside a thread. A database uses the plus beside Data Connectors.
+![Explore: the GOOGL and MSFT closing lines, and the table of closes those lines were drawn from](docs/images/canvas.png)
 
-**Ask a question.** The model menu is the control on the left of the prompt. The arrow sends. A question that names the columns is the one the page suggests for this table: closing price by date for Apple and Microsoft. That is the question behind the orange and green lines in the first picture. A follow-up is typed into the same prompt. With the canvas open, the threads sit in two columns so the cards are not cut off at the edge.
+GOOGL on 31 July 2025 is 191.6 in the grid and at the left end of the green line. MSFT is the orange line that never comes down to meet it. The legend is at the top right. If the green line were smooth and the table were somewhere else, there would be no way to know the line had started at 191.6. That is the check the canvas is for.
 
-**Canvas.** Explore, Reports, and Dashboard, and Close on that bar. Curve, Step, and Points are the mark controls in the picture above.
+Closing the canvas, or switching to Reports or Dashboard, does not throw away thread 2. The card `stock-close1` is still in the middle. Reports is where the sentence about those two lines would be written next to the chart. Dashboard is where that chart would be pinned beside another one, for example the moving-average chart from thread 1.
 
-**Tables.** Data health, search, and the grid are white. Search filters the rows on screen. Download CSV saves the table you are viewing.
+## The guide inside the app
 
-**Sessions.** One session is one workspace: its tables, threads, charts, and reports, stored on this computer. The list sorts by recent edits, by creation time, or by name.
+Docs is the same explanation, inside the product, for someone who has just opened it. It is not a second product. It opens from the left card, and from the top bar when no project is open.
 
-**Knowledge.** Rules for the agent, opened from the bulb. They apply to later questions in that workspace.
+![Docs, the in-app guide, in the order a first project is used](docs/images/documentation.png)
 
-**What stays on this computer.** Connectors copy data into the local workspace. The model receives a sample with the prompt.
+The order on the page is the order of the job. **Open workspace** returns to the window in the first picture. **Watch a short tour** plays a short recording of that window further down the page.
 
-Under the sections, the tour video plays in the page.
+**Start a project** is New project, and the fact that the previous session is still in the list. **The three areas** is the left card, the threads, and the canvas. **Load a table** is Sample datasets, Stock prices, and the two other ways in: a file, or a database. **Ask a question** is the prompt, the model menu, and a question that names the columns. **Canvas** is Explore, Reports, Dashboard, and Close. **Tables** is the white grid, search, and Download CSV. **Sessions** is the saved projects on this computer, sorted by recent edits, by when they were created, or by name. **Knowledge** is the rules the agent keeps for the next question. **What stays on this computer** is the last point: the table is copied into the local project, and the model is given a sample with the prompt.
 
 ## How to run
 
@@ -87,7 +90,7 @@ uv sync
 uv run data_formulator
 ```
 
-For interface work, run the API in one terminal and Vite in another.
+For work on the interface, run the API in one terminal and the page in another.
 
 ```bash
 uv run data_formulator --dev
@@ -96,4 +99,4 @@ yarn start
 
 Open http://localhost:5173. On Windows, `local_server.bat` starts the local server. On Unix, `./local_server.sh`.
 
-Copy `.env.template` to `.env` for language-model keys and server options. `.env` is not part of this repository.
+Copy `.env.template` to `.env` for the language-model keys. `.env` is not in this repository.

@@ -143,7 +143,7 @@
     "video": "Watch a short tour",
     "github": "GitHub",
     "aboutTitle": "About",
-    "aboutBody": "Datly is a local workspace for looking at tables. You load data, ask a question in plain language, and read the chart next to the rows it came from. The work stays on this computer.",
+    "aboutBody": "A table can hold the answer and still hide it. The rows are in one program, the chart is in another, and the question is gone. Datly keeps the table, the question, and the chart in one project on this computer, so the line can be checked against the rows it came from.",
     "aboutLocalTitle": "On this computer",
     "aboutLocalBody": "Projects, tables, and charts are saved as sessions on this machine. You can leave and come back without uploading the file.",
     "aboutAskTitle": "Ask in your own words",
