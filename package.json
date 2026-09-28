@@ -129,7 +129,7 @@
         "@typescript-eslint/parser": "^8.65.0",
         "@vitejs/plugin-react-swc": "^4.3.2",
         "cross-env": "^10.1.0",
-        "electron": "^43.4.1",
+        "electron": "^44.4.5",
         "electron-builder": "^26.15.3",
         "eslint": "^9.15.0",
         "eslint-plugin-jsx-a11y": "^6.10.2",
