@@ -1,0 +1,116 @@
+{
+  "loader": {
+    "mysql": {
+      "user": "اسم مستخدم MySQL",
+      "password": "اتركه فارغاً إن لم يكن هناك كلمة مرور",
+      "host": "عنوان الخادم",
+      "port": "منفذ الخادم",
+      "database": "اسم قاعدة البيانات (اتركه فارغاً لتصفح كل القواعد)",
+      "authInstructions": "**مثال:** المستخدم: `root` · المضيف: `localhost` · المنفذ: `3306` · القاعدة: `mydb`\n\n**الإعداد المحلي:** تأكد من تشغيل MySQL: `brew services list` (macOS) أو `systemctl status mysql` (Linux). اترك كلمة المرور فارغة إن لم تُعيَّن.\n\n**الإعداد البعيد:** احصل على المضيف والمنفذ واسم المستخدم وكلمة المرور من مسؤول قاعدة البيانات. تأكد أن الخادم يسمح بالاتصالات البعيدة وأن عنوان IP مدرج في القائمة البيضاء.\n\n**النطاق:** اترك *قاعدة البيانات* فارغة لتصفح كل القواعد على الخادم، أو املأها للانتقال مباشرة إلى جداول تلك القاعدة.\n\n**استكشاف الأخطاء:** اختبر بـ `mysql -u <user> -p -h <host> -P <port> <database>`"
+    },
+    "mssql": {
+      "server": "عنوان مضيف SQL Server أو اسم المثيل",
+      "database": "اسم قاعدة البيانات (اتركه فارغاً لتصفح كل القواعد)",
+      "user": "اسم المستخدم (اتركه فارغاً لمصادقة Entra ID / Windows)",
+      "password": "كلمة المرور (اتركها فارغة لمصادقة Entra ID / Windows)",
+      "port": "منفذ SQL Server (الافتراضي: 1433)",
+      "encrypt": "تفعيل التشفير (yes/no)",
+      "trust_server_certificate": "الوثوق بشهادة الخادم (yes/no)",
+      "connection_timeout": "مهلة الاتصال بالثواني",
+      "authInstructions": "**Microsoft Entra ID (موصى به):** نفّذ `az login` مرة واحدة في الطرفية ثم ابدأ Datly. اختر *Microsoft Entra ID*، واملأ `server` و`database` اختيارياً، واترك اسم المستخدم وكلمة المرور فارغين: تُستخدم بيانات اعتماد Azure CLI تلقائياً. تعمل Managed Identity وVS Code وبيانات اعتماد البيئة أيضاً عبر `DefaultAzureCredential`.\n\n> يجب منح هوية Entra صلاحية الوصول إلى قاعدة البيانات، مثلاً ينفّذ مسؤول `CREATE USER [you@contoso.com] FROM EXTERNAL PROVIDER;` ويمنح الأدوار اللازمة.\n\n**مثال (Entra ID):** الخادم: `myserver.database.windows.net` · القاعدة: `mydb` (اسم المستخدم/كلمة المرور فارغان)\n\n**مصادقة SQL Server:** اختر *مصادقة SQL Server* وقدّم اسم المستخدم وكلمة المرور.\n\n**مثال (مصادقة SQL):** الخادم: `localhost` · القاعدة: `mydb` · المستخدم: `sa` · كلمة المرور: `MyP@ss` · المنفذ: `1433`\n\n**مصادقة Windows (Windows فقط):** اختر *مصادقة Windows* واترك اسم المستخدم وكلمة المرور فارغين.\n\n**برنامج التشغيل:** برنامج تشغيل Microsoft SQL Server مضمَّن مع Datly ولا يلزم تثبيت ODBC منفصل. لـ Entra ID ثبّت Azure CLI ونفّذ `az login`.\n\n**استكشاف الأخطاء:** تأكد من تسجيل الدخول بـ `az account show`. تأكد أن خدمة SQL Server قيد التشغيل وأن TCP/IP مفعّل. اختبر مصادقة SQL بـ `sqlcmd -S <server> -d <database> -U <user> -P <password>`."
+    },
+    "postgresql": {
+      "user": "اسم مستخدم PostgreSQL",
+      "password": "اتركه فارغاً إن لم يكن هناك كلمة مرور",
+      "host": "مضيف PostgreSQL",
+      "port": "منفذ PostgreSQL",
+      "database": "اسم قاعدة البيانات (اتركه فارغاً لتصفح كل القواعد)",
+      "authInstructions": "**مثال:** المستخدم: `postgres` · المضيف: `localhost` · المنفذ: `5432` · القاعدة: `mydb`\n\n**الإعداد المحلي:** تأكد من تشغيل PostgreSQL: `brew services list` (macOS) أو `systemctl status postgresql` (Linux). اترك كلمة المرور فارغة إن لم تُعيَّن.\n\n**الإعداد البعيد:** احصل على المضيف والمنفذ واسم المستخدم وكلمة المرور من مسؤول قاعدة البيانات. يجب أن يملك المستخدم صلاحيات SELECT على الجداول التي تريد الوصول إليها.\n\n**النطاق:** اترك *قاعدة البيانات* فارغة لتصفح كل القواعد على الخادم، أو املأها للانتقال مباشرة إلى المخططات/الجداول في تلك القاعدة.\n\n**استكشاف الأخطاء:** اختبر بـ `psql -U <user> -h <host> -p <port> -d <database>`"
+    },
+    "mongodb": {
+      "host": "عنوان الخادم",
+      "port": "منفذ الخادم",
+      "username": "اتركه فارغاً إن لم تكن هناك مصادقة",
+      "password": "اتركه فارغاً إن لم تكن هناك مصادقة",
+      "database": "اسم قاعدة البيانات",
+      "collection": "اتركه فارغاً لسرد كل المجموعات",
+      "authSource": "قاعدة بيانات المصادقة (الافتراضي هو القاعدة المستهدفة)",
+      "authInstructions": "**مثال:** المضيف: `localhost` · المنفذ: `27017` · القاعدة: `mydb` · المجموعة: `users`\n\n**الإعداد المحلي:** تأكد من تشغيل MongoDB. اترك اسم المستخدم وكلمة المرور فارغين إن لم تكن المصادقة مفعّلة.\n\n**الإعداد البعيد:** احصل على المضيف والمنفذ واسم المستخدم وكلمة المرور من مسؤول قاعدة البيانات.\n\n**استكشاف الأخطاء:** اختبر بـ `mongosh --host <host> --port <port>`"
+    },
+    "cosmosdb": {
+      "endpoint": "عنوان URL لنقطة نهاية حساب Cosmos DB",
+      "key": "مفتاح الحساب أو مفتاح المحاكي",
+      "database": "اسم قاعدة البيانات",
+      "container": "اتركه فارغاً لسرد كل الحاويات",
+      "authInstructions": "**مثال:** نقطة النهاية: `https://myaccount.documents.azure.com:443/` · القاعدة: `mydb`\n\n**إعداد Azure:** اعثر على نقطة النهاية والمفتاح في بوابة Azure تحت *Keys* لحساب Cosmos DB.\n\n**المحاكي المحلي:** استخدم نقطة النهاية `https://localhost:8081` مع مفتاح المحاكي المعروف.\n\n**استكشاف الأخطاء:** تأكد أن جدار حماية الحساب يسمح بعنوان IP لديك، أو اتصل من شبكة مسموح بها."
+    },
+    "bigquery": {
+      "project_id": "معرّف مشروع Google Cloud",
+      "dataset_id": "معرّفات مجموعات البيانات: اتركه فارغاً للكل، أو حدّد واحداً أو أكثر مفصولة بفواصل",
+      "credentials_path": "مسار ملف JSON لحساب الخدمة (اختياري)",
+      "location": "موقع BigQuery (الافتراضي: US)",
+      "authInstructions": "**مثال:** project_id: `my-gcp-project` · dataset_id: `analytics` · credentials_path: `/path/to/key.json` · location: `US`\n\n**الخيار 1: بيانات الاعتماد الافتراضية للتطبيق (موصى به):**\nثبّت [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) ثم نفّذ `gcloud auth application-default login`. اترك `credentials_path` فارغاً.\n\n**الخيار 2: ملف مفتاح حساب الخدمة:**\nأنشئ حساب خدمة في Google Cloud Console، ونزّل مفتاح JSON، وأدخل المسار الكامل في `credentials_path`. امنح الحساب دوري **BigQuery Data Viewer** و**BigQuery Job User**.\n\n**الخيار 3: متغير البيئة:**\nعيّن `GOOGLE_APPLICATION_CREDENTIALS` إلى مسار ملف JSON لحساب الخدمة. اترك `credentials_path` فارغاً."
+    },
+    "athena": {
+      "aws_profile": "اسم ملف AWS من ~/.aws/credentials (إن وُضع، لا يلزم مفتاح الوصول والسر)",
+      "aws_access_key_id": "معرّف مفتاح وصول AWS (غير مطلوب عند استخدام aws_profile)",
+      "aws_secret_access_key": "مفتاح AWS السري (غير مطلوب عند استخدام aws_profile)",
+      "aws_session_token": "رمز جلسة AWS (مطلوب لبيانات الاعتماد المؤقتة)",
+      "region_name": "اسم منطقة AWS",
+      "workgroup": "اسم مجموعة عمل Athena (يُجلب موقع الإخراج من تهيئة المجموعة)",
+      "output_location": "موقع إخراج S3 لنتائج الاستعلام (مثل s3://bucket/path/). إن كان فارغاً تُستخدم تهيئة مجموعة العمل.",
+      "database": "قاعدة البيانات/الكتالوج الافتراضي للاستعلامات",
+      "query_timeout": "مهلة تنفيذ الاستعلام بالثواني (الافتراضي: 300 = 5 دقائق)",
+      "authInstructions": "**مثال (ملف تعريف):** aws_profile: `default` · region_name: `us-east-1` · workgroup: `primary` · database: `my_database`\n\n**مثال (مفاتيح):** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1`\n\n**الخيار 1: ملف تعريف AWS (موصى به):**\nعيّن `aws_profile` إلى اسم ملف من `~/.aws/credentials`. اضبطه بـ `aws configure --profile <name>`. لا يلزم مفتاح وصول أو سر.\n\n**الخيار 2: بيانات اعتماد صريحة:**\nأدخل `aws_access_key_id` و`aws_secret_access_key` مباشرة. أضف `aws_session_token` لبيانات الاعتماد المؤقتة.\n\n**صلاحيات IAM المطلوبة:** `athena:StartQueryExecution` و`athena:GetQueryExecution` و`athena:GetQueryResults` و`athena:GetWorkGroup` و`athena:ListDatabases` و`athena:ListTableMetadata`، إضافة إلى صلاحيات S3 وGlue على حاويات البيانات/النتائج."
+    },
+    "kusto": {
+      "kusto_cluster": "مثال: https://mycluster.region.kusto.windows.net",
+      "kusto_database": "اسم قاعدة البيانات (مطلوب)",
+      "client_id": "لحساب الخدمة فقط",
+      "client_secret": "لحساب الخدمة فقط",
+      "tenant_id": "لحساب الخدمة فقط",
+      "authInstructions": "**الخيار 1: تسجيل الدخول بـ Entra ID (موصى به):** سجّل الدخول بنفسك واستخدم صلاحيات Kusto الحالية. يظهر هذا الخيار عندما يكون `KUSTO_OAUTH_CLIENT_ID` مهيأ على الخادم.\n\n**الخيار 2: هوية Azure الافتراضية:** استخدم تسجيل دخول Azure CLI (`az login`) أو Managed Identity أو بيانات اعتماد VS Code أو البيئة.\n\n**الخيار 3: حساب الخدمة:** قدّم `client_id` و`client_secret` و`tenant_id` لحساب خدمة يملك وصولاً إلى العنقود.\n\nيجب أن تملك كل هوية مسبقاً وصول مستوى البيانات إلى قاعدة Kusto المحددة."
+    },
+    "databricks": {
+      "server_hostname": "مثال: adb-1234567890.11.azuredatabricks.net",
+      "http_path": "مسار HTTP لمستودع SQL، مثال: /sql/1.0/warehouses/abc123",
+      "catalog": "اسم Unity Catalog (اتركه فارغاً لتصفح كل الكتالوجات)",
+      "schema": "اسم المخطط (اتركه فارغاً لتصفح كل المخططات في الكتالوج)",
+      "access_token": "رمز وصول شخصي لـ Databricks (dapi...)",
+      "authInstructions": "**أين تجد هذه القيم:** في مساحة عمل Databricks افتح **SQL → SQL Warehouses** (الشريط الجانبي الأيسر)، انقر المستودع، وافتح علامة **Connection details**: انسخ **Server hostname** و**HTTP path** من هناك.\n\n**رمز الوصول:** انقر الصورة الرمزية (أعلى اليمين) → **Settings → Developer → Access tokens → Generate new token**. يبدأ بـ `dapi` ويُعرض مرة واحدة فقط.\n\n**الصلاحيات:** يحتاج مستخدم الرمز إلى `USE CATALOG` / `USE SCHEMA` و`SELECT` على كائنات Unity Catalog التي تريد قراءتها.\n\n**النطاق:** اترك *catalog* و*schema* فارغين لتصفح كل ما يمكنك الوصول إليه، أو عيّنهما للانتقال مباشرة إلى كتالوج/مخطط معيّن، مثلاً كتالوج `samples` المضمَّن → `nyctaxi` → `trips`.\n\n**لا حساب؟** Databricks Free Edition بلا خادم ومجاني ويشمل كتالوج `samples` دون إعداد عنقود أو مستودع."
+    },
+    "superset": {
+      "url": "عنوان أساس Superset (مثال: https://bi.company.com)",
+      "username": "اسم مستخدم Superset (اختياري عند استخدام SSO)",
+      "password": "كلمة مرور Superset (اختيارية عند استخدام SSO)",
+      "authInstructions": "**مثال:** url: `https://bi.company.com` · username: `admin` · password: `***`\n\n**الإعداد:** قدّم عنوان أساس مثيل Superset وبيانات اعتماد لمستخدم بدور **Gamma** على الأقل (قراءة مجموعات البيانات).\n\n**SSO:** إذا كان Superset يستخدم SSO، استخدم تدفق جسر SSO بدل مصادقة كلمة المرور (يُهيأ عبر `PLG_SUPERSET_SSO_LOGIN_URL`)."
+    },
+    "azure_blob": {
+      "account_name": "اسم حساب تخزين Azure",
+      "container_name": "اسم حاوية Azure blob",
+      "connection_string": "سلسلة اتصال تخزين Azure (بديل لـ account_name + بيانات الاعتماد)",
+      "credential_chain": "قائمة مرتبة لموفّري بيانات اعتماد Azure (cli;managed_identity;env)",
+      "account_key": "مفتاح حساب تخزين Azure",
+      "sas_token": "رمز SAS في Azure",
+      "endpoint": "تجاوز نقطة نهاية Azure",
+      "authInstructions": "**مثال (سلسلة اتصال):** connection_string: `DefaultEndpointsProtocol=https;AccountName=...` · container_name: `mydata`\n\n**مثال (مفتاح الحساب):** account_name: `mystorageacct` · container_name: `mydata` · account_key: `abc123...`\n\n**الخيار 1: سلسلة الاتصال (الأبسط):**\nاحصل عليها من بوابة Azure → Storage Account → Access keys. أدخلها في `connection_string` ويمكن حذف `account_name`.\n\n**الخيار 2: مفتاح الحساب:**\nمن بوابة Azure → Storage Account → Access keys. استخدم `account_name` + `account_key`.\n\n**الخيار 3: رمز SAS (موصى به للوصول المحدود):**\nولّده من بوابة Azure → Storage Account → Shared access signature. استخدم `account_name` + `sas_token`. يمكن تقييده زمنياً وبالصلاحيات.\n\n**الخيار 4: Azure CLI / Managed Identity (الأكثر أماناً):**\nقدّم `account_name` + `container_name` فقط. يلزم `az login` أو Managed Identity.\n\n**التنسيقات المدعومة:** CSV، Parquet، JSON، JSONL"
+    },
+    "s3": {
+      "aws_access_key_id": "معرّف مفتاح وصول AWS",
+      "aws_secret_access_key": "مفتاح AWS السري",
+      "aws_session_token": "رمز جلسة AWS (مطلوب لبيانات الاعتماد المؤقتة)",
+      "region_name": "اسم منطقة AWS",
+      "bucket": "اسم حاوية S3",
+      "authInstructions": "**مثال:** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1` · bucket: `my-data-bucket`\n\n**الحصول على بيانات الاعتماد:** AWS Console → IAM → Users → Security credentials → Create access key → اختر \"Application running outside AWS\".\n\n**الصلاحيات المطلوبة:** `s3:GetObject` و`s3:ListBucket` على الحاوية.\n\n**التنسيقات المدعومة:** CSV، Parquet، JSON، JSONL"
+    },
+    "local_folder": {
+      "root_dir": "المسار المطلق للمجلد المحلي المراد تصفحه",
+      "recursive": "تضمين الملفات في المجلدات الفرعية",
+      "file_pattern": "نمط glob لتصفية الملفات (مثل '*.csv')",
+      "authInstructions": "وجّه `root_dir` إلى مجلد محلي يحتوي ملفات بيانات.\n\n**التنسيقات المدعومة:** CSV، TSV، Parquet، JSON، JSONL، Excel (.xlsx/.xls)\n\nانقر **تصفح** لفتح منتقي مجلدات، أو الصق مسار مجلد."
+    },
+    "_common": {
+      "table_filter": "تصفية الجدول بكلمات مفتاحية (مثل 'sales')"
+    }
+  }
+}

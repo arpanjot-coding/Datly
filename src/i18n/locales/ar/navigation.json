@@ -1,0 +1,18 @@
+{
+  "navigation": {
+    "startExploration": "بدء الاستكشاف",
+    "installLocally": "تثبيت محلي",
+    "tryOnlineDemo": "تجربة العرض عبر الإنترنت",
+    "video": "فيديو",
+    "github": "GitHub",
+    "contactUs": "اتصل بنا",
+    "termsOfUse": "شروط الاستخدام",
+    "about": "حول",
+    "home": "الرئيسية",
+    "data": "البيانات",
+    "visualization": "التصوّر",
+    "report": "التقرير",
+    "chat": "المحادثة",
+    "agentRules": "قواعد الوكيل"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "errors": {
+    "authRequired": "Autentificare necesară",
+    "authExpired": "Sesiunea a expirat. Vă rugăm să vă conectați din nou.",
+    "accessDenied": "Acces refuzat",
+
+    "invalidRequest": "Cerere nevalidă",
+    "tableNotFound": "Tabelul nu a fost găsit",
+    "fileParseError": "Fișierul încărcat nu a putut fi analizat",
+    "fileTooLarge": "Fișierul este prea mare",
+    "validationError": "Eroare de validare",
+
+    "llmAuthFailed": "Autentificarea a eșuat. Verificați cheia API.",
+    "llmRateLimit": "Limita de solicitări a fost depășită. Așteptați, apoi încercați din nou.",
+    "llmContextTooLong": "Intrarea este prea lungă. Reduceți volumul de date sau lungimea instrucțiunii.",
+    "llmModelNotFound": "Modelul nu a fost găsit. Verificați numele modelului.",
+    "llmTimeout": "Cererea a expirat. Verificați conexiunea, apoi încercați din nou.",
+    "llmServiceError": "Serviciul modelului a returnat o eroare. Încercați din nou mai târziu.",
+    "llmContentFiltered": "Cererea a fost blocată de filtrul de siguranță a conținutului.",
+    "llmUnknownError": "Cererea către model a eșuat",
+
+    "connectorAuthFailed": "Autentificarea la sursa de date a eșuat",
+    "dbConnectionFailed": "Conexiunea la sursa de date a eșuat",
+    "dbQueryError": "Eroare la interogarea bazei de date",
+    "dataLoadError": "Datele nu au putut fi încărcate",
+    "connectorError": "Eroare a conectorului de date",
+
+    "codeExecutionError": "A apărut o eroare în timpul execuției codului",
+    "agentError": "Agentul a întâmpinat o eroare",
+
+    "catalogSyncTimeout": "Sincronizarea catalogului a expirat. Încercați din nou.",
+    "catalogNotFound": "Conectorul nu a fost găsit sau nu este conectat",
+
+    "internalError": "A apărut o eroare neașteptată",
+    "serviceUnavailable": "Serviciul este temporar indisponibil",
+    "storageFull": "Stocarea spațiului de lucru este plină. Eliberați spațiu pe disc, apoi încercați din nou."
+  }
+}

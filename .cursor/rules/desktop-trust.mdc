@@ -1,0 +1,15 @@
+---
+description: Electron loopback trust for the Python sidecar
+globs: py-src/data_formulator/security/desktop_trust.py
+alwaysApply: false
+---
+
+# Desktop Trust
+
+When `DATA_FORMULATOR_DESKTOP` or `DATA_FORMULATOR_LAUNCH_TOKEN` is set, API
+requests must present `X-Datly-Launch-Token`. Host must be loopback.
+
+- Pass the token through the environment, never argv.
+- `DATA_FORMULATOR_DEV_TRUST` is ignored when `DATA_FORMULATOR_PACKAGED=1`.
+- Packaged Electron must spawn its own sidecar; do not attach to port 5567.
+- Connector OAuth is not a substitute for the launch token.

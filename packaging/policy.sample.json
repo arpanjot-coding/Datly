@@ -1,0 +1,10 @@
+{
+  "force_offline": false,
+  "disable_custom_models": true,
+  "disable_data_connectors": false,
+  "disable_updates": false,
+  "telemetry": false,
+  "update_channel": "stable",
+  "allowed_llm_endpoints": ["http://127.0.0.1:11434"],
+  "disable_connectors": []
+}

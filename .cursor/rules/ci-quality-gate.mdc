@@ -1,0 +1,23 @@
+---
+description: CI quality gate and quarantine conventions
+globs: .github/workflows/**/*.{yml,yaml}
+alwaysApply: false
+---
+
+# CI Quality Gate
+
+Every pull request to `main` must pass `.github/workflows/ci.yml`.
+
+## Jobs
+
+- **backend** — `pytest tests/backend -m "not known_failing and not live"`
+- **frontend** — `yarn typecheck`, `yarn lint:check`, `yarn test`
+- **supply-chain** — `pip-audit`, `yarn audit --level high`, Trivy HIGH/CRITICAL, Syft SBOM
+
+## Rules
+
+- Do not weaken the gate (removing a job, ignoring high-severity CVEs, or dropping `--strict-markers`) without an explicit product decision.
+- Do not add `known_failing` to silence a new failure. See `backend-test-conventions.mdc`.
+- Desktop releases must publish SHA-256 checksums and an SBOM next to the installer.
+- Dependabot targets `main`.
+---

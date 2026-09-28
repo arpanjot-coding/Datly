@@ -1,0 +1,38 @@
+{
+  "errors": {
+    "authRequired": "Authentification requise",
+    "authExpired": "Session expirée. Veuillez vous reconnecter.",
+    "accessDenied": "Accès refusé",
+
+    "invalidRequest": "Requête non valide",
+    "tableNotFound": "Table introuvable",
+    "fileParseError": "Impossible d'analyser le fichier importé",
+    "fileTooLarge": "Fichier trop volumineux",
+    "validationError": "Erreur de validation",
+
+    "llmAuthFailed": "Authentification échouée. Vérifiez votre clé API.",
+    "llmRateLimit": "Limite de débit atteinte. Patientez, puis réessayez.",
+    "llmContextTooLong": "Entrée trop longue. Réduisez le volume de données ou la consigne.",
+    "llmModelNotFound": "Modèle introuvable. Vérifiez le nom du modèle.",
+    "llmTimeout": "Délai d'attente dépassé. Vérifiez la connexion, puis réessayez.",
+    "llmServiceError": "Le service du modèle a renvoyé une erreur. Réessayez plus tard.",
+    "llmContentFiltered": "La requête a été bloquée par le filtre de sécurité du contenu.",
+    "llmUnknownError": "La requête au modèle a échoué",
+
+    "connectorAuthFailed": "Échec de l'authentification à la source de données",
+    "dbConnectionFailed": "Impossible de se connecter à la source de données",
+    "dbQueryError": "Erreur de requête base de données",
+    "dataLoadError": "Impossible de charger les données",
+    "connectorError": "Erreur du connecteur de données",
+
+    "codeExecutionError": "Une erreur s'est produite pendant l'exécution du code",
+    "agentError": "L'agent a rencontré une erreur",
+
+    "catalogSyncTimeout": "La synchronisation du catalogue a expiré. Réessayez.",
+    "catalogNotFound": "Connecteur introuvable ou non connecté",
+
+    "internalError": "Une erreur inattendue s'est produite",
+    "serviceUnavailable": "Service temporairement indisponible",
+    "storageFull": "Le stockage de l'espace de travail est plein. Libérez de l'espace disque, puis réessayez."
+  }
+}

@@ -1,0 +1,36 @@
+name: build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - name: Set Node.js 20
+      uses: actions/setup-node@v7
+      with:
+        node-version: 20
+        cache: 'yarn'
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        python-version: 3.12
+    - name: Install node dependencies
+      run: yarn install --frozen-lockfile
+    - name: Build frontend
+      run: yarn build
+    - name: Build python artifact
+      run: uv build
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: release-dist
+        path: dist

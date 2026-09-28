@@ -1,0 +1,38 @@
+{
+  "errors": {
+    "authRequired": "Autenticazione obbligatoria",
+    "authExpired": "Sessione scaduta. Accedere di nuovo.",
+    "accessDenied": "Accesso negato",
+
+    "invalidRequest": "Richiesta non valida",
+    "tableNotFound": "Tabella non trovata",
+    "fileParseError": "Impossibile analizzare il file caricato",
+    "fileTooLarge": "File troppo grande",
+    "validationError": "Errore di convalida",
+
+    "llmAuthFailed": "Autenticazione non riuscita. Controllare la chiave API.",
+    "llmRateLimit": "Limite di richieste superato. Attendere e riprovare.",
+    "llmContextTooLong": "Input troppo lungo. Ridurre i dati o la lunghezza della richiesta.",
+    "llmModelNotFound": "Modello non trovato. Controllare il nome del modello.",
+    "llmTimeout": "Tempo scaduto. Controllare la connessione e riprovare.",
+    "llmServiceError": "Il servizio del modello ha restituito un errore. Riprovare più tardi.",
+    "llmContentFiltered": "La richiesta è stata bloccata dal filtro di sicurezza dei contenuti.",
+    "llmUnknownError": "Richiesta al modello non riuscita",
+
+    "connectorAuthFailed": "Autenticazione alla fonte dati non riuscita",
+    "dbConnectionFailed": "Connessione alla fonte dati non riuscita",
+    "dbQueryError": "Errore nella query al database",
+    "dataLoadError": "Impossibile caricare i dati",
+    "connectorError": "Errore del connettore dati",
+
+    "codeExecutionError": "Si è verificato un errore durante l'esecuzione del codice",
+    "agentError": "L'agente ha riscontrato un errore",
+
+    "catalogSyncTimeout": "Sincronizzazione del catalogo scaduta. Riprovare.",
+    "catalogNotFound": "Connettore non trovato o non connesso",
+
+    "internalError": "Si è verificato un errore imprevisto",
+    "serviceUnavailable": "Servizio temporaneamente non disponibile",
+    "storageFull": "Lo spazio di lavoro è pieno. Liberare spazio su disco e riprovare."
+  }
+}

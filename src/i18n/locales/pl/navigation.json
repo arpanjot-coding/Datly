@@ -1,0 +1,18 @@
+{
+  "navigation": {
+    "startExploration": "Rozpocznij eksplorację",
+    "installLocally": "Zainstaluj lokalnie",
+    "tryOnlineDemo": "Wypróbuj demo online",
+    "video": "Wideo",
+    "github": "GitHub",
+    "contactUs": "Kontakt",
+    "termsOfUse": "Warunki użytkowania",
+    "about": "O programie",
+    "home": "Start",
+    "data": "Dane",
+    "visualization": "Wizualizacja",
+    "report": "Raport",
+    "chat": "Czat",
+    "agentRules": "Reguły agenta"
+  }
+}

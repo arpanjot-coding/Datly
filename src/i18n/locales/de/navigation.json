@@ -1,0 +1,18 @@
+{
+  "navigation": {
+    "startExploration": "Erkunden starten",
+    "installLocally": "Lokal installieren",
+    "tryOnlineDemo": "Online-Demo öffnen",
+    "video": "Video",
+    "github": "GitHub",
+    "contactUs": "Kontakt",
+    "termsOfUse": "Nutzungsbedingungen",
+    "about": "Über Datly",
+    "home": "Start",
+    "data": "Daten",
+    "visualization": "Visualisierung",
+    "report": "Bericht",
+    "chat": "Chat",
+    "agentRules": "Agentenregeln"
+  }
+}

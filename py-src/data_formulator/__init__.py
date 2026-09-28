@@ -1,0 +1,9 @@
+def run_app():
+    """Launch the Data Formulator Flask application."""
+    # Import app only when actually running to avoid heavy imports at package load
+    from data_formulator.app import run_app as _run_app
+    return _run_app()
+
+__all__ = [
+    "run_app",
+]

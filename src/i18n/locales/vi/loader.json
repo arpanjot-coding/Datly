@@ -1,0 +1,116 @@
+{
+  "loader": {
+    "mysql": {
+      "user": "Tên người dùng MySQL",
+      "password": "để trống nếu không có mật khẩu",
+      "host": "địa chỉ máy chủ",
+      "port": "cổng máy chủ",
+      "database": "Tên cơ sở dữ liệu (để trống để duyệt tất cả)",
+      "authInstructions": "**Ví dụ:** user: `root` · host: `localhost` · port: `3306` · database: `mydb`\n\n**Cài trên máy:** Bảo đảm MySQL đang chạy: `brew services list` (macOS) hoặc `systemctl status mysql` (Linux). Nếu chưa đặt mật khẩu thì để trống.\n\n**Máy từ xa:** Lấy host, cổng, tên đăng nhập và mật khẩu từ quản trị viên cơ sở dữ liệu. Bảo đảm máy chủ cho phép kết nối từ xa và IP của bạn nằm trong danh sách cho phép.\n\n**Phạm vi:** Để trống *database* để xem mọi cơ sở dữ liệu trên máy chủ, hoặc điền tên để vào thẳng các bảng trong cơ sở đó.\n\n**Khắc phục:** Thử với `mysql -u <user> -p -h <host> -P <port> <database>`"
+    },
+    "mssql": {
+      "server": "Địa chỉ máy chủ SQL Server hoặc tên instance",
+      "database": "Tên cơ sở dữ liệu (để trống để duyệt tất cả)",
+      "user": "Tên đăng nhập (để trống nếu dùng Entra ID / Windows)",
+      "password": "Mật khẩu (để trống nếu dùng Entra ID / Windows)",
+      "port": "Cổng SQL Server (mặc định: 1433)",
+      "encrypt": "Bật mã hóa (yes/no)",
+      "trust_server_certificate": "Tin chứng chỉ máy chủ (yes/no)",
+      "connection_timeout": "Thời gian chờ kết nối (giây)",
+      "authInstructions": "**Microsoft Entra ID (nên dùng):** Chạy `az login` một lần trong terminal, rồi mở Datly. Chọn *Microsoft Entra ID*, chỉ điền `server` và (nếu muốn) `database`, để trống tên đăng nhập/mật khẩu. Thông tin Azure CLI sẽ được dùng tự động. Managed Identity, VS Code và biến môi trường cũng hoạt động qua `DefaultAzureCredential`.\n\n> Danh tính Entra của bạn phải được cấp quyền trên cơ sở dữ liệu. Ví dụ quản trị viên chạy `CREATE USER [you@contoso.com] FROM EXTERNAL PROVIDER;` rồi gán vai trò cần thiết.\n\n**Ví dụ (Entra ID):** server: `myserver.database.windows.net` · database: `mydb` (để trống tên đăng nhập/mật khẩu)\n\n**Xác thực SQL Server:** Chọn *SQL Server authentication* rồi điền tên đăng nhập và mật khẩu.\n\n**Ví dụ (SQL auth):** server: `localhost` · database: `mydb` · user: `sa` · password: `MyP@ss` · port: `1433`\n\n**Xác thực Windows (chỉ trên Windows):** Chọn *Windows authentication* và để trống tên đăng nhập/mật khẩu.\n\n**Driver:** Driver Microsoft SQL Server đã đi kèm Datly; không cần cài ODBC riêng. Với Entra ID, cài Azure CLI rồi chạy `az login`.\n\n**Khắc phục:** Xác nhận đã đăng nhập bằng `az account show`. Bảo đảm dịch vụ SQL Server đang chạy và TCP/IP đã bật. Thử SQL auth với `sqlcmd -S <server> -d <database> -U <user> -P <password>`."
+    },
+    "postgresql": {
+      "user": "Tên người dùng PostgreSQL",
+      "password": "để trống nếu không có mật khẩu",
+      "host": "Máy chủ PostgreSQL",
+      "port": "Cổng PostgreSQL",
+      "database": "Tên cơ sở dữ liệu (để trống để duyệt tất cả)",
+      "authInstructions": "**Ví dụ:** user: `postgres` · host: `localhost` · port: `5432` · database: `mydb`\n\n**Cài trên máy:** Bảo đảm PostgreSQL đang chạy: `brew services list` (macOS) hoặc `systemctl status postgresql` (Linux). Nếu chưa đặt mật khẩu thì để trống.\n\n**Máy từ xa:** Lấy host, cổng, tên đăng nhập và mật khẩu từ quản trị viên cơ sở dữ liệu. Người dùng cần quyền SELECT trên các bảng bạn muốn xem.\n\n**Phạm vi:** Để trống *database* để xem mọi cơ sở dữ liệu trên máy chủ, hoặc điền tên để vào thẳng schema/bảng trong cơ sở đó.\n\n**Khắc phục:** Thử với `psql -U <user> -h <host> -p <port> -d <database>`"
+    },
+    "mongodb": {
+      "host": "địa chỉ máy chủ",
+      "port": "cổng máy chủ",
+      "username": "để trống nếu không cần xác thực",
+      "password": "để trống nếu không cần xác thực",
+      "database": "tên cơ sở dữ liệu",
+      "collection": "để trống để liệt kê mọi collection",
+      "authSource": "cơ sở xác thực (mặc định là cơ sở đích)",
+      "authInstructions": "**Ví dụ:** host: `localhost` · port: `27017` · database: `mydb` · collection: `users`\n\n**Cài trên máy:** Bảo đảm MongoDB đang chạy. Để trống tên đăng nhập và mật khẩu nếu chưa bật xác thực.\n\n**Máy từ xa:** Lấy host, cổng, tên đăng nhập và mật khẩu từ quản trị viên cơ sở dữ liệu.\n\n**Khắc phục:** Thử với `mongosh --host <host> --port <port>`"
+    },
+    "cosmosdb": {
+      "endpoint": "URL endpoint tài khoản Cosmos DB",
+      "key": "khóa tài khoản hoặc khóa emulator",
+      "database": "tên cơ sở dữ liệu",
+      "container": "để trống để liệt kê mọi container",
+      "authInstructions": "**Ví dụ:** endpoint: `https://myaccount.documents.azure.com:443/` · database: `mydb`\n\n**Cài trên Azure:** Tìm endpoint và khóa trong Azure Portal, mục *Keys* của tài khoản Cosmos DB.\n\n**Emulator trên máy:** Dùng endpoint `https://localhost:8081` với khóa emulator quen thuộc.\n\n**Khắc phục:** Bảo đảm tường lửa tài khoản cho phép IP của bạn, hoặc kết nối từ mạng đã được phép."
+    },
+    "bigquery": {
+      "project_id": "ID dự án Google Cloud",
+      "dataset_id": "ID dataset (để trống để lấy tất cả, hoặc ghi một hay nhiều ID cách nhau bằng dấu phẩy)",
+      "credentials_path": "Đường dẫn tệp JSON tài khoản dịch vụ (không bắt buộc)",
+      "location": "Vùng BigQuery (mặc định: US)",
+      "authInstructions": "**Ví dụ:** project_id: `my-gcp-project` · dataset_id: `analytics` · credentials_path: `/path/to/key.json` · location: `US`\n\n**Cách 1: Application Default Credentials (nên dùng):**\nCài [Google Cloud SDK](https://cloud.google.com/sdk/docs/install), rồi chạy `gcloud auth application-default login`. Để trống `credentials_path`.\n\n**Cách 2: Tệp khóa tài khoản dịch vụ:**\nTạo tài khoản dịch vụ trong Google Cloud Console, tải tệp JSON, rồi điền đường dẫn đầy đủ vào `credentials_path`. Cấp vai trò **BigQuery Data Viewer** và **BigQuery Job User**.\n\n**Cách 3: Biến môi trường:**\nĐặt `GOOGLE_APPLICATION_CREDENTIALS` trỏ tới tệp JSON tài khoản dịch vụ. Để trống `credentials_path`."
+    },
+    "athena": {
+      "aws_profile": "Tên profile AWS trong ~/.aws/credentials (nếu có thì không cần access key và secret)",
+      "aws_access_key_id": "AWS access key ID (không cần nếu dùng aws_profile)",
+      "aws_secret_access_key": "AWS secret access key (không cần nếu dùng aws_profile)",
+      "aws_session_token": "AWS session token (bắt buộc với thông tin tạm thời)",
+      "region_name": "Tên vùng AWS",
+      "workgroup": "Tên workgroup Athena (vị trí xuất lấy từ cấu hình workgroup)",
+      "output_location": "Vị trí S3 cho kết quả truy vấn (vd. s3://bucket/path/). Để trống thì dùng cấu hình workgroup.",
+      "database": "Cơ sở dữ liệu/catalog mặc định cho truy vấn",
+      "query_timeout": "Thời gian chờ chạy truy vấn (giây, mặc định: 300 = 5 phút)",
+      "authInstructions": "**Ví dụ (profile):** aws_profile: `default` · region_name: `us-east-1` · workgroup: `primary` · database: `my_database`\n\n**Ví dụ (khóa):** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1`\n\n**Cách 1: AWS Profile (nên dùng):**\nĐặt `aws_profile` thành tên profile trong `~/.aws/credentials`. Tạo bằng `aws configure --profile <name>`. Không cần access key hay secret.\n\n**Cách 2: Thông tin tường minh:**\nNhập trực tiếp `aws_access_key_id` và `aws_secret_access_key`. Thêm `aws_session_token` nếu dùng thông tin tạm thời.\n\n**Quyền IAM cần có:** `athena:StartQueryExecution`, `athena:GetQueryExecution`, `athena:GetQueryResults`, `athena:GetWorkGroup`, `athena:ListDatabases`, `athena:ListTableMetadata`, cộng quyền S3 và Glue trên bucket dữ liệu/kết quả."
+    },
+    "kusto": {
+      "kusto_cluster": "vd. https://mycluster.region.kusto.windows.net",
+      "kusto_database": "Tên cơ sở dữ liệu (bắt buộc)",
+      "client_id": "Chỉ dùng service principal",
+      "client_secret": "Chỉ dùng service principal",
+      "tenant_id": "Chỉ dùng service principal",
+      "authInstructions": "**Cách 1: Đăng nhập Entra ID (nên dùng):** Đăng nhập bằng chính bạn và dùng quyền Kusto sẵn có. Mục này hiện khi máy chủ đã cấu hình `KUSTO_OAUTH_CLIENT_ID`.\n\n**Cách 2: Azure Default Identity:** Dùng đăng nhập Azure CLI (`az login`), Managed Identity, thông tin VS Code, hoặc biến môi trường.\n\n**Cách 3: Service Principal:** Cung cấp `client_id`, `client_secret` và `tenant_id` của service principal có quyền trên cluster.\n\nMọi danh tính đều phải đã có quyền data-plane trên cơ sở Kusto đã chọn."
+    },
+    "databricks": {
+      "server_hostname": "vd. adb-1234567890.11.azuredatabricks.net",
+      "http_path": "Đường dẫn HTTP của SQL warehouse, vd. /sql/1.0/warehouses/abc123",
+      "catalog": "Tên Unity Catalog (để trống để duyệt mọi catalog)",
+      "schema": "Tên schema (để trống để duyệt mọi schema trong catalog)",
+      "access_token": "Personal access token Databricks (dapi...)",
+      "authInstructions": "**Lấy thông tin ở đâu:** Trong workspace Databricks, mở **SQL → SQL Warehouses** (thanh bên trái), bấm warehouse của bạn, mở thẻ **Connection details**. Sao chép **Server hostname** và **HTTP path** từ đó.\n\n**Access token:** Bấm ảnh đại diện (góc trên phải) → **Settings → Developer → Access tokens → Generate new token**. Token bắt đầu bằng `dapi` và chỉ hiện một lần.\n\n**Quyền:** Người dùng của token cần `USE CATALOG` / `USE SCHEMA` và `SELECT` trên các đối tượng Unity Catalog bạn muốn đọc.\n\n**Phạm vi:** Để trống *catalog* và *schema* để duyệt mọi thứ bạn có quyền, hoặc điền để nhảy thẳng tới catalog/schema cụ thể. Ví dụ thử catalog có sẵn `samples` → `nyctaxi` → `trips`.\n\n**Chưa có tài khoản?** Databricks Free Edition chạy serverless, miễn phí, và có sẵn catalog `samples`. Không cần lập cluster hay warehouse."
+    },
+    "superset": {
+      "url": "URL gốc Superset (vd. https://bi.company.com)",
+      "username": "Tên đăng nhập Superset (không bắt buộc nếu dùng SSO)",
+      "password": "Mật khẩu Superset (không bắt buộc nếu dùng SSO)",
+      "authInstructions": "**Ví dụ:** url: `https://bi.company.com` · username: `admin` · password: `***`\n\n**Thiết lập:** Điền URL gốc của instance Superset và thông tin người dùng có ít nhất vai trò **Gamma** (đọc được dataset).\n\n**SSO:** Nếu Superset dùng SSO, hãy đăng nhập bằng SSO thay vì mật khẩu (cấu hình qua `PLG_SUPERSET_SSO_LOGIN_URL`)."
+    },
+    "azure_blob": {
+      "account_name": "Tên tài khoản lưu trữ Azure",
+      "container_name": "Tên container blob Azure",
+      "connection_string": "Chuỗi kết nối lưu trữ Azure (thay cho account_name + thông tin xác thực)",
+      "credential_chain": "Danh sách có thứ tự nhà cung cấp thông tin Azure (cli;managed_identity;env)",
+      "account_key": "Khóa tài khoản lưu trữ Azure",
+      "sas_token": "Token SAS Azure",
+      "endpoint": "Ghi đè endpoint Azure",
+      "authInstructions": "**Ví dụ (chuỗi kết nối):** connection_string: `DefaultEndpointsProtocol=https;AccountName=...` · container_name: `mydata`\n\n**Ví dụ (khóa tài khoản):** account_name: `mystorageacct` · container_name: `mydata` · account_key: `abc123...`\n\n**Cách 1: Chuỗi kết nối (đơn giản nhất):**\nLấy từ Azure Portal → Storage Account → Access keys. Điền vào `connection_string`; có thể bỏ `account_name`.\n\n**Cách 2: Khóa tài khoản:**\nTừ Azure Portal → Storage Account → Access keys. Dùng `account_name` + `account_key`.\n\n**Cách 3: Token SAS (nên dùng khi cần giới hạn quyền):**\nTạo từ Azure Portal → Storage Account → Shared access signature. Dùng `account_name` + `sas_token`. Có thể giới hạn thời gian và quyền.\n\n**Cách 4: Azure CLI / Managed Identity (an toàn nhất):**\nChỉ cần `account_name` + `container_name`. Cần `az login` hoặc Managed Identity.\n\n**Định dạng hỗ trợ:** CSV, Parquet, JSON, JSONL"
+    },
+    "s3": {
+      "aws_access_key_id": "AWS access key ID",
+      "aws_secret_access_key": "AWS secret access key",
+      "aws_session_token": "AWS session token (bắt buộc với thông tin tạm thời)",
+      "region_name": "Tên vùng AWS",
+      "bucket": "Tên bucket S3",
+      "authInstructions": "**Ví dụ:** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1` · bucket: `my-data-bucket`\n\n**Lấy thông tin:** AWS Console → IAM → Users → Security credentials → Create access key → chọn \"Application running outside AWS\".\n\n**Quyền cần có:** `s3:GetObject` và `s3:ListBucket` trên bucket của bạn.\n\n**Định dạng hỗ trợ:** CSV, Parquet, JSON, JSONL"
+    },
+    "local_folder": {
+      "root_dir": "Đường dẫn tuyệt đối tới thư mục cần duyệt",
+      "recursive": "Gồm cả tệp trong thư mục con",
+      "file_pattern": "Mẫu glob để lọc tệp (vd. '*.csv')",
+      "authInstructions": "Trỏ `root_dir` tới thư mục trên máy chứa tệp dữ liệu.\n\n**Định dạng hỗ trợ:** CSV, TSV, Parquet, JSON, JSONL, Excel (.xlsx/.xls)\n\nBấm **Chọn thư mục** để mở hộp chọn, hoặc dán đường dẫn."
+    },
+    "_common": {
+      "table_filter": "Lọc bảng theo từ khóa (vd. 'sales')"
+    }
+  }
+}

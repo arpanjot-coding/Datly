@@ -1,0 +1,324 @@
+import * as d3 from 'd3';
+import Column from './column';
+import * as ExcelJS from 'exceljs';
+
+import { DictTable } from '../components/ComponentType';
+import { CoerceType, TestType, Type } from './types';
+import { ColumnTable } from './table';
+
+/**
+ * Read a File as text, trying UTF-8 first and falling back to GBK.
+ * Handles CSV/TSV files saved by Chinese-locale Excel (GBK) and similar cases.
+ */
+export const readFileText = async (file: File): Promise<string> => {
+    const buffer = await file.arrayBuffer();
+    try {
+        return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    } catch {
+        return new TextDecoder('gbk').decode(buffer);
+    }
+};
+
+export const loadTextDataWrapper = (title: string, text: string, fileType: string): DictTable | undefined => {
+    
+    let tableName = title;
+    //let tableName = title.replace(/\.[^/.]+$/ , "");
+
+    let table = undefined;
+    if (fileType == "text/csv" || fileType == "text/tab-separated-values") {
+        table = createTableFromText(tableName, text);
+    } else if (fileType == "application/json") {
+        table = createTableFromFromObjectArray(tableName, JSON.parse(text));
+    } 
+    return table;
+};
+
+export const createTableFromText = (title: string, text: string): DictTable | undefined => {
+    // Check for empty strings, bad data, anything else?
+    if (!text || text.trim() === '') {
+        console.log('Invalid text provided for data. Could not load.');
+        return undefined;
+    }
+
+    // Determine if the input text is tab or comma separated values
+    // Compute the number of tabs and lines
+    let tabNum = 0,
+        lineNum = 0;
+    for (let i = 0; i < text.length; i++) {
+        if (text.charAt(i) === '\t') tabNum++;
+        if (text.charAt(i) === '\n') lineNum++;
+    }
+
+    // If one or more tab per line, then it is tab separated values
+    // Should check the data file as well for the ending
+    const isTabSeparated = tabNum / lineNum >= 1;
+
+    // Use d3.dsvFormat to create a custom parser that properly handles quoted fields
+    // This ensures commas inside quoted fields won't be treated as delimiters
+    const rows = isTabSeparated 
+        ? d3.tsvParseRows(text) 
+        : d3.dsvFormat(',').parseRows(text, (row, index) => {
+            // Process each row to ensure proper type handling
+            return row;
+          });
+    
+    // Handle duplicate column names by appending _1, _2, etc.
+    let colNames: string[] = [];
+    for (let i = 0; i < rows[0].length; i++) {
+        let col = rows[0][i];   
+        if (colNames.includes(col)) {
+            let k = 1;
+            while (colNames.includes(`${col}_${k}`)) {
+                k++;
+            }
+            colNames.push(`${col}_${k}`);
+        } else {
+            colNames.push(col);
+        }
+    }
+
+    let values = rows.slice(1);
+    let records = values.map(row => {
+        let record: any = {};
+        for (let i = 0; i < colNames.length; i++) {
+            record[colNames[i]] = row[i];
+        }
+        return record;
+    });
+
+    return createTableFromFromObjectArray(title, records);
+};
+
+export const createTableFromFromObjectArray = (title: string, values: any[], derive?: any): DictTable => {
+    /*
+    * title: the title of the table
+    * values: the values of the table
+    * derive: the derive of the table
+    */
+
+    const len = values.length;
+    let names: string[] = [];
+    let cleanNames: string[] = [];
+    const columns = new Map<string, Column>();
+
+    if (len) {
+        names = Object.keys(values[0]);
+        cleanNames = names.map((name, i) => {
+            if (name == "") {
+                let newName = `c${i}`;
+                let k = 0;
+                while(names.includes(newName)) {
+                    newName = `c${i}_${k}`
+                    k = k + 1;
+                } 
+                return newName;
+            }
+            // clean up messy column names
+            if (name && name.includes(".")) {
+                return name.replace(".", "_");
+            }
+            return name;
+        })
+
+        for (let i = 0; i < names.length; i++) {
+            let col = [];
+            for (let r = 0; r < len; r++) {
+                col.push(values[r][names[i]]);
+            }
+            const type = refineTemporalType(col, inferTypeFromValueArray(col));
+            col = coerceValueArrayFromTypes(col, type);
+            columns.set(cleanNames[i], new Column(col, type));
+        }
+    }
+
+    let columnTable = new ColumnTable(columns, cleanNames);
+
+    return  {
+        kind: 'table' as const,
+        id: title,
+        displayId: `${title}`,
+        names: columnTable.names(),
+        metadata: columnTable.names().reduce((acc, name) => ({
+            ...acc,
+            [name]: {
+                type: (columnTable.column(name) as Column).type,
+                levels: []
+            }
+        }), {}),
+        rows: columnTable.objects(),
+        derive: derive,
+        virtual: { tableId: title, rowCount: len },
+        description: ''
+    }
+};
+
+export const inferTypeFromValueArray = (values: any[]): Type => {
+    // More specific types first; the first surviving candidate wins.
+    let types: Type[] = [
+        Type.Boolean, Type.Integer,
+        Type.DateTime, Type.Date, Type.Time, Type.Duration,
+        Type.Number, Type.String,
+    ];
+
+    for (let i = 0; i < values.length; i++) {
+        const v = values[i];
+        if (v == null || v === '') continue;
+
+        for (let t = 0; t < types.length; t++) {
+            if (!TestType[types[t]](v)) {
+                types.splice(t, 1);
+                t -= 1;
+            }
+        }
+    }
+
+    return types[0];
+};
+
+/**
+ * Downgrade DateTime to Date when every non-null value has a zero time component.
+ * Call this on a column AFTER type inference to refine the temporal precision.
+ */
+export const refineTemporalType = (values: any[], inferredType: Type): Type => {
+    if (inferredType !== Type.DateTime) return inferredType;
+    const nonNull = values.filter(v => v != null && v !== '');
+    if (nonNull.length === 0) return inferredType;
+    const allMidnight = nonNull.every(v => {
+        if (typeof v !== 'string') return false;
+        const tIdx = v.indexOf('T');
+        if (tIdx === -1) return false;
+        const timePart = v.slice(tIdx + 1).replace(/[Z+-].*$/, '');
+        const parts = timePart.split(':');
+        return parts.length >= 2 && parts.every(p => parseFloat(p) === 0);
+    });
+    return allMidnight ? Type.Date : Type.DateTime;
+};
+
+export const convertTypeToDtype = (type: Type | undefined): string => {
+    switch (type) {
+        case Type.Integer:
+        case Type.Number:
+        case Type.Duration:
+            return 'quantitative';
+        case Type.Boolean:
+            return 'boolean';
+        case Type.Date:
+        case Type.DateTime:
+        case Type.Time:
+            return 'date';
+        default:
+            return 'nominal';
+    }
+};
+
+export const coerceValueArrayFromTypes = (values: any[], type: Type): any[] => {
+    return values.map((v) => CoerceType[type](v));
+};
+
+export const coerceValueFromTypes = (value: any, type: Type): any => {
+    return CoerceType[type](value);
+};
+
+export const computeUniqueValues = (values: any[]): any[] => {
+    return Array.from(new Set(values));
+};
+
+export function tupleEqual(a: any[], b: any[]) {
+    // check if two tuples are equal
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
+export const resolveExcelCellValue = (value: any): string | number | boolean | null => {
+    if (value == null) return null;
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value === 'object') {
+        if (value.richText) {
+            return value.richText.map((rt: any) => rt.text ?? '').join('');
+        }
+        if (value.hyperlink != null) {
+            return value.text || value.hyperlink;
+        }
+        if (value.formula !== undefined) {
+            return resolveExcelCellValue(value.result);
+        }
+        if (value.error) return null;
+        return String(value);
+    }
+    return value;
+};
+
+export const loadBinaryDataWrapper = async (title: string, arrayBuffer: ArrayBuffer): Promise<DictTable[]> => {
+    try {
+        // Read the Excel file
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(arrayBuffer);
+        
+        // Create tables for each sheet
+        const tables: DictTable[] = [];
+        
+        workbook.eachSheet((worksheet) => {
+            try {
+                const jsonData: any[] = [];
+
+                // Get the first row as headers
+                const headerRow = worksheet.getRow(1);
+                const headers: string[] = [];
+                headerRow.eachCell((cell, colNumber) => {
+                    headers[colNumber - 1] = resolveExcelCellValue(cell.value)?.toString() || `Column${colNumber}`;
+                });
+
+                if (headers.length === 0) {
+                    return;
+                }
+
+                // Process data rows (skip header row)
+                worksheet.eachRow((row, rowNumber) => {
+                    if (rowNumber === 1) return; // Skip header row
+
+                    const rowData: any = {};
+                    row.eachCell((cell, colNumber) => {
+                        const header = headers[colNumber - 1] || `Column${colNumber}`;
+                        rowData[header] = resolveExcelCellValue(cell.value);
+                    });
+
+                    // Only add row if it has data
+                    if (Object.keys(rowData).length > 0) {
+                        jsonData.push(rowData);
+                    }
+                });
+
+                if (jsonData.length === 0) {
+                    return;
+                }
+
+                // Create a table from the JSON data with sheet name included in the title
+                const sheetTable = createTableFromFromObjectArray(`${title}-${worksheet.name}`, jsonData);
+                tables.push(sheetTable);
+            } catch (error) {
+                console.error(`Error processing sheet ${worksheet.name}:`, error);
+            }
+        });
+        
+        return tables;
+    } catch (error) {
+        console.error('Error processing Excel file:', error);
+        return [];
+    }
+};
+
+/**
+ * Exports a DictTable to DSV format using d3.dsvFormat
+ * @param table - The DictTable to export
+ * @param delimiter - The delimiter to use (e.g., "," for CSV, "\t" for TSV)
+ * @returns DSV string representation of the table
+ */
+export const exportTableToDsv = (table: DictTable, delimiter: string): string => {
+    // Use d3.dsvFormat to convert the rows array to DSV
+    return d3.dsvFormat(delimiter).format(table.rows);
+};

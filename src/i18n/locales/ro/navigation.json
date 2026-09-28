@@ -1,0 +1,18 @@
+{
+  "navigation": {
+    "startExploration": "Începeți explorarea",
+    "installLocally": "Instalați local",
+    "tryOnlineDemo": "Încercați demo-ul online",
+    "video": "Video",
+    "github": "GitHub",
+    "contactUs": "Contactați-ne",
+    "termsOfUse": "Condiții de utilizare",
+    "about": "Despre",
+    "home": "Acasă",
+    "data": "Date",
+    "visualization": "Vizualizare",
+    "report": "Raport",
+    "chat": "Discuție",
+    "agentRules": "Reguli ale agentului"
+  }
+}

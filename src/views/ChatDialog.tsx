@@ -1,0 +1,447 @@
+import { FC, useRef, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next';
+import { radius } from '../app/tokens';
+import { Divider } from "@mui/material";
+import {
+		Card,
+		Box,
+		Typography,
+		Dialog,
+        DialogTitle,
+        DialogContent,
+        Button,
+        IconButton,
+        styled,
+        CardContent,
+} from '@mui/material';
+
+import CloseIcon from '@mui/icons-material/Close';
+import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
+import React from 'react';
+import { alpha, useTheme } from '@mui/material/styles';
+import { CodeBox } from './VisualizationView';
+import { iconVar, textVar } from '../app/layout';
+
+export const GroupHeader = styled('div')(({ theme }) => ({
+    position: 'sticky',
+    top: '-8px',
+    padding: '4px 4px',
+    color: "darkgray",
+    fontSize: "12px",
+}));
+  
+export const GroupItems = styled('ul')({
+    padding: 0,
+});
+
+// Function to parse message content and render code blocks
+/** Try to parse a JSON action from a message string and render it in segments. */
+const renderJsonAction = (message: string): React.ReactNode | null => {
+    let action: any;
+    try {
+        action = JSON.parse(message.trim());
+    } catch {
+        // Try to find JSON within the message
+        const jsonMatch = message.match(/\{[\s\S]*"action"\s*:\s*"[^"]+"/);
+        if (!jsonMatch) return null;
+        try {
+            // Find the matching closing brace
+            const startIdx = message.indexOf(jsonMatch[0]);
+            let depth = 0;
+            let endIdx = startIdx;
+            for (let i = startIdx; i < message.length; i++) {
+                if (message[i] === '{') depth++;
+                else if (message[i] === '}') { depth--; if (depth === 0) { endIdx = i + 1; break; } }
+            }
+            action = JSON.parse(message.slice(startIdx, endIdx));
+        } catch { return null; }
+    }
+    if (!action || typeof action !== 'object' || !action.action) return null;
+
+    const sections: React.ReactNode[] = [];
+    const actionType = action.action;
+
+    sections.push(
+        <Typography key="action-type" sx={{ fontSize: textVar.sm, fontWeight: 600, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '0.5px', mb: 0.5 }}>
+            {actionType}
+        </Typography>
+    );
+
+    if (action.thought) {
+        sections.push(
+            <Typography key="thought" sx={{ fontSize: textVar.sm, color: 'text.secondary', fontStyle: 'italic', mb: 0.5, lineHeight: 1.4 }}>
+                {action.thought}
+            </Typography>
+        );
+    }
+
+    if (action.display_instruction) {
+        sections.push(
+            <Typography key="display" sx={{ fontSize: textVar.sm, fontWeight: 500, mb: 0.5, lineHeight: 1.4 }}>
+                {action.display_instruction}
+            </Typography>
+        );
+    }
+
+    if (action.message) {
+        sections.push(
+            <Typography key="message" sx={{ fontSize: textVar.sm, mb: 0.5, lineHeight: 1.4 }}>
+                {action.message}
+            </Typography>
+        );
+        if (action.options && Array.isArray(action.options)) {
+            sections.push(
+                <Box key="options" sx={{ pl: 2, mb: 0.5 }}>
+                    {action.options.map((opt: string, i: number) => (
+                        <Typography key={`opt-${i}`} sx={{ fontSize: textVar.xs, color: 'text.secondary', lineHeight: 1.5 }}>
+                            {i + 1}. {opt}
+                        </Typography>
+                    ))}
+                </Box>
+            );
+        }
+    }
+
+    // clarify action: render the list of questions, response type, and options
+    if (action.questions && Array.isArray(action.questions)) {
+        sections.push(
+            <Box key="questions" sx={{ mb: 0.5, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                {action.questions.map((q: any, i: number) => {
+                    const text = typeof q === 'string' ? q : (q?.text ?? '');
+                    const responseType = typeof q === 'object' ? q?.responseType : undefined;
+                    const opts = typeof q === 'object' && Array.isArray(q?.options) ? q.options : [];
+                    return (
+                        <Box key={`q-${i}`}>
+                            <Typography sx={{ fontSize: textVar.sm, fontWeight: 500, lineHeight: 1.4 }}>
+                                {i + 1}. {text}
+                                {responseType && (
+                                    <Typography component="span" sx={{ fontSize: textVar.xxs, color: 'text.disabled', ml: 0.5 }}>
+                                        ({responseType})
+                                    </Typography>
+                                )}
+                            </Typography>
+                            {opts.length > 0 && (
+                                <Box sx={{ pl: 2 }}>
+                                    {opts.map((opt: any, j: number) => {
+                                        const optLabel = typeof opt === 'string' ? opt : (opt?.label ?? JSON.stringify(opt));
+                                        return (
+                                            <Typography key={`opt-${i}-${j}`} sx={{ fontSize: textVar.xs, color: 'text.secondary', lineHeight: 1.5 }}>
+                                                • {optLabel}
+                                            </Typography>
+                                        );
+                                    })}
+                                </Box>
+                            )}
+                        </Box>
+                    );
+                })}
+            </Box>
+        );
+    }
+
+    // explain action: render the explanation text and any followup prompts
+    if (action.explanation) {
+        sections.push(
+            <Typography key="explanation" sx={{ fontSize: textVar.sm, mb: 0.5, lineHeight: 1.4 }}>
+                {action.explanation}
+            </Typography>
+        );
+    }
+    if (action.followups && Array.isArray(action.followups) && action.followups.length > 0) {
+        sections.push(
+            <Box key="followups" sx={{ mb: 0.5 }}>
+                <Typography sx={{ fontSize: textVar.xs, color: 'text.secondary', fontWeight: 500, lineHeight: 1.4 }}>
+                    Followups:
+                </Typography>
+                <Box sx={{ pl: 2 }}>
+                    {action.followups.map((f: string, i: number) => (
+                        <Typography key={`fu-${i}`} sx={{ fontSize: textVar.xs, color: 'text.secondary', lineHeight: 1.5 }}>
+                            • {f}
+                        </Typography>
+                    ))}
+                </Box>
+            </Box>
+        );
+    }
+
+    if (action.summary) {
+        sections.push(
+            <Typography key="summary" sx={{ fontSize: textVar.sm, fontWeight: 500, mb: 0.5, lineHeight: 1.4 }}>
+                {action.summary}
+            </Typography>
+        );
+    }
+
+    if (action.code) {
+        sections.push(
+            <Box key="code" sx={{ my: 0.5, borderRadius: 1, overflow: 'auto' }}>
+                <CodeBox code={action.code} language="python" fontSize={10} />
+            </Box>
+        );
+    }
+
+    if (action.chart) {
+        const chartStr = JSON.stringify(action.chart, null, 2);
+        sections.push(
+            <Box key="chart" sx={{ my: 0.5, borderRadius: 1, overflow: 'auto' }}>
+                <CodeBox code={chartStr} language="json" fontSize={10} />
+            </Box>
+        );
+    }
+
+    const meta: string[] = [];
+    if (action.output_variable) meta.push(`output: ${action.output_variable}`);
+    if (action.field_metadata) meta.push(`field_metadata: ${JSON.stringify(action.field_metadata)}`);
+    if (action.table_names) meta.push(`tables: ${action.table_names.join(', ')}`);
+    if (meta.length > 0) {
+        sections.push(
+            <Typography key="meta" sx={{ fontSize: textVar.xxs, color: 'text.disabled', mt: 0.5, lineHeight: 1.4 }}>
+                {meta.join(' · ')}
+            </Typography>
+        );
+    }
+
+    return <Box sx={{ display: 'flex', flexDirection: 'column' }}>{sections}</Box>;
+};
+
+const renderMessageContent = (role: string, message: string) => {
+    // For assistant messages, try to render as structured JSON action first
+    if (role === 'assistant') {
+        const actionView = renderJsonAction(message);
+        if (actionView) return actionView;
+    }
+
+    // Split message by code blocks (```language ... ```)
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = codeBlockRegex.exec(message)) !== null) {
+        // Add text before code block
+        if (match.index > lastIndex) {
+            const textContent = message.slice(lastIndex, match.index);
+            if (textContent.trim()) {
+                parts.push(
+                    <Typography key={`text-${lastIndex}`} sx={{ 
+                        fontSize: textVar.md, 
+                        whiteSpace: 'pre-wrap',
+                        lineHeight: 1.4,
+                        marginBottom: 1
+                    }}>
+                        {textContent}
+                    </Typography>
+                );
+            }
+        }
+
+        // Add code block
+        const language = match[1] || 'text';
+        const code = match[2].trim();
+        parts.push(
+            <Box key={`code-${match.index}`} sx={{ 
+                margin: '0',
+                borderRadius: 1,
+                overflow: 'auto'
+            }}>
+                <CodeBox code={code} language={language} fontSize={10} />
+            </Box>
+        );
+
+        lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text after last code block
+    if (lastIndex < message.length) {
+        const textContent = message.slice(lastIndex);
+        if (textContent.trim()) {
+            parts.push(
+                <Typography key={`text-${lastIndex}`} sx={{ 
+                    fontSize: textVar.md, 
+                    whiteSpace: 'pre-wrap',
+                    lineHeight: 1.4
+                }}>
+                    {textContent}
+                </Typography>
+            );
+        }
+    }
+
+    // If no code blocks found, return original message
+    if (parts.length === 0) {
+        return (
+            <Typography sx={{ 
+                fontSize: textVar.md, 
+                whiteSpace: 'pre-wrap',
+                lineHeight: 1.4
+            }}>
+                {message}
+            </Typography>
+        );
+    }
+
+    return <Box>{parts}</Box>;
+};
+
+const LONG_MESSAGE_LIMIT = 4000;
+const MESSAGE_PREVIEW_LIMIT = 2500;
+
+const ExpandableMessageContent: FC<{
+    role: string;
+    message: string;
+}> = ({ role, message }) => {
+    const { t } = useTranslation();
+    const [expanded, setExpanded] = useState(false);
+    const isLong = message.length > LONG_MESSAGE_LIMIT;
+    const visibleMessage = isLong && !expanded
+        ? message.slice(0, MESSAGE_PREVIEW_LIMIT) + "\n\n... " + t('chatDialog.truncatedPreview')
+        : message;
+
+    return (
+        <Box>
+            {renderMessageContent(role, visibleMessage)}
+            {isLong && (
+                <Button
+                    size="small"
+                    variant="text"
+                    sx={{ mt: 0.5, px: 0, minWidth: 0, textTransform: 'none' }}
+                    onClick={() => setExpanded(prev => !prev)}
+                >
+                    {expanded ? t('chatDialog.collapseFullMessage') : t('chatDialog.expandFullMessage', { count: message.length })}
+                </Button>
+            )}
+        </Box>
+    );
+};
+
+export interface ChatDialogProps {
+    code: string, // final code generated
+    dialog: any[],
+    open: boolean,
+    handleCloseDialog: () => void,
+}
+
+export const ChatDialog: FC<ChatDialogProps> = function ChatDialog({code, dialog, open, handleCloseDialog}) {
+    const { t } = useTranslation();
+    let theme = useTheme();
+    const dialogContentRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to bottom when dialog opens
+    useEffect(() => {
+        if (open) {
+            setTimeout(() => {
+                if (dialogContentRef.current) {
+                    dialogContentRef.current.scrollTop = dialogContentRef.current.scrollHeight;
+                }
+            }, 100);
+        }
+    }, [open]);
+
+ 
+    let body = undefined
+    if (dialog == undefined) {
+        body = <Box sx={{display: "flex", overflowX: "auto", flexDirection: "column", 
+                         justifyContent: "space-between", position: "relative", marginTop: "10px", minHeight: "50px"}}>
+            <Typography sx={{ fontSize: textVar.lg }}  color="text.secondary" gutterBottom>
+                {t('chatDialog.noHistory')}
+            </Typography>
+        </Box>
+    } else {
+        body = 
+            <Box sx={{display: "flex", overflowX: "auto", flexDirection: "column", 
+                    justifyContent: "space-between", position: "relative", marginTop: "10px", minHeight: "50px"}}>
+                
+                {dialog.map((chatEntry, idx) => {
+
+                    let role = chatEntry['role'];
+                    let content : any = chatEntry['content'];
+                    const isUser = role === 'user';
+                    const isSystem = role === 'system';
+
+                    // Handle multimodal content (array with text + image_url objects)
+                    let message: string;
+                    if (Array.isArray(content)) {
+                        message = content
+                            .filter((part: any) => part.type === 'text')
+                            .map((part: any) => part.text)
+                            .join('\n');
+                    } else {
+                        message = content as string;
+                    }
+
+                    message = message.trimEnd();
+
+                    const bgColor = isSystem ? alpha(theme.palette.grey[500], 0.05)
+                        : isUser ? alpha(theme.palette.primary.main, 0.05)
+                        : alpha(theme.palette.custom.main, 0.05);
+                    const borderClr = isSystem ? alpha(theme.palette.grey[500], 0.2)
+                        : isUser ? alpha(theme.palette.primary.main, 0.2)
+                        : alpha(theme.palette.custom.main, 0.2);
+                    const labelColor = isSystem ? 'text.secondary'
+                        : isUser ? 'primary.main'
+                        : 'custom.main';
+                    const textColor = isSystem ? 'text.secondary'
+                        : isUser ? 'primary.dark'
+                        : 'custom.dark';
+                    const label = isSystem ? 'SYSTEM' : isUser ? t('chatDialog.you') : t('chatDialog.assistant');
+
+                    return <Card variant="outlined" key={`chat-dialog-${idx}`}
+                        sx={{
+                            minWidth: "280px", 
+                            maxWidth: "1920px", 
+                            display: "flex", 
+                            flexGrow: 1, 
+                            margin: "6px",
+                            backgroundColor: bgColor,
+                            border: "1px solid",
+                            borderColor: borderClr,
+                            borderRadius: radius.md,
+                        }}>
+                        <CardContent sx={{display: "flex", flexDirection: "column", flexGrow: 1, padding: '8px 12px', paddingBottom: '8px !important'}}>
+                            <Typography sx={{ 
+                                fontSize: textVar.sm, 
+                                fontWeight: 600,
+                                color: labelColor,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px'
+                            }} gutterBottom>
+                                {label}
+                            </Typography>
+                            <Box sx={{display: 'flex', flexDirection: "column", alignItems: "flex-start", flex: 'auto'}}>
+                                <Box sx={{maxWidth: 800, width: 'fit-content', display: 'flex', flexDirection: 'column'}}>
+                                    <Box sx={{ color: textColor }}>
+                                        <ExpandableMessageContent role={role} message={message} />
+                                    </Box>
+                                </Box>
+                            </Box>
+                        </CardContent>
+                    </Card>
+                })}
+                
+            </Box>
+    }
+
+    return (
+        <Dialog
+            sx={{ '& .MuiDialog-paper': { maxHeight: '90%' } }}
+            maxWidth="md"
+            fullWidth
+            open={open}
+            onClose={() => { handleCloseDialog() }}
+            key="chat-dialog-dialog"
+        >
+            <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.25 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <QuestionAnswerIcon sx={{ fontSize: iconVar.lg, color: 'text.secondary' }} />
+                    <Typography sx={{ fontSize: textVar.lg, fontWeight: 600 }}>{t('chatDialog.agentLog')}</Typography>
+                </Box>
+                <IconButton size="small" aria-label={t('app.close')} onClick={() => { handleCloseDialog() }}>
+                    <CloseIcon sx={{ fontSize: iconVar.lg }} />
+                </IconButton>
+            </DialogTitle>
+            <DialogContent ref={dialogContentRef} sx={{overflowY: "auto", overflowX: "hidden"}} dividers>
+                {body}
+            </DialogContent>
+        </Dialog>
+    );
+}

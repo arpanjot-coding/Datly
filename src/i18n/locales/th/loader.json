@@ -1,0 +1,116 @@
+{
+  "loader": {
+    "mysql": {
+      "user": "ชื่อผู้ใช้ MySQL",
+      "password": "เว้นว่างหากไม่มีรหัสผ่าน",
+      "host": "ที่อยู่เซิร์ฟเวอร์",
+      "port": "พอร์ตเซิร์ฟเวอร์",
+      "database": "ชื่อฐานข้อมูล (เว้นว่างเพื่อเรียกดูทุกฐานข้อมูล)",
+      "authInstructions": "**ตัวอย่าง:** ผู้ใช้: `root` · โฮสต์: `localhost` · พอร์ต: `3306` · ฐานข้อมูล: `mydb`\n\n**ตั้งค่าในเครื่อง:** ตรวจว่า MySQL กำลังทำงาน `brew services list` (macOS) หรือ `systemctl status mysql` (Linux) ถ้าไม่มีรหัสผ่านให้เว้นว่าง\n\n**ตั้งค่าระยะไกล:** ขอโฮสต์ พอร์ต ชื่อผู้ใช้ และรหัสผ่านจากผู้ดูแลฐานข้อมูล ตรวจว่าเซิร์ฟเวอร์อนุญาตการเชื่อมต่อระยะไกล และ IP ของคุณอยู่ในรายการที่อนุญาต\n\n**ขอบเขต:** เว้น *database* ว่างเพื่อเรียกดูทุกฐานข้อมูลบนเซิร์ฟเวอร์ หรือกรอกเพื่อไปที่ตารางในฐานข้อมูลนั้นโดยตรง\n\n**แก้ปัญหา:** ทดสอบด้วย `mysql -u <user> -p -h <host> -P <port> <database>`"
+    },
+    "mssql": {
+      "server": "ที่อยู่โฮสต์หรือชื่ออินสแตนซ์ของ SQL Server",
+      "database": "ชื่อฐานข้อมูล (เว้นว่างเพื่อเรียกดูทุกฐานข้อมูล)",
+      "user": "ชื่อผู้ใช้ (เว้นว่างสำหรับ Entra ID / Windows auth)",
+      "password": "รหัสผ่าน (เว้นว่างสำหรับ Entra ID / Windows auth)",
+      "port": "พอร์ต SQL Server (ค่าเริ่มต้น: 1433)",
+      "encrypt": "เปิดการเข้ารหัส (yes/no)",
+      "trust_server_certificate": "เชื่อถือใบรับรองเซิร์ฟเวอร์ (yes/no)",
+      "connection_timeout": "หมดเวลาการเชื่อมต่อเป็นวินาที",
+      "authInstructions": "**Microsoft Entra ID (แนะนำ):** รัน `az login` ครั้งหนึ่งในเทอร์มินัล แล้วเปิด Datly เลือก *Microsoft Entra ID* กรอกเฉพาะ `server` และ (ถ้าต้องการ) `database` แล้วเว้นชื่อผู้ใช้/รหัสผ่านว่าง ระบบจะใช้ข้อมูลรับรอง Azure CLI โดยอัตโนมัติ Managed Identity, VS Code และข้อมูลรับรองจากสภาพแวดล้อมก็ใช้ได้ผ่าน `DefaultAzureCredential`\n\n> ข้อมูลประจำตัว Entra ของคุณต้องได้รับสิทธิ์เข้าถึงฐานข้อมูล เช่น ผู้ดูแลรัน `CREATE USER [you@contoso.com] FROM EXTERNAL PROVIDER;` แล้วให้บทบาทที่จำเป็น\n\n**ตัวอย่าง (Entra ID):** เซิร์ฟเวอร์: `myserver.database.windows.net` · ฐานข้อมูล: `mydb` (ชื่อผู้ใช้/รหัสผ่านว่าง)\n\n**การยืนยันตัวตน SQL Server:** เลือก *SQL Server authentication* แล้วใส่ชื่อผู้ใช้กับรหัสผ่าน\n\n**ตัวอย่าง (SQL auth):** เซิร์ฟเวอร์: `localhost` · ฐานข้อมูล: `mydb` · ผู้ใช้: `sa` · รหัสผ่าน: `MyP@ss` · พอร์ต: `1433`\n\n**การยืนยันตัวตน Windows (เฉพาะ Windows):** เลือก *Windows authentication* แล้วเว้นชื่อผู้ใช้/รหัสผ่านว่าง\n\n**ไดรเวอร์:** ไดรเวอร์ Microsoft SQL Server มาพร้อมกับ Datly ไม่ต้องติดตั้ง ODBC แยก สำหรับ Entra ID ให้ติดตั้ง Azure CLI แล้วรัน `az login`\n\n**แก้ปัญหา:** ตรวจว่าลงชื่อเข้าใช้ด้วย `az account show` ตรวจว่าบริการ SQL Server ทำงานอยู่และเปิด TCP/IP ทดสอบ SQL auth ด้วย `sqlcmd -S <server> -d <database> -U <user> -P <password>`"
+    },
+    "postgresql": {
+      "user": "ชื่อผู้ใช้ PostgreSQL",
+      "password": "เว้นว่างหากไม่มีรหัสผ่าน",
+      "host": "โฮสต์ PostgreSQL",
+      "port": "พอร์ต PostgreSQL",
+      "database": "ชื่อฐานข้อมูล (เว้นว่างเพื่อเรียกดูทุกฐานข้อมูล)",
+      "authInstructions": "**ตัวอย่าง:** ผู้ใช้: `postgres` · โฮสต์: `localhost` · พอร์ต: `5432` · ฐานข้อมูล: `mydb`\n\n**ตั้งค่าในเครื่อง:** ตรวจว่า PostgreSQL กำลังทำงาน `brew services list` (macOS) หรือ `systemctl status postgresql` (Linux) ถ้าไม่มีรหัสผ่านให้เว้นว่าง\n\n**ตั้งค่าระยะไกล:** ขอโฮสต์ พอร์ต ชื่อผู้ใช้ และรหัสผ่านจากผู้ดูแลฐานข้อมูล ผู้ใช้ต้องมีสิทธิ์ SELECT บนตารางที่ต้องการเข้าถึง\n\n**ขอบเขต:** เว้น *database* ว่างเพื่อเรียกดูทุกฐานข้อมูลบนเซิร์ฟเวอร์ หรือกรอกเพื่อไปที่สคีมา/ตารางในฐานข้อมูลนั้นโดยตรง\n\n**แก้ปัญหา:** ทดสอบด้วย `psql -U <user> -h <host> -p <port> -d <database>`"
+    },
+    "mongodb": {
+      "host": "ที่อยู่เซิร์ฟเวอร์",
+      "port": "พอร์ตเซิร์ฟเวอร์",
+      "username": "เว้นว่างหากไม่มีการยืนยันตัวตน",
+      "password": "เว้นว่างหากไม่มีการยืนยันตัวตน",
+      "database": "ชื่อฐานข้อมูล",
+      "collection": "เว้นว่างเพื่อแสดงทุกรายการคอลเลกชัน",
+      "authSource": "ฐานข้อมูลยืนยันตัวตน (ค่าเริ่มต้นคือฐานข้อมูลเป้าหมาย)",
+      "authInstructions": "**ตัวอย่าง:** โฮสต์: `localhost` · พอร์ต: `27017` · ฐานข้อมูล: `mydb` · คอลเลกชัน: `users`\n\n**ตั้งค่าในเครื่อง:** ตรวจว่า MongoDB กำลังทำงาน ถ้าไม่ได้เปิดการยืนยันตัวตน ให้เว้นชื่อผู้ใช้และรหัสผ่านว่าง\n\n**ตั้งค่าระยะไกล:** ขอโฮสต์ พอร์ต ชื่อผู้ใช้ และรหัสผ่านจากผู้ดูแลฐานข้อมูล\n\n**แก้ปัญหา:** ทดสอบด้วย `mongosh --host <host> --port <port>`"
+    },
+    "cosmosdb": {
+      "endpoint": "URL เอนด์พอยต์บัญชี Cosmos DB",
+      "key": "คีย์บัญชีหรือคีย์เอมูเลเตอร์",
+      "database": "ชื่อฐานข้อมูล",
+      "container": "เว้นว่างเพื่อแสดงคอนเทนเนอร์ทั้งหมด",
+      "authInstructions": "**ตัวอย่าง:** เอนด์พอยต์: `https://myaccount.documents.azure.com:443/` · ฐานข้อมูล: `mydb`\n\n**ตั้งค่า Azure:** หาเอนด์พอยต์และคีย์ใน Azure Portal ที่ *Keys* ของบัญชี Cosmos DB\n\n**เอมูเลเตอร์ในเครื่อง:** ใช้เอนด์พอยต์ `https://localhost:8081` พร้อมคีย์เอมูเลเตอร์มาตรฐาน\n\n**แก้ปัญหา:** ตรวจว่าไฟร์วอลล์บัญชีอนุญาต IP ของคุณ หรือเชื่อมต่อจากเครือข่ายที่อนุญาต"
+    },
+    "bigquery": {
+      "project_id": "รหัสโปรเจกต์ Google Cloud",
+      "dataset_id": "รหัสชุดข้อมูล เว้นว่างสำหรับทั้งหมด หรือระบุหนึ่งหรือหลายรายการคั่นด้วยจุลภาค",
+      "credentials_path": "พาธไปยังไฟล์ JSON ของบัญชีบริการ (ไม่บังคับ)",
+      "location": "ตำแหน่ง BigQuery (ค่าเริ่มต้น: US)",
+      "authInstructions": "**ตัวอย่าง:** project_id: `my-gcp-project` · dataset_id: `analytics` · credentials_path: `/path/to/key.json` · location: `US`\n\n**ตัวเลือก 1 ข้อมูลรับรองเริ่มต้นของแอป (แนะนำ):**\nติดตั้ง [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) แล้วรัน `gcloud auth application-default login` เว้น `credentials_path` ว่าง\n\n**ตัวเลือก 2 ไฟล์คีย์บัญชีบริการ:**\nสร้างบัญชีบริการใน Google Cloud Console ดาวน์โหลดคีย์ JSON แล้วใส่พาธเต็มใน `credentials_path` ให้บทบาท **BigQuery Data Viewer** และ **BigQuery Job User**\n\n**ตัวเลือก 3 ตัวแปรสภาพแวดล้อม:**\nตั้ง `GOOGLE_APPLICATION_CREDENTIALS` เป็นพาธไฟล์ JSON ของบัญชีบริการ เว้น `credentials_path` ว่าง"
+    },
+    "athena": {
+      "aws_profile": "ชื่อโปรไฟล์ AWS จาก ~/.aws/credentials (ถ้าตั้งแล้ว ไม่ต้องใส่คีย์เข้าถึงและซีเคร็ต)",
+      "aws_access_key_id": "รหัสคีย์เข้าถึง AWS (ไม่ต้องใส่ถ้าใช้ aws_profile)",
+      "aws_secret_access_key": "คีย์ลับ AWS (ไม่ต้องใส่ถ้าใช้ aws_profile)",
+      "aws_session_token": "โทเค็นเซสชัน AWS (จำเป็นสำหรับข้อมูลรับรองชั่วคราว)",
+      "region_name": "ชื่อรีเจียน AWS",
+      "workgroup": "ชื่อเวิร์กกรุ๊ป Athena (ตำแหน่งเอาต์พุตดึงจากค่าเวิร์กกรุ๊ป)",
+      "output_location": "ตำแหน่งเอาต์พุต S3 สำหรับผลคิวรี (เช่น s3://bucket/path/) ถ้าเว้นว่าง จะใช้ค่าเวิร์กกรุ๊ป",
+      "database": "ฐานข้อมูล/แคตตาล็อกเริ่มต้นสำหรับคิวรี",
+      "query_timeout": "หมดเวลาการรันคิวรีเป็นวินาที (ค่าเริ่มต้น: 300 = 5 นาที)",
+      "authInstructions": "**ตัวอย่าง (โปรไฟล์):** aws_profile: `default` · region_name: `us-east-1` · workgroup: `primary` · database: `my_database`\n\n**ตัวอย่าง (คีย์):** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1`\n\n**ตัวเลือก 1 โปรไฟล์ AWS (แนะนำ):**\nตั้ง `aws_profile` เป็นชื่อโปรไฟล์จาก `~/.aws/credentials` ตั้งค่าด้วย `aws configure --profile <name>` ไม่ต้องใส่คีย์เข้าถึงหรือซีเคร็ต\n\n**ตัวเลือก 2 ข้อมูลรับรองโดยตรง:**\nใส่ `aws_access_key_id` และ `aws_secret_access_key` โดยตรง เพิ่ม `aws_session_token` สำหรับข้อมูลรับรองชั่วคราว\n\n**สิทธิ์ IAM ที่ต้องมี:** `athena:StartQueryExecution`, `athena:GetQueryExecution`, `athena:GetQueryResults`, `athena:GetWorkGroup`, `athena:ListDatabases`, `athena:ListTableMetadata` รวมถึงสิทธิ์ S3 และ Glue บนบัคเก็ตข้อมูล/ผลลัพธ์"
+    },
+    "kusto": {
+      "kusto_cluster": "เช่น https://mycluster.region.kusto.windows.net",
+      "kusto_database": "ชื่อฐานข้อมูล (จำเป็น)",
+      "client_id": "เฉพาะ service principal",
+      "client_secret": "เฉพาะ service principal",
+      "tenant_id": "เฉพาะ service principal",
+      "authInstructions": "**ตัวเลือก 1 ลงชื่อเข้าใช้ Entra ID (แนะนำ):** ลงชื่อเข้าใช้ในฐานะตัวคุณเอง และใช้สิทธิ์ Kusto ที่มีอยู่แล้ว ตัวเลือกนี้ปรากฏเมื่อเซิร์ฟเวอร์ตั้งค่า `KUSTO_OAUTH_CLIENT_ID` ไว้\n\n**ตัวเลือก 2 Azure Default Identity:** ใช้การลงชื่อเข้าใช้ Azure CLI (`az login`) Managed Identity ข้อมูลรับรอง VS Code หรือข้อมูลรับรองจากสภาพแวดล้อม\n\n**ตัวเลือก 3 Service Principal:** ใส่ `client_id`, `client_secret` และ `tenant_id` ของ service principal ที่มีสิทธิ์เข้าคลัสเตอร์\n\nทุกข้อมูลประจำตัวต้องมีสิทธิ์ระนาบข้อมูลต่อฐานข้อมูล Kusto ที่เลือกอยู่แล้ว"
+    },
+    "databricks": {
+      "server_hostname": "เช่น adb-1234567890.11.azuredatabricks.net",
+      "http_path": "พาธ HTTP ของ SQL warehouse เช่น /sql/1.0/warehouses/abc123",
+      "catalog": "ชื่อ Unity Catalog (เว้นว่างเพื่อเรียกดูทุกแคตตาล็อก)",
+      "schema": "ชื่อสคีมา (เว้นว่างเพื่อเรียกดูทุกสคีมาในแคตตาล็อก)",
+      "access_token": "โทเค็นเข้าถึงส่วนบุคคลของ Databricks (dapi...)",
+      "authInstructions": "**หาค่าเหล่านี้ได้ที่ไหน:** ในพื้นที่ทำงาน Databricks เปิด **SQL → SQL Warehouses** (แถบซ้าย) คลิกคลังของคุณ แล้วเปิดแท็บ **Connection details** คัดลอก **Server hostname** และ **HTTP path** จากที่นั่น\n\n**โทเค็นเข้าถึง:** คลิกอวตาร (มุมขวาบน) → **Settings → Developer → Access tokens → Generate new token** ขึ้นต้นด้วย `dapi` และแสดงครั้งเดียวเท่านั้น\n\n**สิทธิ์:** ผู้ใช้ของโทเค็นต้องมี `USE CATALOG` / `USE SCHEMA` และ `SELECT` บนออบเจ็กต์ Unity Catalog ที่ต้องการอ่าน\n\n**ขอบเขต:** เว้น *catalog* และ *schema* ว่างเพื่อเรียกดูทุกอย่างที่เข้าถึงได้ หรือตั้งค่าเพื่อกระโดดไปยังแคตตาล็อก/สคีมาที่ต้องการ เช่น ลองแคตตาล็อกในตัว `samples` → `nyctaxi` → `trips`\n\n**ยังไม่มีบัญชี?** Databricks Free Edition เป็นแบบ serverless ใช้ฟรี และมีแคตตาล็อก `samples` ไม่ต้องตั้งคลัสเตอร์หรือคลัง"
+    },
+    "superset": {
+      "url": "URL ฐานของ Superset (เช่น https://bi.company.com)",
+      "username": "ชื่อผู้ใช้ Superset (ไม่บังคับถ้าใช้ SSO)",
+      "password": "รหัสผ่าน Superset (ไม่บังคับถ้าใช้ SSO)",
+      "authInstructions": "**ตัวอย่าง:** url: `https://bi.company.com` · username: `admin` · password: `***`\n\n**ตั้งค่า:** ใส่ URL ฐานของอินสแตนซ์ Superset และข้อมูลรับรองของผู้ใช้ที่มีอย่างน้อยบทบาท **Gamma** (อ่านชุดข้อมูลได้)\n\n**SSO:** ถ้า Superset ใช้ SSO ให้ใช้โฟลว์สะพาน SSO แทนการยืนยันด้วยรหัสผ่าน (ตั้งค่าผ่าน `PLG_SUPERSET_SSO_LOGIN_URL`)"
+    },
+    "azure_blob": {
+      "account_name": "ชื่อบัญชีที่เก็บ Azure",
+      "container_name": "ชื่อคอนเทนเนอร์ Azure blob",
+      "connection_string": "สตริงการเชื่อมต่อที่เก็บ Azure (ทางเลือกแทน account_name + ข้อมูลรับรอง)",
+      "credential_chain": "รายการผู้ให้ข้อมูลรับรอง Azure ตามลำดับ (cli;managed_identity;env)",
+      "account_key": "คีย์บัญชีที่เก็บ Azure",
+      "sas_token": "โทเค็น SAS ของ Azure",
+      "endpoint": "แทนที่เอนด์พอยต์ Azure",
+      "authInstructions": "**ตัวอย่าง (สตริงเชื่อมต่อ):** connection_string: `DefaultEndpointsProtocol=https;AccountName=...` · container_name: `mydata`\n\n**ตัวอย่าง (คีย์บัญชี):** account_name: `mystorageacct` · container_name: `mydata` · account_key: `abc123...`\n\n**ตัวเลือก 1 สตริงการเชื่อมต่อ (ง่ายที่สุด):**\nหาได้จาก Azure Portal → Storage Account → Access keys ใส่ใน `connection_string` จะละ `account_name` ก็ได้\n\n**ตัวเลือก 2 คีย์บัญชี:**\nจาก Azure Portal → Storage Account → Access keys ใช้ `account_name` + `account_key`\n\n**ตัวเลือก 3 โทเค็น SAS (แนะนำเมื่อจำกัดสิทธิ์):**\nสร้างจาก Azure Portal → Storage Account → Shared access signature ใช้ `account_name` + `sas_token` จำกัดเวลาและขอบเขตสิทธิ์ได้\n\n**ตัวเลือก 4 Azure CLI / Managed Identity (ปลอดภัยที่สุด):**\nใส่แค่ `account_name` + `container_name` ต้องมี `az login` หรือ Managed Identity\n\n**รูปแบบที่รองรับ:** CSV, Parquet, JSON, JSONL"
+    },
+    "s3": {
+      "aws_access_key_id": "รหัสคีย์เข้าถึง AWS",
+      "aws_secret_access_key": "คีย์ลับ AWS",
+      "aws_session_token": "โทเค็นเซสชัน AWS (จำเป็นสำหรับข้อมูลรับรองชั่วคราว)",
+      "region_name": "ชื่อรีเจียน AWS",
+      "bucket": "ชื่อบัคเก็ต S3",
+      "authInstructions": "**ตัวอย่าง:** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1` · bucket: `my-data-bucket`\n\n**รับข้อมูลรับรอง:** AWS Console → IAM → Users → Security credentials → Create access key → เลือก \"Application running outside AWS\"\n\n**สิทธิ์ที่ต้องมี:** `s3:GetObject` และ `s3:ListBucket` บนบัคเก็ตของคุณ\n\n**รูปแบบที่รองรับ:** CSV, Parquet, JSON, JSONL"
+    },
+    "local_folder": {
+      "root_dir": "พาธสัมบูรณ์ไปยังไดเรกทอรีในเครื่องที่ต้องการเรียกดู",
+      "recursive": "รวมไฟล์ในไดเรกทอรีย่อย",
+      "file_pattern": "รูปแบบ glob เพื่อกรองไฟล์ (เช่น '*.csv')",
+      "authInstructions": "ชี้ `root_dir` ไปยังไดเรกทอรีในเครื่องที่มีไฟล์ข้อมูล\n\n**รูปแบบที่รองรับ:** CSV, TSV, Parquet, JSON, JSONL, Excel (.xlsx/.xls)\n\nคลิก **เรียกดู** เพื่อเปิดตัวเลือกโฟลเดอร์ หรือวางพาธไดเรกทอรี"
+    },
+    "_common": {
+      "table_filter": "กรองตารางด้วยคำสำคัญ (เช่น 'sales')"
+    }
+  }
+}

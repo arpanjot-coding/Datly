@@ -1,0 +1,2729 @@
+import { createAsyncThunk, createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit'
+import { Channel, Chart, ChartTemplate, DataCleanBlock, DataSourceConfig, EncodingItem, EncodingMap, FieldItem, Trigger, ChartStyleVariant, DraftNode, InteractionEntry, DeriveStatus, ChatMessage, PendingTableLoad, PendingClarification, TextTurn, InputTable, TableSemanticsInfo, LoadedTableNode } from '../components/ComponentType'
+import { enableMapSet } from 'immer';
+import { DictTable, ROOTLESS_THREAD_ID } from "../components/ComponentType";
+import { Message } from '../views/MessageSnackbar';
+import { getChartTemplate, getChartChannels } from "../components/ChartTemplates"
+import { vlAdaptChart, vlRecommendEncodings } from 'flint-chart';
+import { migrateState } from './stateMigrations';
+import { getDataTable } from '../views/ChartUtils';
+import { getTriggers, getUrls, computeContentHash } from './utils';
+import { apiRequest, ApiRequestError } from './apiClient';
+import { deleteTablesFromWorkspace } from './workspaceService';
+import i18n from '../i18n';
+import { Type } from '../data/types';
+import { createTableFromFromObjectArray, inferTypeFromValueArray, refineTemporalType } from '../data/utils';
+import { Identity } from './identity';
+import { REHYDRATE } from 'redux-persist';
+import { setInputTablePreview } from './inputTablePreviewCache';
+import { materializeInputTablePreview, materializeTables } from './tableResolution';
+import { toInputTable } from './tableToInputTable';
+
+enableMapSet();
+
+const getSemanticTypeMap = (
+    semantics: TableSemanticsInfo[],
+    tableId: string | undefined,
+): Record<string, string> => Object.fromEntries(
+    Object.entries(semantics.find(info => info.tableId === tableId)?.fields || {})
+        .filter((entry): entry is [string, { semanticType: string }] =>
+            typeof entry[1].semanticType === 'string' && entry[1].semanticType.length > 0,
+        )
+        .map(([name, info]) => [name, info.semanticType]),
+);
+
+// Redux Persist will handle persistence automatically with enableMapSet()
+
+export const generateFreshChart = (tableRef: string, chartType: string, source: "user" | "trigger" = "user") : Chart => {
+    return { 
+        id: `chart-${Date.now()- Math.floor(Math.random() * 10000)}`, 
+        chartType: chartType, 
+        encodingMap: Object.assign({}, ...getChartChannels(chartType).map((channel) => ({ [channel]: { channel: channel, bin: false } }))),
+        tableRef: tableRef,
+        source: source,
+    }
+}
+
+/**
+ * Migrate legacy `chartType: "Dotted Line Chart"` to `Line Chart` with `config.showPoints: true`.
+ * Dotted Line was removed as a standalone type and folded into a Line Chart property.
+ */
+const migrateDottedLineChart = (chart: any): any => {
+    if (chart?.chartType !== 'Dotted Line Chart') return chart;
+    return {
+        ...chart,
+        chartType: 'Line Chart',
+        config: { ...(chart.config || {}), showPoints: true },
+    };
+};
+
+export interface SSEMessage {
+    type: "heartbeat" | "notification" | "action"; 
+    text: string;
+    data?: Record<string, any>;
+    timestamp: number;
+}
+
+// Add interface for app configuration
+export interface ServerConfig {
+    DISABLE_DISPLAY_KEYS: boolean;
+    DISABLE_DATA_CONNECTORS: boolean;
+    DISABLE_CUSTOM_MODELS: boolean;
+    MAX_DISPLAY_ROWS: number;
+    AVAILABLE_LANGUAGES: string[];
+    DATA_FORMULATOR_HOME?: string;
+    DEV_MODE: boolean;
+    WORKSPACE_BACKEND: 'local' | 'azure_blob' | 'ephemeral';
+    CONNECTORS?: Array<{
+        source_id: string;
+        source_type: string;
+        name: string;
+        icon: string;
+        params_form: Array<{name: string; type: string; required: boolean; default?: string; options?: string[]; advanced?: boolean; description?: string; sensitive?: boolean; tier?: 'connection' | 'auth' | 'filter'}>;
+        pinned_params: Record<string, string>;
+        hierarchy: Array<{key: string; label: string}>;
+        effective_hierarchy: Array<{key: string; label: string}>;
+        auth_instructions: string;
+        auth_mode?: string;
+        delegated_login?: { login_url: string; label?: string; params?: string[] } | null;
+    }>;
+    DISABLED_SOURCES?: Record<string, {install_hint: string}>;
+    CONNECTED_CONNECTORS?: string[];
+    IDENTITY?: { type: string; id: string };
+    CREDENTIAL_VAULT_ENABLED?: boolean;
+    IS_LOCAL_MODE?: boolean;
+    POLICY?: {
+        force_offline?: boolean;
+        disable_custom_models?: boolean;
+        disable_data_connectors?: boolean;
+        disable_updates?: boolean;
+        locked?: string[];
+    };
+}
+
+export interface ModelConfig {
+    id: string; // unique identifier for the model / client combination
+    endpoint: string;
+    model: string;
+    api_key?: string;
+    api_base?: string;
+    api_version?: string;
+    /** Non-sensitive server hint describing how a global model authenticates. */
+    auth_mode?: 'key' | 'azure_identity';
+    /** True for models configured server-side via .env. Their credentials never leave the server. */
+    is_global?: boolean;
+}
+
+
+export type FocusedId = 
+    | { type: 'table'; tableId: string }
+    | { type: 'chart'; chartId: string }
+    | { type: 'report'; reportId: string }
+    | { type: 'text'; textId: string }
+    | undefined;
+
+export const DEFAULT_ROW_LIMIT = 2_000_000;
+
+export interface ClientConfig {
+    formulateTimeoutSeconds: number;
+    defaultChartWidth: number;
+    defaultChartHeight: number;
+    maxStretchFactor: number; // max per-axis stretch multiplier for chart sizing (default 1.5)
+    frontendRowLimit: number; // max rows to keep in browser when loading locally (non-virtual)
+    paletteKey: string; // active color palette key from tokens.ts
+}
+
+export interface GeneratedReport {
+    id: string;
+    content: string;
+    selectedChartIds: string[];
+    createdAt: number;
+    title?: string;
+    updatedAt?: number;
+    triggerTableId?: string;
+    /** The authored thread node this report follows. `triggerTableId` remains
+     *  source provenance; this edge controls narrative placement. */
+    parentNodeId?: string;
+    contentSnapshotHash?: string;
+    prompt?: string;
+    status?: 'generating' | 'completed' | 'error';
+    generatingPhase?: 'inspecting' | 'writing';  // transient: which phase the agent is in while generating
+    // transient: accumulated inspect steps, flipped to done on completion.
+    // `charts` carries lightweight descriptors (chartType for the icon + a
+    // display name) so the editor can render a chart-type icon next to a title
+    // or field list. Kept serializable (no React nodes) for redux-persist.
+    inspectionSteps?: {
+        label: string;
+        doneLabel?: string;   // past-tense label shown once the step completes
+        done: boolean;
+        charts?: { chartType: string; name: string }[];
+        startedAt?: number;   // epoch ms when the tool call started
+        durationMs?: number;  // wall time once the step is done
+    }[];
+}
+
+export interface DataFormulatorState {
+
+
+    // Desktop identity: the OS account, assigned by the sidecar.
+    identity: Identity;
+    /**
+     * Server-managed global models loaded from the backend on every app start.
+     * These are NOT persisted by redux-persist (blacklisted in store.ts) so they
+     * are always refreshed from the latest server configuration.
+     */
+    globalModels: ModelConfig[];
+    /** User-added models, persisted across browser sessions. */
+    models: ModelConfig[];
+    selectedModelId: string | undefined;
+    testedModels: {id: string, status: 'ok' | 'error' | 'testing' | 'unknown', message: string}[];
+
+    inputTables: InputTable[];
+    derivedTables: DictTable[];
+    loadedTableNodes: LoadedTableNode[];
+    tableSemantics: TableSemanticsInfo[];
+    draftNodes: DraftNode[];
+    charts: Chart[];
+    
+    conceptShelfItems: FieldItem[];
+
+    // controls logs and message index
+    messages: Message[];
+    displayedMessageIdx: number;
+
+    focusedDataCleanBlockId: {blockId: string, itemId: number} | undefined;
+
+    focusedId: FocusedId;
+
+    viewMode: 'editor' | 'report' | 'dashboard';
+
+    chartSynthesisInProgress: string[];
+
+    /** Table loads awaiting their first row; drives "loading" vs "empty" copy. */
+    tableLoadsInFlight: number;
+
+    /**
+     * Thumbnail PNG data URLs keyed by chart id. Stored in a separate slice
+     * (rather than on `chart.thumbnail`) so a thumbnail update doesn't
+     * invalidate the `charts` array reference and trigger a cascade of
+     * `ChartRenderService` effect re-runs / cancelled render queues.
+     * Not persisted — thumbnails are re-derived from the module-scoped
+     * `chartCache` on reload.
+     */
+    chartThumbnails: Record<string, string>;
+
+    /**
+     * Monotonically increasing counter bumped whenever the focused canvas
+     * fetches a fresh display-row sample (see `src/app/displayRowsCache.ts`).
+     * Background services that render off-screen (e.g. ChartRenderService)
+     * select this so they re-run when the canvas's richer sample becomes
+     * available, instead of being stuck rendering against the small preview
+     * slice that virtual tables ship in `table.rows`.
+     */
+    displayRowsTick: number;
+
+    serverConfig: ServerConfig;
+
+    config: ClientConfig;
+
+    dataLoaderConnectParams: Record<string, Record<string, string>>; // {table_name: {param_name: param_value}}
+
+    // Data cleaning dialog state (legacy, kept for migration)
+    dataCleanBlocks: DataCleanBlock[];
+    cleanInProgress: boolean;
+
+    // Conversational data loading chat
+    dataLoadingChatMessages: ChatMessage[];
+    dataLoadingChatInProgress: boolean;
+    /**
+     * Monotonic counter bumped whenever the chat is reset externally
+     * (clearChatMessages). DataLoadingChat watches this to abort any
+     * in-flight stream and discard partial dispatches that would
+     * otherwise pollute the freshly-cleared thread.
+     * Transient — not persisted.
+     */
+    dataLoadingChatResetCounter: number;
+    /**
+     * Pending submission queued for the data-loading chat. Set by any
+     * surface that wants to hand a prompt off to the chat (the menu
+     * agent input box, suggestion auto-run, external dialog callers).
+     * `DataLoadingChat` consumes it on render: it clears the slot and
+     * sends the carried payload as a fresh user message. Using a single
+     * redux slot (instead of props + a reset counter) eliminates the
+     * cross-tick race where the parent's pre-clear would otherwise
+     * cancel the auto-send for the new prompt. Transient — not persisted.
+     */
+    dataLoadingChatPending: { text: string; images: string[]; attachments: string[]; hidden?: boolean } | null;
+    /** Seeded prompt for the analyst (data-thread) chat, e.g. from the landing box. */
+    analystChatPending: { text: string; images: string[]; attachments: string[] } | null;
+    /**
+     * Monotonic counter bumped whenever a connector is created/changed from a
+     * surface that is not the sidebar itself (e.g. the inline connection form
+     * in the data-loading chat, design 38). `DataFormulator` watches it and
+     * refreshes the connector list so the new source appears. Transient.
+     */
+    connectorRefreshRequest: number;
+    /**
+    * Pending legacy report-generation hand-off. Data loading is an in-run
+    * AnalystAgent skill and must never use this popup hand-off channel.
+     */
+    agentHandoffRequest: { target: 'report_gen'; prompt: string; images?: string[] } | null;
+
+    // Generated reports state
+    generatedReports: GeneratedReport[];
+    // Text turns (clarify / explain) placed in a thread by their one authored
+    // edge `parentNodeId` — the node the user asked from (design-docs/42).
+    textTurns: TextTurn[];
+
+    // Session loading overlay
+    sessionLoading: boolean;
+    sessionLoadingLabel: string;
+
+    // Active workspace (null = show workspace picker)
+    // id: stable identifier (folder name), displayName: user-facing name (can be renamed)
+    activeWorkspace: { id: string; displayName: string; readOnly?: boolean } | null;
+
+    /** Whether the data source sidebar is expanded (true) or collapsed to rail (false) */
+    dataSourceSidebarOpen: boolean;
+
+    /** Which data source sidebar tab is active. Persisted so it survives session refresh. */
+    dataSourceSidebarTab: 'sources' | 'sessions' | 'knowledge';
+
+    /**
+     * One-shot signal asking the sidebar to focus a specific connector
+     * (open the sidebar, switch to sources tab, expand + scroll-into-view
+     * + briefly highlight). Cleared by the sidebar after consumption.
+     */
+    focusedConnectorId?: string;
+
+    /**
+     * AI-generated starter exploration questions, stored per root table.
+     * Keyed by table id; each entry's `questions` are tailored to that table
+     * (plus optional cross-table questions when other tables exist).
+     * `signature` is the root-table-set signature the questions were generated
+     * for (so they refresh when the set of tables changes). Persisted;
+     * `starterQuestionsStatus` is transient.
+     */
+    starterQuestions: { [tableId: string]: { questions: string[]; signature: string } };
+    starterQuestionsStatus: { [tableId: string]: 'idle' | 'loading' | 'error' };
+}
+
+// Define the initial state using that type
+const initialState: DataFormulatorState = {
+
+
+    identity: { type: 'local', id: '' },
+    globalModels: [],
+    models: [],
+    selectedModelId: localStorage.getItem('df_selected_model') || undefined,
+    testedModels: [],
+
+    inputTables: [],
+    derivedTables: [],
+    loadedTableNodes: [],
+    tableSemantics: [],
+    draftNodes: [],
+    charts: [],
+
+    conceptShelfItems: [],
+
+    messages: [],
+    displayedMessageIdx: -1,
+
+    focusedDataCleanBlockId: undefined,
+    focusedId: undefined,
+
+    viewMode: 'editor',
+
+    chartSynthesisInProgress: [],
+    tableLoadsInFlight: 0,
+    chartThumbnails: {},
+    displayRowsTick: 0,
+
+    serverConfig: {
+        DISABLE_DISPLAY_KEYS: false,
+        DISABLE_DATA_CONNECTORS: false,
+        DISABLE_CUSTOM_MODELS: false,
+        MAX_DISPLAY_ROWS: 10000,
+        AVAILABLE_LANGUAGES: ['ar', 'zh', 'nl', 'en', 'fr', 'de', 'el', 'hi', 'it', 'ja', 'ko', 'pl', 'pt', 'ro', 'ru', 'es', 'th', 'tr', 'vi', 'fil'],
+        DEV_MODE: false,
+        WORKSPACE_BACKEND: 'local',
+    },
+
+    config: {
+        formulateTimeoutSeconds: 180,
+        defaultChartWidth: 400,
+        defaultChartHeight: 300,
+        maxStretchFactor: 1.5,
+        frontendRowLimit: DEFAULT_ROW_LIMIT,
+        paletteKey: 'cicada',
+    },
+
+    dataLoaderConnectParams: {},
+
+    dataCleanBlocks: [],
+    cleanInProgress: false,
+
+    dataLoadingChatMessages: [],
+    dataLoadingChatInProgress: false,
+    dataLoadingChatResetCounter: 0,
+    dataLoadingChatPending: null,
+    analystChatPending: null,
+    connectorRefreshRequest: 0,
+    agentHandoffRequest: null,
+
+    generatedReports: [],
+    textTurns: [],
+
+    sessionLoading: false,
+    sessionLoadingLabel: '',
+
+    activeWorkspace: null,
+
+    dataSourceSidebarOpen: false,
+
+    dataSourceSidebarTab: 'sources',
+
+    focusedConnectorId: undefined,
+
+    starterQuestions: {},
+    starterQuestionsStatus: {},
+}
+/**
+ * Non-memoized equivalent of `dfSelectors.getAllCharts` for use inside
+ * reducers. Reducers receive an Immer draft `state`; passing a draft into
+ * memoized selectors (createSelector) causes the selector to cache draft
+ * proxies. Once the reducer completes, those proxies are revoked, and any
+ * later read from the cached array throws "Cannot perform 'get' on a proxy
+ * that has been revoked". Always use this helper from reducer code paths.
+ */
+const collectAllCharts = (state: DataFormulatorState): Chart[] => {
+    const triggerCharts = state.derivedTables
+        .filter(t => t.derive?.trigger?.chart)
+        .map(t => t.derive?.trigger?.chart) as Chart[];
+    return [...state.charts, ...triggerCharts];
+};
+
+const collectAllTables = (state: DataFormulatorState): DictTable[] =>
+    materializeTables(state.inputTables, state.derivedTables);
+
+const withDerivedParent = (table: DictTable): DictTable =>
+    table.derive && !table.parentNodeId
+        ? { ...table, parentNodeId: table.derive.trigger.tableId }
+        : table;
+
+const replaceStoredTable = (state: DataFormulatorState, table: DictTable): void => {
+    if (table.derive) {
+    table = withDerivedParent(table);
+        const index = state.derivedTables.findIndex(item => item.id === table.id);
+        if (index >= 0) state.derivedTables[index] = table;
+        else state.derivedTables.push(table);
+        return;
+    }
+    const inputTable = toInputTable(table);
+    setInputTablePreview(inputTable, table.rows);
+    const index = state.inputTables.findIndex(item => item.id === table.id);
+    if (index >= 0) state.inputTables[index] = inputTable;
+    else state.inputTables.push(inputTable);
+};
+
+// Category-B encoding-action overrides (e.g. heatmap color scheme) are stored in
+// chart.config keyed by the action key, and composed onto the encoding by the
+// Flint compiler at assemble time (applyEncodingOverrides). When the user
+// re-binds, clears, or swaps a channel that an override declares as a
+// `dependency`, the stored value is stale, so we drop it here. This reset is
+// host-side policy only; Flint never resets — it just composes
+// "override + current encoding". The action's declared dependencies live in the
+// template's EncodingActionDef.
+const resetDependentEncodingOverrides = (chart: Chart, ...changedChannels: Channel[]) => {
+    if (!chart.config) return;
+    const actions = getChartTemplate(chart.chartType)?.encodingActions;
+    if (!actions || actions.length === 0) return;
+    for (const action of actions) {
+        const deps = action.dependencies;
+        if (!deps) continue;
+        if (changedChannels.some(ch => deps.includes(ch)) && chart.config[action.key] !== undefined) {
+            delete chart.config[action.key];
+        }
+    }
+};
+
+let getUnrefedDerivedTableIds = (state: DataFormulatorState) => {
+    const tables = collectAllTables(state);
+    // find tables directly referred by charts
+    let allCharts = collectAllCharts(state);
+    let chartRefedTables = allCharts.map(chart => getDataTable(chart, tables, allCharts, state.conceptShelfItems))
+        .filter(t => t != undefined).map(t => t.id);
+    let tableWithDescendants = tables.filter(table => state.derivedTables.some(t => t.derive?.trigger.tableId == table.id)).map(t => t.id);
+    const focusedTableId = state.focusedId?.type === 'table' ? state.focusedId.tableId : undefined;
+
+    return state.derivedTables.filter(table =>
+        !tableWithDescendants.includes(table.id)
+        && !chartRefedTables.includes(table.id)
+        && table.id !== focusedTableId
+        && table.virtual?.tableId !== focusedTableId
+    ).map(t => t.id);
+}
+
+let deleteChartsRoutine = (state: DataFormulatorState, chartIds: string[]) => {
+    const tables = collectAllTables(state);
+    let currentFocusedChartId = state.focusedId?.type === 'chart' ? state.focusedId.chartId : undefined;
+
+    // Capture context BEFORE filtering so we can pick a sensible new focus.
+    // When the focused chart is being deleted, we prefer:
+    //   1. The neighboring sibling on the same table (visually adjacent).
+    //   2. The table itself, if no sibling remains.
+    //   3. Any remaining chart, as a final fallback.
+    let deletedFocusedChart = currentFocusedChartId && chartIds.includes(currentFocusedChartId)
+        ? state.charts.find(c => c.id === currentFocusedChartId)
+        : undefined;
+    let focusedTableRef = deletedFocusedChart?.tableRef;
+    let focusedSiblingIndex = -1;
+    if (deletedFocusedChart && focusedTableRef) {
+        const siblings = state.charts.filter(c => c.tableRef === focusedTableRef);
+        focusedSiblingIndex = siblings.findIndex(c => c.id === currentFocusedChartId);
+    }
+
+    let charts = state.charts.filter(c => !chartIds.includes(c.id));
+
+    if (deletedFocusedChart) {
+        const remainingSiblings = focusedTableRef
+            ? charts.filter(c => c.tableRef === focusedTableRef)
+            : [];
+        if (remainingSiblings.length > 0) {
+            // Pick the chart just before the deleted one in original order
+            // (visually "previous"). Clamp so the very first sibling
+            // falls back to the new first, and tail deletions land on
+            // the new last.
+            const targetIdx = Math.min(
+                Math.max(0, focusedSiblingIndex - 1),
+                remainingSiblings.length - 1,
+            );
+            state.focusedId = { type: 'chart', chartId: remainingSiblings[targetIdx].id };
+        } else if (focusedTableRef && tables.some(t => t.id === focusedTableRef)) {
+            // Last chart on this table — surface the table itself.
+            state.focusedId = { type: 'table', tableId: focusedTableRef };
+        } else if (charts.length > 0) {
+            state.focusedId = { type: 'chart', chartId: charts[0].id };
+        } else {
+            state.focusedId = undefined;
+        }
+    }
+
+    state.chartSynthesisInProgress = state.chartSynthesisInProgress.filter(s => !chartIds.includes(s));
+
+    // Clean up thumbnail entries for removed charts.
+    if (state.chartThumbnails) {
+        for (const id of chartIds) {
+            delete state.chartThumbnails[id];
+        }
+    }
+
+    // update focusedChart and activeThreadChart
+    state.charts = charts;
+
+    let unrefedDerivedTableIds = getUnrefedDerivedTableIds(state);
+    let tableIdsToDelete = state.derivedTables.filter(t => unrefedDerivedTableIds.includes(t.id)).map(t => t.id);
+    
+    // Clean up virtual tables from workspace before removing from state
+    let tablesToDelete = state.derivedTables.filter(t => tableIdsToDelete.includes(t.id));
+    deleteTablesFromWorkspace(tablesToDelete.map(t => t.virtual.tableId));
+
+    state.derivedTables = state.derivedTables.filter(t => !tableIdsToDelete.includes(t.id));
+
+    // If the focus we just set lands on a table that has now been cascade-
+    // deleted (e.g. a derived table whose only chart we just
+    // removed), walk up the derive chain to land on a still-present chart
+    // — the "previous chart above this table" the user expects. Falls
+    // through to the parent table itself, then to any remaining chart.
+    if (state.focusedId?.type === 'table' && !collectAllTables(state).some(t => t.id === (state.focusedId as any).tableId)) {
+        const deletedTablesById = new Map(tablesToDelete.map(t => [t.id, t]));
+        let cursor: string | undefined = (state.focusedId as any).tableId;
+        let resolved = false;
+        while (cursor) {
+            const removedTable = deletedTablesById.get(cursor);
+            const parentId: string | undefined = removedTable?.derive?.trigger.tableId;
+            if (!parentId) break;
+            if (collectAllTables(state).some(t => t.id === parentId)) {
+                const parentCharts = state.charts.filter(c => c.tableRef === parentId);
+                if (parentCharts.length > 0) {
+                    state.focusedId = { type: 'chart', chartId: parentCharts[parentCharts.length - 1].id };
+                } else {
+                    state.focusedId = { type: 'table', tableId: parentId };
+                }
+                resolved = true;
+                break;
+            }
+            cursor = parentId;
+        }
+        if (!resolved) {
+            if (state.charts.length > 0) {
+                state.focusedId = { type: 'chart', chartId: state.charts[state.charts.length - 1].id };
+            } else if (collectAllTables(state).length > 0) {
+                state.focusedId = { type: 'table', tableId: collectAllTables(state)[0].id };
+            } else {
+                state.focusedId = undefined;
+            }
+        }
+    }
+}
+
+/**
+ * Remove a table from Redux state (tables, conceptShelf, charts, draftNodes, focus).
+ * Does NOT send any server-side delete requests ??the caller decides whether
+ * server cleanup is needed.
+ */
+let removeTableStateRoutine = (state: DataFormulatorState, tableId: string) => {
+    const tables = collectAllTables(state);
+    const tableToDelete = tables.find(t => t.id === tableId);
+    if (!tableToDelete) return;
+
+    const directChildren = state.derivedTables.filter(t =>
+        t.derive?.trigger.tableId === tableId ||
+        t.derive?.source.includes(tableId)
+    );
+
+    if (directChildren.length > 0 && tableToDelete.derive) {
+        const parentTriggerId = tableToDelete.derive.trigger.tableId;
+        state.derivedTables = state.derivedTables.map(t => {
+            if (!t.derive || t.derive.trigger.tableId !== tableId) return t;
+            return { ...t, derive: { ...t.derive, trigger: { ...t.derive.trigger, tableId: parentTriggerId } } };
+        });
+    }
+
+    state.inputTables = state.inputTables.filter(t => t.id !== tableId);
+    state.derivedTables = state.derivedTables.filter(t => t.id !== tableId);
+    state.loadedTableNodes = state.loadedTableNodes.filter(node => node.tableId !== tableId);
+    state.tableSemantics = state.tableSemantics.filter(info => info.tableId !== tableId);
+    state.conceptShelfItems = state.conceptShelfItems.filter(f => f.tableRef !== tableId);
+
+    const chartIdsToDelete = state.charts.filter(c => c.tableRef === tableId).map(c => c.id);
+    deleteChartsRoutine(state, chartIdsToDelete);
+
+    // Delete reports triggered from this table
+    state.generatedReports = state.generatedReports.filter(r => r.triggerTableId !== tableId);
+
+    // The data goes; the conversation about it stays. Turns and any live run
+    // anchored here move to the nearest surviving anchor — the table this one
+    // was derived from, else the thread's rootless origin (design-docs/42).
+    const survivingTables = collectAllTables(state);
+    const triggerId = tableToDelete.derive?.trigger.tableId;
+    const reanchorId = triggerId && survivingTables.some(t => t.id === triggerId)
+        ? triggerId
+        : ROOTLESS_THREAD_ID;
+    state.textTurns = state.textTurns.map(a =>
+        a.parentNodeId === tableId ? { ...a, parentNodeId: reanchorId } : a);
+    state.derivedTables = state.derivedTables.map(table =>
+        table.parentNodeId === tableId ? { ...table, parentNodeId: reanchorId } : table);
+    state.loadedTableNodes = state.loadedTableNodes.map(node =>
+        node.parentNodeId === tableId ? { ...node, parentNodeId: reanchorId } : node);
+    state.generatedReports = state.generatedReports.map(report =>
+        report.parentNodeId === tableId ? { ...report, parentNodeId: reanchorId } : report);
+    state.draftNodes = state.draftNodes.map(d =>
+        d.derive?.trigger.tableId === tableId || d.parentNodeId === tableId
+            ? {
+                ...d,
+                ...(d.parentNodeId === tableId ? { parentNodeId: reanchorId } : {}),
+                ...(d.derive?.trigger.tableId === tableId
+                    ? { derive: { ...d.derive, trigger: { ...d.derive.trigger, tableId: reanchorId } } }
+                    : {}),
+            }
+            : d);
+
+    // Drop this table's starter questions / generation status
+    delete state.starterQuestions[tableId];
+    delete state.starterQuestionsStatus[tableId];
+
+    if (state.focusedId?.type === 'table' && state.focusedId.tableId === tableId) {
+        const remainingTables = collectAllTables(state);
+        state.focusedId = remainingTables.length > 0 ? { type: 'table', tableId: remainingTables[0].id } : undefined;
+    }
+    // If a report triggered by this table was focused, fall back
+    if (state.focusedId?.type === 'report') {
+        const reportId = (state.focusedId as { type: 'report'; reportId: string }).reportId;
+        const focusedReport = state.generatedReports.find(r => r.id === reportId);
+        if (!focusedReport) {
+            const remainingTables = collectAllTables(state);
+            state.focusedId = remainingTables.length > 0 ? { type: 'table', tableId: remainingTables[remainingTables.length - 1].id } : undefined;
+            state.viewMode = 'editor';
+        }
+    }
+};
+
+export const fetchFieldSemanticType = createAsyncThunk(
+    "dataFormulatorSlice/fetchFieldSemanticType",
+    async (table: DictTable, { getState }) => {
+        console.log(">>> call agent to infer semantic types <<<")
+
+        let state = getState() as DataFormulatorState;
+
+        const sampleRows = (table.rows || []).slice(0, 15);
+        const request = () => apiRequest(getUrls().SERVER_PROCESS_DATA_ON_LOAD, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                input_data: {name: table.id, rows: sampleRows, virtual: table.virtual ? true : false},
+                model: dfSelectors.getActiveModel(state)
+            }),
+        });
+
+        try {
+            const { data } = await request();
+            return data;
+        } catch (error) {
+            if (!(error instanceof ApiRequestError) || !error.isRetryable) throw error;
+            const { data } = await request();
+            return data;
+        }
+    }
+);
+
+/**
+ * Generate a few short, table-tailored starter exploration questions for the
+ * currently focused root table. Called (debounced) when a root table is
+ * focused and it has no fresh questions for the current table-set signature.
+ * The focused table is the "primary" table; all root tables are passed as
+ * context so the agent can add a cross-table question when relevant.
+ * Dispatches `startStarterQuestions` up front, then `setStarterQuestions` /
+ * `setStarterQuestionsError`. Results are only applied if the signature is
+ * still current (guards against stale responses when data changed mid-flight).
+ */
+export const generateStarterQuestions = createAsyncThunk(
+    "dataFormulatorSlice/generateStarterQuestions",
+    async (arg: { tableId: string; signature: string; tableIds: string[] }, { getState, dispatch }) => {
+        const state = getState() as DataFormulatorState;
+
+        dispatch(dfActions.startStarterQuestions({ tableId: arg.tableId, signature: arg.signature }));
+
+        const inputTables = arg.tableIds
+            .map(id => collectAllTables(state).find(t => t.id === id))
+            .filter((t): t is DictTable => !!t)
+            .map(t => ({
+                name: t.id,
+                columns: t.names,
+                sample_rows: (t.rows || []).slice(0, 10),
+                description: typeof t.description === 'string' ? t.description : '',
+            }));
+
+        if (inputTables.length === 0) {
+            dispatch(dfActions.setStarterQuestions({ tableId: arg.tableId, signature: arg.signature, questions: [] }));
+            return;
+        }
+
+        try {
+            const { data } = await apiRequest(getUrls().DERIVE_STARTER_QUESTIONS, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    input_tables: inputTables,
+                    primary_table: arg.tableId,
+                    model: dfSelectors.getActiveModel(state),
+                    n: 2,
+                }),
+            });
+            const questions: string[] = Array.isArray(data?.result)
+                ? data.result.map((q: any) => String(q)).filter((q: string) => q.trim() !== '')
+                : [];
+            dispatch(dfActions.setStarterQuestions({ tableId: arg.tableId, signature: arg.signature, questions: questions.slice(0, 2) }));
+        } catch (err) {
+            console.warn('generateStarterQuestions failed', err);
+            dispatch(dfActions.setStarterQuestionsError({ tableId: arg.tableId, signature: arg.signature }));
+        }
+    }
+);
+
+/**
+ * Fetch backend-computed per-column statistics for a workspace-stored
+ * (virtual) table and merge them into ``table.metadata``. Powers the
+ * data-grid column filter popover (design-doc 31): the response carries
+ * ``distinct_count`` / ``null_count`` for every column and, for
+ * low-cardinality columns, ``levels`` + parallel ``level_counts``.
+ *
+ * ``levels`` is merged with precedence — curated orderings already on the
+ * table (LLM ``sort_order``, chart-gallery hints) win; the stats-derived
+ * list only fills when the existing ``levels`` is empty.
+ */
+export const fetchColumnStats = createAsyncThunk(
+    "dataFormulatorSlice/fetchColumnStats",
+    async (table: DictTable) => {
+        const { data } = await apiRequest(getUrls().GET_COLUMN_STATS, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ table_name: table.virtual?.tableId || table.id }),
+        });
+        return { tableId: table.id, statistics: data?.statistics || [] };
+    }
+);
+
+export const fetchCodeExpl = createAsyncThunk(
+    "dataFormulatorSlice/fetchCodeExpl",
+    async (derivedTable: DictTable, { getState }) => {
+        console.log(">>> call agent to obtain code explanations <<<")
+
+        let state = getState() as DataFormulatorState;
+
+        const { data } = await apiRequest(getUrls().CODE_EXPL_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                input_tables: derivedTable.derive?.source
+                                .map(tId => collectAllTables(state).find(t => t.id == tId) as DictTable)
+                                .map(t => ({ 
+                                    name: t.id, 
+                                    rows: t.rows,
+                                })),
+                code: derivedTable.derive?.code,
+                model: dfSelectors.getActiveModel(state)
+            }),
+        });
+        return data;
+    }
+);
+
+/** Fast fetch: returns the list of server-configured models instantly (no
+ *  connectivity check).  The UI renders them immediately with a "testing"
+ *  spinner so the admin can see every configured model right away. */
+export const fetchGlobalModelList = createAsyncThunk(
+    "dataFormulatorSlice/fetchGlobalModelList",
+    async () => {
+        const { data } = await apiRequest(getUrls().LIST_GLOBAL_MODELS);
+        return data;
+    }
+);
+
+/** Slow fetch: runs parallel connectivity checks on all server-configured
+ *  models and returns each model's connected / disconnected status. */
+export const fetchAvailableModels = createAsyncThunk(
+    "dataFormulatorSlice/fetchAvailableModels",
+    async () => {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 30000)
+
+        try {
+            const { data } = await apiRequest(getUrls().CHECK_AVAILABLE_MODELS, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
+                signal: controller.signal,
+            });
+            return data;
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    }
+);
+
+// No server round-trip needed - identity is determined client-side:
+// - User ID from auth provider (if logged in)
+// - Browser ID from localStorage (shared across all tabs)
+
+export const dataFormulatorSlice = createSlice({
+    name: 'dataFormulatorSlice',
+    initialState: initialState,
+    reducers: {
+        resetState: (state) => {
+            //state.table = undefined;
+            
+            // Preserve: models, selectedModelId, testedModels,
+            //           config, dataLoaderConnectParams, identity
+
+            state.inputTables = [];
+            state.derivedTables = [];
+            state.loadedTableNodes = [];
+            state.tableSemantics = [];
+            state.draftNodes = [];
+            state.charts = [];
+
+            state.conceptShelfItems = [];
+
+            state.messages = [];
+            state.displayedMessageIdx = -1;
+
+            state.focusedDataCleanBlockId = undefined;
+
+            state.focusedId = undefined;
+
+            state.viewMode = 'editor';
+
+            state.chartSynthesisInProgress = [];
+
+            // Preserve serverConfig ??it reflects the actual server state, not user state
+
+            state.dataCleanBlocks = [];
+            state.cleanInProgress = false;
+
+            state.dataLoadingChatMessages = [];
+            state.dataLoadingChatInProgress = false;
+            state.dataLoadingChatResetCounter = (state.dataLoadingChatResetCounter ?? 0) + 1;
+            state.dataLoadingChatPending = null;
+            state.analystChatPending = null;
+
+            state.generatedReports = [];
+            state.textTurns = [];
+
+            // Clear active workspace so stale IDs don't persist across restarts
+            state.activeWorkspace = null;
+            // Redux Persist will handle persistence automatically
+            
+        },
+        setSessionLoading: (state, action: PayloadAction<{loading: boolean, label?: string}>) => {
+            state.sessionLoading = action.payload.loading;
+            state.sessionLoadingLabel = action.payload.label || '';
+        },
+        setActiveWorkspace: (state, action: PayloadAction<{ id: string; displayName: string; readOnly?: boolean } | null>) => {
+            state.activeWorkspace = action.payload;
+        },
+        resetForNewWorkspace: (state, action: PayloadAction<{ id: string; displayName: string }>) => {
+            // Fresh session data, but preserve user settings / server config / identity / view mode
+            return {
+                ...initialState,
+                identity: state.identity,
+                globalModels: state.globalModels,
+                models: state.models,
+                selectedModelId: state.selectedModelId,
+                testedModels: state.testedModels,
+                serverConfig: state.serverConfig,
+                config: state.config,
+                viewMode: state.viewMode,
+                dataLoaderConnectParams: state.dataLoaderConnectParams,
+                dataSourceSidebarOpen: state.dataSourceSidebarOpen,
+                dataSourceSidebarTab: state.dataSourceSidebarTab,
+                activeWorkspace: action.payload,
+            };
+        },
+        setDataSourceSidebarOpen: (state, action: PayloadAction<boolean>) => {
+            state.dataSourceSidebarOpen = action.payload;
+        },
+        setDataSourceSidebarTab: (state, action: PayloadAction<'sources' | 'sessions' | 'knowledge'>) => {
+            state.dataSourceSidebarTab = action.payload;
+        },
+        /**
+         * Ask the data-source sidebar to focus a specific connector.
+         * Opens the sidebar (if collapsed) and stores the target id; the
+         * sidebar consumes the signal and clears it.
+         */
+        focusConnector: (state, action: PayloadAction<string>) => {
+            state.dataSourceSidebarOpen = true;
+            state.focusedConnectorId = action.payload;
+        },
+        /** Sidebar calls this once it has consumed a focus request. */
+        clearFocusedConnector: (state) => {
+            state.focusedConnectorId = undefined;
+        },
+        /** Mark a starter-questions generation as started for a table. */
+        startStarterQuestions: (state, action: PayloadAction<{ tableId: string; signature: string }>) => {
+            state.starterQuestions[action.payload.tableId] = {
+                questions: [],
+                signature: action.payload.signature,
+            };
+            state.starterQuestionsStatus[action.payload.tableId] = 'loading';
+        },
+        /** Store generated starter questions (only if signature still current). */
+        setStarterQuestions: (state, action: PayloadAction<{ tableId: string; signature: string; questions: string[] }>) => {
+            const cur = state.starterQuestions[action.payload.tableId];
+            if (!cur || cur.signature !== action.payload.signature) return;
+            cur.questions = action.payload.questions;
+            state.starterQuestionsStatus[action.payload.tableId] = 'idle';
+        },
+        /** Mark starter-questions generation as failed (only if signature current). */
+        setStarterQuestionsError: (state, action: PayloadAction<{ tableId: string; signature: string }>) => {
+            const cur = state.starterQuestions[action.payload.tableId];
+            if (!cur || cur.signature !== action.payload.signature) return;
+            state.starterQuestionsStatus[action.payload.tableId] = 'error';
+        },
+        loadState: (state, action: PayloadAction<any>) => {
+            // Upgrade an older persisted payload through the versioned migration
+            // chain before applying it (see stateMigrations.ts). Idempotent
+            // field backfills below handle "new optional field" cases that need
+            // no version.
+            const saved = migrateState(action.payload);
+            const { miniMode: _legacyMiniMode, ...savedConfig } = saved.config || {};
+
+            // Return a brand-new state object so Immer skips
+            // recursive proxy / freeze on potentially huge table rows.
+            return {
+                // Preserve local-only / sensitive fields from current state
+                identity: state.identity,
+                globalModels: state.globalModels || [],
+                models: state.models || [],
+                selectedModelId: state.selectedModelId || undefined,
+                testedModels: state.testedModels || [],
+                dataLoaderConnectParams: state.dataLoaderConnectParams || {},
+                serverConfig: state.serverConfig,
+
+                // Restore from saved payload (backfill virtual for old states).
+                // Strip the legacy `attachedMetadata` field on the way in
+                // (see design-docs/23-table-description-unification.md): the
+                // value was session-only and often agent-fabricated. We don't
+                // migrate it to `description`, which is reserved for
+                // loader-supplied source descriptions.
+                inputTables: saved.inputTables || [],
+                derivedTables: (saved.derivedTables || []).map((t: any) => {
+                    const { attachedMetadata: _legacyAttachedMetadata, ...rest } = t;
+                    return {
+                        ...rest,
+                        description: typeof rest.description === 'string' ? rest.description : '',
+                        virtual: rest.virtual || { tableId: rest.id, rowCount: rest.rows?.length || 0 },
+                    };
+                }),
+                loadedTableNodes: saved.loadedTableNodes || [],
+                tableSemantics: saved.tableSemantics || [],
+                draftNodes: (saved.draftNodes || []).map((node: DraftNode) => {
+                    // Mark any running/clarifying drafts as interrupted (SSE connection lost)
+                    if (node.derive?.status === 'running' || node.derive?.status === 'clarifying') {
+                        return {
+                            ...node,
+                            derive: {
+                                ...node.derive,
+                                status: 'interrupted' as const,
+                                trigger: {
+                                    ...node.derive.trigger,
+                                    interaction: [
+                                        ...(node.derive.trigger.interaction || []),
+                                        { from: 'data-agent' as const, to: 'user' as const, role: 'error' as const,
+                                          content: 'Interrupted by page refresh. You can retry or delete this step.',
+                                          timestamp: Date.now() }
+                                    ]
+                                }
+                            }
+                        };
+                    }
+                    return node;
+                }),
+                charts: (saved.charts || []).map(migrateDottedLineChart).map((c: Chart) => {
+                    // Legacy sessions stored `thumbnail` on the Chart itself.
+                    // We now keep thumbnails in a sibling slice (see
+                    // `chartThumbnails` in state). Strip the field on load so
+                    // it doesn't get re-persisted; ChartRenderService will
+                    // repopulate the thumbnail slice from the module cache.
+                    if (c && (c as any).thumbnail !== undefined) {
+                        const { thumbnail: _drop, ...rest } = c as any;
+                        return rest as Chart;
+                    }
+                    return c;
+                }),
+                conceptShelfItems: saved.conceptShelfItems || [],
+                focusedDataCleanBlockId: saved.focusedDataCleanBlockId || undefined,
+                focusedId: saved.focusedId || undefined,
+                config: { ...initialState.config, ...savedConfig },
+                dataCleanBlocks: saved.dataCleanBlocks || [],
+                dataLoadingChatMessages: saved.dataLoadingChatMessages || [],
+                dataLoadingChatPending: null,
+                analystChatPending: null,
+                generatedReports: saved.generatedReports || [],
+                textTurns: saved.textTurns || [],
+
+                // Reset transient fields
+                messages: [],
+                displayedMessageIdx: -1,
+                viewMode: saved.viewMode || 'editor',
+                chartSynthesisInProgress: [],
+                tableLoadsInFlight: 0,
+                cleanInProgress: false,
+                dataLoadingChatInProgress: false,
+                dataLoadingChatResetCounter: 0,
+                connectorRefreshRequest: 0,
+                agentHandoffRequest: null,
+                sessionLoading: false,
+                sessionLoadingLabel: '',
+
+                // Preserve or restore workspace name
+                activeWorkspace: saved.activeWorkspace ?? state.activeWorkspace ?? null,
+
+                dataSourceSidebarOpen: state.dataSourceSidebarOpen,
+                dataSourceSidebarTab: state.dataSourceSidebarTab,
+
+                // Reset display-rows tick so dependent components re-fetch.
+                displayRowsTick: 0,
+
+                // Thumbnails are not persisted; ChartRenderService
+                // repopulates this slice from the module cache / fresh
+                // renders after load.
+                chartThumbnails: {},
+
+                // Restore persisted starter questions (status is transient).
+                starterQuestions: saved.starterQuestions ?? {},
+                starterQuestionsStatus: {},
+            };
+        },
+        setServerConfig: (state, action: PayloadAction<ServerConfig>) => {
+            state.serverConfig = action.payload;
+        },
+        setConfig: (state, action: PayloadAction<ClientConfig>) => {
+            state.config = action.payload;
+        },
+        setViewMode: (state, action: PayloadAction<'editor' | 'report' | 'dashboard'>) => {
+            state.viewMode = action.payload;
+        },
+        selectModel: (state, action: PayloadAction<string | undefined>) => {
+            state.selectedModelId = action.payload;
+            try {
+                if (action.payload) {
+                    localStorage.setItem('df_selected_model', action.payload);
+                } else {
+                    localStorage.removeItem('df_selected_model');
+                }
+            } catch { /* localStorage unavailable */ }
+        },
+        addModel: (state, action: PayloadAction<ModelConfig>) => {
+            state.models = [...state.models, action.payload];
+        },
+        updateModel: (state, action: PayloadAction<ModelConfig>) => {
+            state.models = state.models.map(model =>
+                model.id === action.payload.id ? action.payload : model
+            );
+        },
+        removeModel: (state, action: PayloadAction<string>) => {
+            state.models = state.models.filter(model => model.id != action.payload);
+            if (state.selectedModelId == action.payload) {
+                state.selectedModelId = undefined;
+                try { localStorage.removeItem('df_selected_model'); } catch { /* */ }
+            }
+        },
+        updateModelStatus: (state, action: PayloadAction<{id: string, status: 'ok' | 'error' | 'testing' | 'unknown', message: string}>) => {
+            let id = action.payload.id;
+            let status = action.payload.status;
+            let message = action.payload.message;
+            
+            state.testedModels = [
+                ...state.testedModels.filter(t => t.id != id), 
+                {id: id, status, message}
+            ];
+        },
+        addTableToStore: (state, action: PayloadAction<DictTable>) => {
+            let table = action.payload;
+            if (!table.contentHash) {
+                table = { ...table, contentHash: computeContentHash(table.rows, table.names) };
+            }
+
+            if (table.derive) {
+                table = withDerivedParent(table);
+                const existingIdx = state.derivedTables.findIndex(t => t.id === table.id);
+                if (existingIdx >= 0) state.derivedTables[existingIdx] = table;
+                else state.derivedTables.push(table);
+            } else {
+                const inputTable = toInputTable(table);
+                setInputTablePreview(inputTable, table.rows);
+                const existingIdx = state.inputTables.findIndex(t => t.id === table.id);
+                if (existingIdx >= 0) state.inputTables[existingIdx] = inputTable;
+                else state.inputTables.push(inputTable);
+            }
+            if (state.conceptShelfItems.some(f => f.tableRef === table.id)) {
+                state.conceptShelfItems = state.conceptShelfItems.filter(f => f.tableRef !== table.id);
+            }
+
+            state.charts = [...state.charts];
+            state.conceptShelfItems = [...state.conceptShelfItems, ...getDataFieldItems(table)];
+            state.focusedId = { type: 'table', tableId: table.id };
+        },
+        addLoadedTableNode: (state, action: PayloadAction<LoadedTableNode>) => {
+            const node = action.payload;
+            const existingIdx = state.loadedTableNodes.findIndex(item => item.id === node.id);
+            if (existingIdx >= 0) state.loadedTableNodes[existingIdx] = node;
+            else state.loadedTableNodes.push(node);
+        },
+        deleteTable: (state, action: PayloadAction<string>) => {
+            const tableId = action.payload;
+            const tableToDelete = collectAllTables(state).find(t => t.id === tableId);
+            if (!tableToDelete) return;
+            deleteTablesFromWorkspace([tableToDelete.virtual.tableId]);
+            removeTableStateRoutine(state, tableId);
+        },
+        removeTableLocally: (state, action: PayloadAction<string>) => {
+            removeTableStateRoutine(state, action.payload);
+        },
+        updateTableDisplayId: (state, action: PayloadAction<{tableId: string, displayId: string}>) => {
+            let tableId = action.payload.tableId;
+            let displayId = action.payload.displayId;
+            state.inputTables = state.inputTables.map(t => t.id == tableId ? {...t, displayId} : t);
+            state.derivedTables = state.derivedTables.map(t => t.id == tableId ? {...t, displayId} : t);
+        },
+        updateTableRows: (state, action: PayloadAction<{tableId: string, rows: any[], contentHash?: string}>) => {
+            // Update the rows of a table while preserving all other table properties
+            // This is used for refreshing data in original (non-derived) tables
+            let tableId = action.payload.tableId;
+            let newRows = action.payload.rows;
+            let providedContentHash = action.payload.contentHash;
+            
+            for (const table of collectAllTables(state)) {
+                const t = table;
+                if (t.id == tableId) {
+                    let newMetadata = { ...t.metadata };
+                    for (let name of t.names) {
+                        if (newRows.length > 0 && name in newRows[0]) {
+                            const colVals = newRows.map(r => r[name]);
+                            newMetadata[name] = {
+                                ...newMetadata[name],
+                                type: refineTemporalType(colVals, inferTypeFromValueArray(colVals)),
+                            };
+                        }
+                    }
+                    const updatedSource = t.source ? { ...t.source, lastRefreshed: Date.now() } : undefined;
+                    const newContentHash = providedContentHash || computeContentHash(newRows, t.names);
+                    const updatedVirtual = { ...t.virtual, rowCount: newRows.length };
+                    replaceStoredTable(state, { ...t, rows: newRows, metadata: newMetadata, source: updatedSource, contentHash: newContentHash, virtual: updatedVirtual });
+                }
+            }
+        },
+        updateMultipleTableRows: (state, action: PayloadAction<{tableId: string, rows: any[], contentHash?: string}[]>) => {
+            // Batch-update rows for multiple tables in a single state mutation.
+            // This avoids N separate dispatches when refreshing derived tables.
+            // when refreshing derived tables after a source table changes.
+            const updates = new Map(action.payload.map(u => [u.tableId, u]));
+            for (const table of collectAllTables(state)) {
+                const t = table;
+                const update = updates.get(t.id);
+                if (!update) continue;
+                const newRows = update.rows;
+                const providedContentHash = update.contentHash;
+                let newMetadata = { ...t.metadata };
+                for (let name of t.names) {
+                    if (newRows.length > 0 && name in newRows[0]) {
+                        const colVals = newRows.map(r => r[name]);
+                        newMetadata[name] = {
+                            ...newMetadata[name],
+                            type: refineTemporalType(colVals, inferTypeFromValueArray(colVals)),
+                        };
+                    }
+                }
+                const updatedSource = t.source ? { ...t.source, lastRefreshed: Date.now() } : undefined;
+                const newContentHash = providedContentHash || computeContentHash(newRows, t.names);
+                const updatedVirtual = { ...t.virtual, rowCount: newRows.length };
+                replaceStoredTable(state, { ...t, rows: newRows, metadata: newMetadata, source: updatedSource, contentHash: newContentHash, virtual: updatedVirtual });
+            }
+        },
+        updateTableSource: (state, action: PayloadAction<{tableId: string, source: DataSourceConfig}>) => {
+            // Update the source configuration of a table
+            let tableId = action.payload.tableId;
+            let source = action.payload.source;
+            state.inputTables = state.inputTables.map(t => t.id == tableId ? {...t, sourceConfig: source} : t);
+            state.derivedTables = state.derivedTables.map(t => t.id == tableId ? {...t, source} : t);
+        },
+        updateTableSourceRefreshSettings: (state, action: PayloadAction<{tableId: string, autoRefresh: boolean, refreshIntervalSeconds?: number}>) => {
+            // Update just the refresh settings of a table's source
+            let tableId = action.payload.tableId;
+            let autoRefresh = action.payload.autoRefresh;
+            let refreshIntervalSeconds = action.payload.refreshIntervalSeconds;
+            state.inputTables = state.inputTables.map(t => {
+                if (t.id == tableId && t.sourceConfig) {
+                    return {
+                        ...t,
+                        sourceConfig: {
+                            ...t.sourceConfig,
+                            autoRefresh,
+                            ...(refreshIntervalSeconds !== undefined ? { refreshIntervalSeconds } : {})
+                        }
+                    };
+                }
+                return t;
+            });
+            state.derivedTables = state.derivedTables.map(t => {
+                if (t.id != tableId || !t.source) return t;
+                return { ...t, source: { ...t.source, autoRefresh, ...(refreshIntervalSeconds !== undefined ? { refreshIntervalSeconds } : {}) } };
+            });
+        },
+        upsertTableSemantics: (state, action: PayloadAction<TableSemanticsInfo>) => {
+            const index = state.tableSemantics.findIndex(info => info.tableId === action.payload.tableId);
+            if (index >= 0) state.tableSemantics[index] = action.payload;
+            else state.tableSemantics.push(action.payload);
+        },
+        extendTableWithNewFields: (state, action: PayloadAction<{tableId: string, columnName: string, values: any[], previousName: string | undefined, parentIDs: string[]}>) => {
+            // extend the existing extTable with new columns from the new table
+            let newValues = action.payload.values;
+            let tableId = action.payload.tableId;
+            let columnName = action.payload.columnName;
+            let previousName = action.payload.previousName;
+            let parentIDs = action.payload.parentIDs;
+
+            // Find the first parent's column name
+            let lastParentField = state.conceptShelfItems.find(f => f.id === parentIDs[parentIDs.length - 1]);
+            let lastParentName = lastParentField?.name;
+
+            let table = state.derivedTables.find(t => t.id == tableId) as DictTable;
+
+            let newNames = [];
+            if (previousName && table.names.indexOf(previousName) != -1) {
+                let replacePosition = table.names.indexOf(previousName);
+                newNames[replacePosition] = columnName;
+            } else {            
+                let insertPosition = lastParentName ? table.names.indexOf(lastParentName) : table.names.length - 1;
+                newNames = table.names.slice(0, insertPosition + 1).concat(columnName).concat(table.names.slice(insertPosition + 1));
+            }
+
+            let newMetadata = structuredClone(table.metadata);
+            const inferredColType = refineTemporalType(newValues, inferTypeFromValueArray(newValues));
+            for (let name of newNames) {
+                newMetadata[name] = {type: inferredColType, levels: []};
+            }
+
+            // Create new rows with the column positioned after the first parent
+            let newRows = table.rows.map((row, i) => {
+                let newRow: {[key: string]: any} = {};
+                for (let key of Object.keys(row)) {
+                    newRow[key] = row[key];
+                    if (key === lastParentName) {
+                        newRow[columnName] = newValues[i];
+                    }
+                }
+                if (!lastParentName) {
+                    newRow[columnName] = newValues[i];
+                }
+                if (previousName) {
+                    delete newRow[previousName];
+                }
+                return newRow;
+            });
+            
+            table.names = newNames;
+            table.metadata = newMetadata;
+            table.rows = newRows;
+        },
+        removeDerivedField: (state, action: PayloadAction<{tableId: string, fieldId: string}>) => {
+            let tableId = action.payload.tableId;
+            let fieldId = action.payload.fieldId;
+            let table = state.derivedTables.find(t => t.id == tableId) as DictTable;
+            let fieldName = state.conceptShelfItems.find(f => f.id == fieldId)?.name as string;
+
+            let fieldIndex = table.names.indexOf(fieldName);  
+            if (fieldIndex != -1) {
+                table.names = table.names.slice(0, fieldIndex).concat(table.names.slice(fieldIndex + 1));
+                delete table.metadata[fieldName];
+                table.rows = table.rows.map(r => {
+                    delete r[fieldName];
+                    return r;
+                });
+            }
+        },
+        createNewChart: (state, action: PayloadAction<{chartType: string, tableId: string}>) => {
+            let chartType = action.payload.chartType;
+            const tables = collectAllTables(state);
+            let tableId = action.payload.tableId || tables[0].id;
+            let freshChart = generateFreshChart(tableId, chartType, "user") as Chart;
+            
+            // Auto-populate encodings based on table metadata
+            let table = tables.find(t => t.id === tableId);
+            if (table) {
+                const semanticTypes = getSemanticTypeMap(state.tableSemantics, tableId);
+                const suggested = vlRecommendEncodings(chartType, table.rows, semanticTypes);
+                for (const [channel, fieldName] of Object.entries(suggested)) {
+                    if (freshChart.encodingMap[channel as Channel]?.fieldID == undefined) {
+                        const fieldItem = state.conceptShelfItems.find(f => f.name === fieldName && table!.names.includes(f.name));
+                        if (fieldItem) freshChart.encodingMap[channel as Channel] = { fieldID: fieldItem.id };
+                    }
+                }
+            }
+            
+            state.charts = [ freshChart , ...state.charts];
+            state.focusedId = { type: 'chart', chartId: freshChart.id };
+        },
+        addChart: (state, action: PayloadAction<Chart>) => {
+            let chart = action.payload;
+            state.charts = [chart, ...state.charts];
+        },
+        addAndFocusChart: (state, action: PayloadAction<Chart>) => {
+            let chart = action.payload;
+            state.charts = [chart, ...state.charts];
+            state.focusedId = { type: 'chart', chartId: chart.id };
+        },
+        duplicateChart: (state, action: PayloadAction<string>) => {
+            let chartId = action.payload;
+
+            let chartCopy = JSON.parse(JSON.stringify(state.charts.find(chart => chart.id == chartId) as Chart)) as Chart;
+            chartCopy.id = `chart-${Date.now()- Math.floor(Math.random() * 10000)}`;
+            state.charts.push(chartCopy);
+            state.focusedId = { type: 'chart', chartId: chartCopy.id };
+        },
+        deleteChartById: (state, action: PayloadAction<string>) => {
+            let chartId = action.payload;
+            deleteChartsRoutine(state, [chartId]);
+        },
+        updateChartType: (state, action: PayloadAction<{chartId: string, chartType: string}>) => {
+            let chartId = action.payload.chartId;
+            let chartType = action.payload.chartType;
+
+            let chart = collectAllCharts(state).find(c => c.id == chartId);
+            if (chart) {
+                const template = getChartTemplate(chartType) as ChartTemplate;
+                const sourceType = chart.chartType;
+
+                // Get data table + semantic types for recommendation-based adaptation
+                let allCharts = collectAllCharts(state);
+                let table = getDataTable(chart, collectAllTables(state), allCharts, state.conceptShelfItems);
+                const semanticTypes = getSemanticTypeMap(state.tableSemantics, table?.id);
+
+                // Extract current encodings as field names
+                const filledEncodings: Record<string, string> = {};
+                for (const [ch, enc] of Object.entries(chart.encodingMap)) {
+                    if (enc.fieldID != null) {
+                        const field = state.conceptShelfItems.find(f => f.id === enc.fieldID);
+                        if (field) filledEncodings[ch] = field.name;
+                    }
+                }
+
+                // Adapt encodings: re-recommends with preference for existing fields
+                let adapted = vlAdaptChart(sourceType, chartType, filledEncodings, table?.rows, semanticTypes);
+
+                // Fallback: if adaptation returned nothing but we had fields,
+                // keep fields in channels that exist in both source and target
+                if (Object.keys(adapted).length === 0 && Object.keys(filledEncodings).length > 0) {
+                    const targetChannelSet = new Set(template.channels);
+                    for (const [ch, fieldName] of Object.entries(filledEncodings)) {
+                        if (targetChannelSet.has(ch)) {
+                            adapted[ch] = fieldName;
+                        }
+                    }
+                }
+
+                // Build new encoding map from adapted field names
+                const newEncodingMap = Object.assign(
+                    {}, ...template.channels.map((ch: string) => ({ [ch]: {} as EncodingItem })),
+                ) as EncodingMap;
+                for (const [ch, fieldName] of Object.entries(adapted)) {
+                    const field = state.conceptShelfItems.find(f => f.name === fieldName);
+                    if (field) newEncodingMap[ch as Channel] = { fieldID: field.id };
+                }
+                chart = { ...chart, chartType, encodingMap: newEncodingMap };
+
+                // Intentionally do NOT autofill remaining empty channels via a
+                // second recommendation pass: the adapter already returns at
+                // most as many fields as the source had, and re-recommending
+                // here would (a) re-introduce duplicates (e.g. `metric` already
+                // on `y` getting suggested again for `color`) and (b) surprise
+                // the user by inflating a 2-encoding chart into a 5-encoding
+                // one on type switch.  Empty channels are left for the user.
+
+                // Chart type changed — any active variant was authored against
+                // the old structure, so step out of it. The variants stay in
+                // the chip strip (marked stale) for the user to revisit.
+                chart.activeVariantId = undefined;
+
+                dfSelectors.replaceChart(state, chart);
+            }
+        },
+        
+        updateTableRef: (state, action: PayloadAction<{chartId: string, tableRef: string}>) => {
+            let chartId = action.payload.chartId;
+            let tableRef = action.payload.tableRef;
+            state.charts = state.charts.map(chart => {
+                if (chart.id == chartId) {
+                    return { ...chart, tableRef }
+                } else {
+                    return chart
+                }
+            })
+        },
+        updateChartConfig: (state, action: PayloadAction<{chartId: string, key: string, value: any}>) => {
+            let chartId = action.payload.chartId;
+            let key = action.payload.key;
+            let value = action.payload.value;
+            let chart = collectAllCharts(state).find(c => c.id == chartId);
+            if (chart) {
+                if (!chart.config) {
+                    chart.config = {};
+                }
+                if (value === undefined) {
+                    delete chart.config[key];
+                } else {
+                    chart.config[key] = value;
+                }
+            }
+        },
+        updateChartThumbnail: (state, action: PayloadAction<{chartId: string, thumbnail: string}>) => {
+            // Write to a dedicated slice (not onto the Chart object) so that
+            // thumbnail updates don't invalidate the `charts` array reference
+            // — that ref is in the dep list of ChartRenderService's effect,
+            // and churning it cancels the in-flight render queue on every
+            // tick (see design discussion on tick performance).
+            if (!state.chartThumbnails) state.chartThumbnails = {};
+            state.chartThumbnails[action.payload.chartId] = action.payload.thumbnail;
+        },
+        bumpDisplayRowsTick: (state) => {
+            state.displayRowsTick = (state.displayRowsTick || 0) + 1;
+        },
+        // Zoom level applied by the resizer. Stored on the Chart (not in
+        // config, which is for template-defined properties) so it persists
+        // with the chart across focus changes and session save/load.
+        updateChartScaleFactor: (state, action: PayloadAction<{chartId: string, scaleFactor: number}>) => {
+            let chart = collectAllCharts(state).find(c => c.id == action.payload.chartId);
+            if (chart) {
+                chart.scaleFactor = action.payload.scaleFactor === 1 ? undefined : action.payload.scaleFactor;
+            }
+        },
+        setChartTheme: (state, action: PayloadAction<{chartId: string, themeId: string | undefined}>) => {
+            const chart = collectAllCharts(state).find(c => c.id === action.payload.chartId);
+            if (!chart) return;
+            chart.themeId = action.payload.themeId;
+            chart.activeVariantId = undefined;
+        },
+        // --- Style variants (see design-docs/28-chart-style-refinement-agent.md) ---
+        // Variants are user-authored "skins" of a chart's Vega-Lite spec. They live
+        // on Chart, persist with the session, and drive both the focused canvas
+        // (VisualizationView) and the thread thumbnail (ChartRenderService) so
+        // the preview reflects whichever variant the user has active.
+        addStyleVariant: (state, action: PayloadAction<{chartId: string, variant: ChartStyleVariant, activate?: boolean}>) => {
+            const { chartId, variant, activate } = action.payload;
+            const chart = collectAllCharts(state).find(c => c.id === chartId);
+            if (!chart) return;
+            if (!chart.styleVariants) chart.styleVariants = [];
+            chart.styleVariants.push(variant);
+            if (activate !== false) {
+                chart.activeVariantId = variant.id;
+            }
+        },
+        setActiveVariant: (state, action: PayloadAction<{chartId: string, variantId: string | undefined}>) => {
+            const { chartId, variantId } = action.payload;
+            const chart = collectAllCharts(state).find(c => c.id === chartId);
+            if (!chart) return;
+            chart.activeVariantId = variantId;
+        },
+        deleteStyleVariant: (state, action: PayloadAction<{chartId: string, variantId: string}>) => {
+            const { chartId, variantId } = action.payload;
+            const chart = collectAllCharts(state).find(c => c.id === chartId);
+            if (!chart || !chart.styleVariants) return;
+            chart.styleVariants = chart.styleVariants.filter(v => v.id !== variantId);
+            if (chart.activeVariantId === variantId) {
+                chart.activeVariantId = undefined;
+            }
+            if (chart.styleVariants.length === 0) {
+                chart.styleVariants = undefined;
+            }
+        },
+        renameStyleVariant: (state, action: PayloadAction<{chartId: string, variantId: string, label: string}>) => {
+            const { chartId, variantId, label } = action.payload;
+            const chart = collectAllCharts(state).find(c => c.id === chartId);
+            const v = chart?.styleVariants?.find(v => v.id === variantId);
+            if (v) v.label = label;
+        },
+        // Replace a variant's spec in place — used by the "refresh stale variant"
+        // flow (overlay in VisualizationView). The variant id stays the same so
+        // the chip doesn't visibly disappear and re-appear.
+        updateStyleVariant: (state, action: PayloadAction<{chartId: string, variantId: string, vlSpec: any, rationale?: string, encodingFingerprint?: string, configUI?: ChartStyleVariant['configUI']}>) => {
+            const { chartId, variantId, vlSpec, rationale, encodingFingerprint, configUI } = action.payload;
+            const chart = collectAllCharts(state).find(c => c.id === chartId);
+            const v = chart?.styleVariants?.find(v => v.id === variantId);
+            if (!v) return;
+            v.vlSpec = vlSpec;
+            if (rationale !== undefined) v.rationale = rationale;
+            if (encodingFingerprint !== undefined) v.encodingFingerprint = encodingFingerprint;
+            // The agent re-authored the controls; replace them and reset values
+            // so stale keys don't linger.
+            if (configUI !== undefined) {
+                v.configUI = configUI && configUI.length > 0 ? configUI : undefined;
+                v.configValues = undefined;
+            }
+        },
+        // Set the value of a single generative-UI control on a style variant.
+        // value === undefined removes the override (falls back to the control's
+        // defaultValue at render time).
+        updateVariantConfigValue: (state, action: PayloadAction<{chartId: string, variantId: string, key: string, value: any}>) => {
+            const { chartId, variantId, key, value } = action.payload;
+            const chart = collectAllCharts(state).find(c => c.id === chartId);
+            const v = chart?.styleVariants?.find(v => v.id === variantId);
+            if (!v) return;
+            if (value === undefined) {
+                if (v.configValues) delete v.configValues[key];
+            } else {
+                if (!v.configValues) v.configValues = {};
+                v.configValues[key] = value;
+            }
+        },
+        updateChartEncoding: (state, action: PayloadAction<{chartId: string, channel: Channel, encoding: EncodingItem}>) => {
+            let chartId = action.payload.chartId;
+            let channel = action.payload.channel;
+            let encoding = action.payload.encoding;
+            let chart = collectAllCharts(state).find(c => c.id == chartId);
+            if (chart) {
+                chart.encodingMap[channel] = encoding;
+                // The channel's binding changed — drop any Category-B override
+                // that depended on it (see resetDependentEncodingOverrides).
+                resetDependentEncodingOverrides(chart, channel);
+                // Auto-revert to default whenever the user edits the encoding so
+                // the canvas reflects what they're editing. Existing variants
+                // stay in the chip strip (now stale). See
+                // design-docs/28-chart-style-refinement-agent.md §4.7.
+                if (chart.activeVariantId) chart.activeVariantId = undefined;
+            }
+        },
+        updateChartEncodingProp: (state, action: PayloadAction<{chartId: string, channel: Channel, prop: string, value: any}>) => {
+            let chartId = action.payload.chartId;
+            let channel = action.payload.channel;
+            let prop = action.payload.prop;
+            let value = action.payload.value;
+            let chart = collectAllCharts(state).find(c => c.id == chartId);
+            let table = collectAllTables(state).find(t => t.id == chart?.tableRef) as DictTable;
+            
+            if (chart) {
+                //TODO: check this, finding reference and directly update??
+                let encoding = chart.encodingMap[channel];
+                // Track whether the prop value actually changed so we only
+                // invalidate the active variant on real edits. Without this
+                // check, no-op dispatches (e.g. EncodingBox's auto-sort
+                // useEffect re-firing on chart switch) silently reset
+                // chart.activeVariantId back to "default".
+                let changed = false;
+                if (prop == 'fieldID') {
+                    if (encoding.fieldID !== value) changed = true;
+                    encoding.fieldID = value;
+
+                    // automatcially fetch the auto-sort order from the field
+                    let field = state.conceptShelfItems.find(f => f.id == value);
+                    if (table && field && table.metadata[field.name] && table.metadata[field.name].levels && table.metadata[field.name].levels.length > 0) {
+                        const nextSortBy = JSON.stringify(table.metadata[field.name].levels);
+                        if (encoding.sortBy !== nextSortBy) changed = true;
+                        encoding.sortBy = nextSortBy;
+                    }
+                } else if (prop == 'aggregate') {
+                    if (encoding.aggregate !== value) changed = true;
+                    encoding.aggregate = value;
+                } else if (prop == "sortOrder") {
+                    const next = value == "auto" ? undefined : value;
+                    if (encoding.sortOrder !== next) changed = true;
+                    encoding.sortOrder = next;
+                } else if (prop == "sortBy") {
+                    const next = value == "auto" ? undefined : value;
+                    if (encoding.sortBy !== next) changed = true;
+                    encoding.sortBy = next;
+                } else if (prop == "scheme") {
+                    if (encoding.scheme !== value) changed = true;
+                    encoding.scheme = value;
+                } else if (prop == "dtype") {
+                    if (encoding.dtype !== value) changed = true;
+                    encoding.dtype = value;
+                }
+                // When the user actually edits a channel in the shelf, drop any
+                // Category-B override computed against it (declared via the
+                // action's `dependencies`) so a stale override can't keep
+                // winning over the shelf edit. See resetDependentEncodingOverrides.
+                if (changed) resetDependentEncodingOverrides(chart, channel);
+                // Auto-revert to default when the encoding actually changes
+                // (see above). No-op updates must NOT clear the variant.
+                if (changed && chart.activeVariantId) chart.activeVariantId = undefined;
+            }
+        },
+        swapChartEncoding: (state, action: PayloadAction<{chartId: string, channel1: Channel, channel2: Channel}>) => {
+            let chartId = action.payload.chartId;
+            let channel1 = action.payload.channel1;
+            let channel2 = action.payload.channel2;
+
+            let chart = collectAllCharts(state).find(c => c.id == chartId);
+            if (chart) {
+                let enc1 = chart.encodingMap[channel1];
+                let enc2 = chart.encodingMap[channel2];
+
+                chart.encodingMap[channel1] = { fieldID: enc2.fieldID, aggregate: enc2.aggregate, sortBy: enc2.sortBy, sortOrder: enc2.sortOrder };
+                chart.encodingMap[channel2] = { fieldID: enc1.fieldID, aggregate: enc1.aggregate, sortBy: enc1.sortBy, sortOrder: enc1.sortOrder };
+                // Both channels' bindings changed — drop dependent overrides.
+                resetDependentEncodingOverrides(chart, channel1, channel2);
+                // Auto-revert to default when the encoding changes (see above).
+                if (chart.activeVariantId) chart.activeVariantId = undefined;
+            }
+        },
+        addConceptItems: (state, action: PayloadAction<FieldItem[]>) => {
+            state.conceptShelfItems = [...action.payload, ...state.conceptShelfItems];
+        },
+        updateConceptItems: (state, action: PayloadAction<FieldItem>) => {
+            let concept = action.payload;
+            let conceptShelfItems = [...state.conceptShelfItems];
+            let index = conceptShelfItems.findIndex(field => field.id === concept.id);
+            if (index != -1) {
+                conceptShelfItems[index] = concept;
+            } else {
+                conceptShelfItems = [concept, ...conceptShelfItems];
+            }
+            state.conceptShelfItems = conceptShelfItems;
+        },
+        deleteConceptItemByID: (state, action: PayloadAction<string>) => {
+            let conceptID = action.payload;
+            let allCharts = collectAllCharts(state);
+            // remove concepts from encoding maps
+            state.conceptShelfItems = state.conceptShelfItems.filter(f => f.id != conceptID);
+            for (let chart of allCharts)  {
+                for (let [channel, encoding] of Object.entries(chart.encodingMap)) {
+                    if (encoding.fieldID && conceptID == encoding.fieldID) {
+                        // clear the encoding
+                        chart.encodingMap[channel as Channel] = { }
+                    }
+                }
+            }
+        },
+        batchDeleteConceptItemByID: (state, action: PayloadAction<string[]>) => {
+            let allCharts = collectAllCharts(state);
+            for (let conceptID of action.payload) {
+                // remove concepts from encoding maps
+                state.conceptShelfItems = state.conceptShelfItems.filter(field => field.id != conceptID);
+                for (let chart of allCharts)  {
+                    for (let [channel, encoding] of Object.entries(chart.encodingMap)) {
+                        if (encoding.fieldID && conceptID == encoding.fieldID) {
+                            // clear the encoding
+                            chart.encodingMap[channel as Channel] = { }
+                        }
+                    }
+                }
+            }
+        },
+        insertDerivedTables: (state, action: PayloadAction<DictTable>) => {
+            // Guard against duplicate IDs (e.g. race conditions or backend name collisions)
+            if (collectAllTables(state).some(t => t.id === action.payload.id)) return;
+            state.derivedTables = [...state.derivedTables, withDerivedParent(action.payload)];
+        },
+        // ?? Draft node reducers ??????????????????????????????????
+        createDraftNode: (state, action: PayloadAction<{ id: string; displayId: string; parentNodeId: string; parentTableId: string; source: string[]; interaction: InteractionEntry[]; chart?: Chart; actionId?: string }>) => {
+            const { id, displayId, parentNodeId, parentTableId, source, interaction, chart, actionId } = action.payload;
+            const draft: DraftNode = {
+                kind: 'draft',
+                id,
+                displayId,
+                parentNodeId,
+                derive: {
+                    source,
+                    trigger: {
+                        tableId: parentTableId,
+                        resultTableId: id,
+                        chart,
+                        interaction,
+                    },
+                    status: 'running',
+                },
+                actionId,
+            };
+            state.draftNodes = [...state.draftNodes, draft];
+        },
+        appendDraftInteraction: (state, action: PayloadAction<{ draftId: string; entry: InteractionEntry }>) => {
+            const draft = state.draftNodes.find(d => d.id === action.payload.draftId);
+            if (draft?.derive?.trigger) {
+                draft.derive.trigger.interaction = [
+                    ...(draft.derive.trigger.interaction || []),
+                    action.payload.entry,
+                ];
+            }
+        },
+        updateDraftRunningPlan: (state, action: PayloadAction<{ draftId: string; plan: string }>) => {
+            const draft = state.draftNodes.find(d => d.id === action.payload.draftId);
+            if (draft?.derive) {
+                draft.derive.runningPlan = action.payload.plan;
+            }
+        },
+        updateDeriveStatus: (state, action: PayloadAction<{ nodeId: string; status: DeriveStatus }>) => {
+            const draft = state.draftNodes.find(d => d.id === action.payload.nodeId);
+            if (draft?.derive) {
+                draft.derive.status = action.payload.status;
+            }
+        },
+        updateDraftClarification: (state, action: PayloadAction<{ draftId: string; pendingClarification: PendingClarification | null }>) => {
+            const draft = state.draftNodes.find(d => d.id === action.payload.draftId);
+            if (draft?.derive) {
+                draft.derive.pendingClarification = action.payload.pendingClarification;
+            }
+        },
+        promoteDraft: (state, action: PayloadAction<{ draftId: string; rows: any[]; names: string[]; metadata: any; code: string; codeSignature?: string; outputVariable?: string; dialog?: any[]; explanation?: any; virtual: { tableId: string; rowCount: number }; description?: string; source?: DataSourceConfig }>) => {
+            const { draftId, rows, names, metadata, code, codeSignature, outputVariable, dialog, explanation, virtual, description, source } = action.payload;
+            const draft = state.draftNodes.find(d => d.id === draftId);
+            if (!draft) return;
+            const table: DictTable = {
+                kind: 'table',
+                id: draft.id,
+                displayId: draft.displayId,
+                derive: {
+                    ...draft.derive,
+                    status: 'completed' as const,
+                    code,
+                    codeSignature,
+                    outputVariable: outputVariable || 'result_df',
+                    dialog: dialog || [],
+                    explanation,
+                },
+                rows,
+                names,
+                metadata,
+                virtual: virtual,
+                description: description || '',
+                source,
+                parentNodeId: draft.parentNodeId,
+            };
+            state.derivedTables = [...state.derivedTables, table];
+            state.draftNodes = state.draftNodes.filter(d => d.id !== draftId);
+        },
+        removeDraftNode: (state, action: PayloadAction<string>) => {
+            state.draftNodes = state.draftNodes.filter(d => d.id !== action.payload);
+        },
+        appendTriggerInteraction: (state, action: PayloadAction<{ tableId: string; entries: InteractionEntry[] }>) => {
+            const table = state.derivedTables.find(t => t.id === action.payload.tableId);
+            if (table?.derive?.trigger) {
+                table.derive.trigger.interaction = [
+                    ...(table.derive.trigger.interaction || []),
+                    ...action.payload.entries,
+                ];
+            }
+        },
+        // Remove specific interaction entries (by timestamp) from a table's
+        // trigger interaction — used to delete a resolved conversation block
+        // (e.g. an explanation) from the data thread.
+        removeInteractionEntries: (state, action: PayloadAction<{ tableId: string; timestamps: number[] }>) => {
+            const table = state.derivedTables.find(t => t.id === action.payload.tableId);
+            if (table?.derive?.trigger?.interaction) {
+                const ts = new Set(action.payload.timestamps);
+                table.derive.trigger.interaction = table.derive.trigger.interaction.filter(
+                    e => e.timestamp === undefined || !ts.has(e.timestamp)
+                );
+            }
+        },
+        overrideDerivedTables: (state, action: PayloadAction<DictTable>) => {
+            let table = withDerivedParent(action.payload);
+            
+            // Clean up old virtual table from workspace since it's being replaced
+            let oldTable = state.derivedTables.find(t => t.id == table.id);
+            if (oldTable) {
+                deleteTablesFromWorkspace([oldTable.virtual.tableId]);
+            }
+            
+            state.derivedTables = [...state.derivedTables.filter(t => t.id != table.id), table];
+        },
+        deleteDerivedTableById: (state, action: PayloadAction<string>) => {
+            // delete a synthesis output based on index
+            let tableId = action.payload;
+            
+            // Clean up virtual table from workspace before removing from state
+            let tableToDelete = state.derivedTables.find(t => t.id == tableId);
+            if (tableToDelete) {
+                deleteTablesFromWorkspace([tableToDelete.virtual.tableId]);
+            }
+            
+            state.derivedTables = state.derivedTables.filter(t => t.id != tableId);
+        },
+        clearUnReferencedTables: (state) => {
+            // remove all tables that are not referred
+            let allCharts = collectAllCharts(state);
+            let referredTableId = allCharts.map(chart => getDataTable(chart, collectAllTables(state), allCharts, state.conceptShelfItems))
+                .filter(t => t != undefined).map(t => t.id);
+            let tablesToRemove = state.derivedTables.filter(t => !referredTableId.some(tableId => tableId == t.id));
+            
+            // Clean up virtual tables from workspace
+            deleteTablesFromWorkspace(tablesToRemove.map(t => t.virtual.tableId));
+            
+            state.derivedTables = state.derivedTables.filter(t => !tablesToRemove.some(tr => tr.id == t.id));
+        },
+        clearUnReferencedCustomConcepts: (state) => {
+            let fieldNamesFromTables = collectAllTables(state).map(t => t.names).flat();
+            let fieldIdsReferredByCharts = collectAllCharts(state).map(c => Object.values(c.encodingMap).map(enc => enc.fieldID).filter(fid => fid != undefined) as string[]).flat();
+
+            state.conceptShelfItems = state.conceptShelfItems.filter(field => !(field.source == "custom" 
+                && !(fieldNamesFromTables.includes(field.name) || fieldIdsReferredByCharts.includes(field.id))))
+        },
+        addMessages: (state, action: PayloadAction<Message>) => {
+            state.messages = [...state.messages, action.payload];
+        },
+        setDisplayedMessageIndex: (state, action: PayloadAction<number>) => {
+            state.displayedMessageIdx = action.payload
+        },
+        setFocused: (state, action: PayloadAction<FocusedId>) => {
+            const payload = action.payload;
+            state.focusedId = payload;
+
+            if (payload?.type === 'chart' && state.viewMode == 'report') {
+                state.viewMode = 'editor';
+            }
+            if (payload?.type === 'report') {
+                state.viewMode = 'report';
+            }
+            // Clear the "unread" mark on a chart as soon as the user focuses it.
+            if (payload?.type === 'chart') {
+                const focusedChart = state.charts.find(c => c.id === payload.chartId);
+                if (focusedChart?.unread) {
+                    focusedChart.unread = false;
+                }
+            }
+        },
+        setFocusedDataCleanBlockId: (state, action: PayloadAction<{blockId: string, itemId: number} | undefined>) => {
+            state.focusedDataCleanBlockId = action.payload;
+        },
+        changeChartRunningStatus: (state, action: PayloadAction<{chartId: string, status: boolean}>) => {
+            if (action.payload.status) {
+                state.chartSynthesisInProgress = [...new Set([...state.chartSynthesisInProgress, action.payload.chartId])]
+            } else {
+                state.chartSynthesisInProgress = state.chartSynthesisInProgress.filter(s => s != action.payload.chartId);
+            }
+        },
+        setIdentity: (state, action: PayloadAction<Identity>) => {
+            state.identity = action.payload;
+        },
+        updateDataLoaderConnectParams: (state, action: PayloadAction<{dataLoaderType: string, params: Record<string, string>}>) => {
+            let dataLoaderType = action.payload.dataLoaderType;
+            let params = action.payload.params;
+            state.dataLoaderConnectParams[dataLoaderType] = params;
+        },
+        updateDataLoaderConnectParam: (state, action: PayloadAction<{dataLoaderType: string, paramName: string, paramValue: string}>) => {
+            let dataLoaderType = action.payload.dataLoaderType;
+            if (!state.dataLoaderConnectParams[dataLoaderType]) {
+                state.dataLoaderConnectParams[dataLoaderType] = {};
+            }
+            let paramName = action.payload.paramName;
+            let paramValue = action.payload.paramValue;
+            state.dataLoaderConnectParams[dataLoaderType][paramName] = paramValue;
+        },
+        deleteDataLoaderConnectParams: (state, action: PayloadAction<string>) => {
+            let dataLoaderType = action.payload;
+            delete state.dataLoaderConnectParams[dataLoaderType];
+        },
+        clearMessages: (state) => {
+            state.messages = [];
+        },
+        // Data cleaning dialog actions
+        addDataCleanBlock: (state, action: PayloadAction<DataCleanBlock>) => {
+            state.dataCleanBlocks = [...state.dataCleanBlocks, action.payload];
+        },
+        removeDataCleanBlocks: (state, action: PayloadAction<{blockIds: string[]}>) => {
+            state.dataCleanBlocks = state.dataCleanBlocks.filter(block => !action.payload.blockIds.includes(block.id));
+        },
+        resetDataCleanBlocks: (state) => {
+            state.dataCleanBlocks = [];
+        },
+        updateLastDataCleanBlock: (state, action: PayloadAction<Partial<DataCleanBlock>>) => {
+            if (state.dataCleanBlocks.length > 0) {
+                const lastIndex = state.dataCleanBlocks.length - 1;
+                state.dataCleanBlocks[lastIndex] = { 
+                    ...state.dataCleanBlocks[lastIndex], 
+                    ...action.payload 
+                };
+            }
+        },
+        setCleanInProgress: (state, action: PayloadAction<boolean>) => {
+            state.cleanInProgress = action.payload;
+        },
+        // Conversational data loading chat actions
+        addChatMessage: (state, action: PayloadAction<ChatMessage>) => {
+            state.dataLoadingChatMessages = [...state.dataLoadingChatMessages, action.payload];
+        },
+        updateLastChatMessage: (state, action: PayloadAction<Partial<ChatMessage>>) => {
+            if (state.dataLoadingChatMessages.length > 0) {
+                const lastIndex = state.dataLoadingChatMessages.length - 1;
+                state.dataLoadingChatMessages[lastIndex] = {
+                    ...state.dataLoadingChatMessages[lastIndex],
+                    ...action.payload,
+                };
+            }
+        },
+        clearChatMessages: (state) => {
+            // Reset is a coherent operation: clear messages, drop the
+            // in-progress flag, and bump the reset counter so the chat
+            // surface aborts its in-flight stream and discards any
+            // pending dispatches from that stream. Doing all three in
+            // one reducer avoids interleaving with redux/react render
+            // cycles that would otherwise let stale messages slip in.
+            state.dataLoadingChatMessages = [];
+            state.dataLoadingChatInProgress = false;
+            state.dataLoadingChatResetCounter = (state.dataLoadingChatResetCounter ?? 0) + 1;
+            // Note: `dataLoadingChatPending` is intentionally left
+            // alone. Callers that want "fresh slate + auto-send the
+            // new prompt" dispatch `clearChatMessages` followed by
+            // `setDataLoadingChatPending` in the same tick — clearing
+            // pending here would race with that ordering.
+        },
+        setDataLoadingChatPending: (
+            state,
+            action: PayloadAction<{ text: string; images: string[]; attachments: string[]; hidden?: boolean }>,
+        ) => {
+            state.dataLoadingChatPending = action.payload;
+        },
+        queueAnalystTask: (
+            state,
+            action: PayloadAction<{ text: string; images: string[]; attachments: string[] }>,
+        ) => {
+            state.analystChatPending = action.payload;
+        },
+        clearAnalystChatPending: (state) => {
+            state.analystChatPending = null;
+        },
+        queueDataLoadingTask: (
+            state,
+            action: PayloadAction<{ text: string; images: string[]; attachments: string[] }>,
+        ) => {
+            // Start a new data-loading task while PRESERVING the prior
+            // conversation (Option A). Retriggers (agent delegate, a fresh
+            // query from the menu, a sample-task click) no longer wipe the
+            // thread — instead, when history exists we drop a lightweight
+            // "new request" divider so the boundary between tasks is clear,
+            // then queue the submission for `DataLoadingChat` to auto-send.
+            // The explicit reset button (`clearChatMessages`) remains the way
+            // to start from a blank slate.
+            if (state.dataLoadingChatMessages.length > 0) {
+                state.dataLoadingChatMessages = [
+                    ...state.dataLoadingChatMessages,
+                    {
+                        id: `divider-${Date.now()}`,
+                        role: 'assistant',
+                        content: '',
+                        divider: true,
+                        timestamp: Date.now(),
+                    },
+                ];
+            }
+            state.dataLoadingChatPending = action.payload;
+        },
+        // Move an earlier task "section" to the end so it becomes the latest
+        // one the user continues from — a lightweight, NON-destructive way to
+        // resume a prior conversation. `anchorId` is the id of the section's
+        // first message (a divider for tasks after the first, or the first
+        // bubble for the opening task). Nothing is deleted: the whole thread is
+        // preserved (and any tables already loaded stay in the workspace); only
+        // the order changes. The promoted block is guaranteed to start with a
+        // divider so it reads as the current section's boundary at the top.
+        promoteDataLoadingChatSection: (
+            state,
+            action: PayloadAction<{ anchorId: string }>,
+        ) => {
+            const msgs = state.dataLoadingChatMessages;
+            const startIdx = msgs.findIndex(m => m.id === action.payload.anchorId);
+            if (startIdx < 0) return;
+            // Section ends just before the next divider (or at the array end).
+            let endIdx = msgs.length;
+            for (let i = startIdx + 1; i < msgs.length; i += 1) {
+                if (msgs[i].divider) { endIdx = i; break; }
+            }
+            // Already the last section — nothing to promote.
+            if (endIdx === msgs.length) return;
+            const block = msgs.slice(startIdx, endIdx);
+            const rest = [...msgs.slice(0, startIdx), ...msgs.slice(endIdx)];
+            const promoted = block[0]?.divider
+                ? block
+                : [
+                    {
+                        id: `divider-${Date.now()}`,
+                        role: 'assistant' as const,
+                        content: '',
+                        divider: true,
+                        timestamp: Date.now(),
+                    },
+                    ...block,
+                ];
+            state.dataLoadingChatMessages = [...rest, ...promoted];
+        },
+        clearDataLoadingChatPending: (state) => {
+            state.dataLoadingChatPending = null;
+        },
+        confirmTableLoad: (state, action: PayloadAction<{messageId: string, tableName: string}>) => {
+            const msg = state.dataLoadingChatMessages.find(m => m.id === action.payload.messageId);
+            if (msg?.pendingLoads) {
+                const pending = msg.pendingLoads.find(p => p.name === action.payload.tableName);
+                if (pending) {
+                    pending.confirmed = true;
+                }
+            }
+        },
+        markLoadPlanConfirmed: (state, action: PayloadAction<{messageId: string}>) => {
+            const msg = state.dataLoadingChatMessages.find(m => m.id === action.payload.messageId);
+            if (msg?.loadPlan) {
+                msg.loadPlan.confirmed = true;
+            }
+        },
+        resolveConnectorForm: (
+            state,
+            action: PayloadAction<{
+                messageId: string;
+                status: 'pending' | 'connected';
+                connectorId?: string;
+                connectionName?: string;
+                tableCount?: number;
+            }>,
+        ) => {
+            const msg = state.dataLoadingChatMessages.find(m => m.id === action.payload.messageId);
+            if (msg?.connectorForm) {
+                msg.connectorForm.status = action.payload.status;
+                if (action.payload.connectorId !== undefined) {
+                    msg.connectorForm.connectorId = action.payload.connectorId;
+                }
+                if (action.payload.connectionName !== undefined) {
+                    msg.connectorForm.connectionName = action.payload.connectionName;
+                }
+                if (action.payload.tableCount !== undefined) {
+                    msg.connectorForm.tableCount = action.payload.tableCount;
+                }
+            }
+        },
+        requestConnectorRefresh: (state) => {
+            state.connectorRefreshRequest = (state.connectorRefreshRequest ?? 0) + 1;
+        },
+        setDataLoadingChatInProgress: (state, action: PayloadAction<boolean>) => {
+            state.dataLoadingChatInProgress = action.payload;
+        },
+        /**
+         * Legacy report-generation hand-off. Data loading stays within the
+         * AnalystAgent conversation through its dynamically loaded skill.
+         */
+        requestAgentHandoff: (state, action: PayloadAction<{ target: 'report_gen'; prompt: string; images?: string[] }>) => {
+            state.agentHandoffRequest = {
+                target: action.payload.target,
+                prompt: action.payload.prompt,
+                images: action.payload.images,
+            };
+        },
+        clearAgentHandoffRequest: (state) => {
+            state.agentHandoffRequest = null;
+        },
+        // ── Text turns (clarify / explain) — design-docs/41 ──
+        addTextTurn: (state, action: PayloadAction<TextTurn>) => {
+            const turn = action.payload;
+            const existingIndex = state.textTurns.findIndex(a => a.id === turn.id);
+            if (existingIndex >= 0) {
+                state.textTurns[existingIndex] = turn;
+            } else {
+                state.textTurns.push(turn);
+            }
+        },
+        updateTextTurn: (state, action: PayloadAction<{ id: string } & Partial<TextTurn>>) => {
+            const { id, ...patch } = action.payload;
+            const turn = state.textTurns.find(a => a.id === id);
+            if (turn) Object.assign(turn, patch);
+        },
+        removeTextTurn: (state, action: PayloadAction<string>) => {
+            const turnId = action.payload;
+            const turn = state.textTurns.find(a => a.id === turnId);
+            const wasFocused = state.focusedId?.type === 'text' && state.focusedId.textId === turnId;
+            const parentTurn = turn
+                ? state.textTurns.find(candidate => candidate.id === turn.parentNodeId)
+                : undefined;
+            const hasSiblingTurns = !!turn && state.textTurns.some(candidate =>
+                candidate.id !== turnId && candidate.parentNodeId === turn.parentNodeId);
+            const hasProducedArtifacts = !!turn && (
+                state.derivedTables.some(table => table.parentNodeId === turnId)
+                || state.loadedTableNodes.some(node => node.parentNodeId === turnId)
+                || state.draftNodes.some(draft => draft.parentNodeId === turnId)
+                || state.generatedReports.some(report => report.parentNodeId === turnId)
+                || state.textTurns.some(child => child.parentNodeId === turnId)
+            );
+            state.textTurns = state.textTurns.filter(a => a.id !== turnId);
+            if (parentTurn?.answered && parentTurn.answer && !hasSiblingTurns && !hasProducedArtifacts) {
+                parentTurn.answered = false;
+                delete parentTurn.answer;
+            }
+            if (turn) {
+                state.textTurns = state.textTurns.map(child =>
+                    child.parentNodeId === turnId
+                        ? { ...child, parentNodeId: turn.parentNodeId }
+                        : child);
+                state.derivedTables = state.derivedTables.map(table =>
+                    table.parentNodeId === turnId
+                        ? { ...table, parentNodeId: turn.parentNodeId }
+                        : table);
+                state.loadedTableNodes = state.loadedTableNodes.map(node =>
+                    node.parentNodeId === turnId
+                        ? { ...node, parentNodeId: turn.parentNodeId }
+                        : node);
+                state.draftNodes = state.draftNodes.map(draft =>
+                    draft.parentNodeId === turnId
+                        ? { ...draft, parentNodeId: turn.parentNodeId }
+                        : draft);
+                state.generatedReports = state.generatedReports.map(report =>
+                    report.parentNodeId === turnId
+                        ? { ...report, parentNodeId: turn.parentNodeId }
+                        : report);
+            }
+            // Fallback focus (design-docs/42): the source chart it came from,
+            // else its thread-parent table (walk parentNodeId), else nothing.
+            if (wasFocused && turn) {
+                const allCharts = collectAllCharts(state);
+                if (turn.sourceChartId && allCharts.some(c => c.id === turn.sourceChartId)) {
+                    state.focusedId = { type: 'chart', chartId: turn.sourceChartId };
+                } else {
+                    // Resolve the turn's thread position to a table id.
+                    let parentTableId: string | undefined;
+                    let cur: TextTurn | undefined = turn;
+                    const seen = new Set<string>();
+                    while (cur && !seen.has(cur.id)) {
+                        seen.add(cur.id);
+                        const p: string | undefined = cur.parentNodeId;
+                        if (!p) break;
+                        if (collectAllTables(state).some(t => t.id === p)) { parentTableId = p; break; }
+                        cur = state.textTurns.find(tt => tt.id === p);
+                    }
+                    if (parentTableId) {
+                        state.focusedId = { type: 'table', tableId: parentTableId };
+                    } else {
+                        state.focusedId = undefined;
+                    }
+                }
+            }
+        },
+        // Generated reports actions
+        saveGeneratedReport: (state, action: PayloadAction<GeneratedReport>) => {
+            const report = action.payload;
+            // Check if report with same ID already exists and update it, otherwise add new
+            const existingIndex = state.generatedReports.findIndex(r => r.id === report.id);
+            if (existingIndex >= 0) {
+                state.generatedReports[existingIndex] = report;
+            } else {
+                state.generatedReports.unshift(report); // Add to beginning of array
+            }
+            // Redux Persist will handle persistence automatically
+        },
+        deleteGeneratedReport: (state, action: PayloadAction<string>) => {
+            const reportId = action.payload;
+            const report = state.generatedReports.find(r => r.id === reportId);
+            const wasFocused = state.focusedId?.type === 'report' && state.focusedId.reportId === reportId;
+
+            state.generatedReports = state.generatedReports.filter(r => r.id !== reportId);
+
+            // Fallback focus: trigger table's first chart, or the trigger table itself
+            if (wasFocused && report) {
+                const triggerTableId = report.triggerTableId;
+                if (triggerTableId) {
+                    const allCharts = collectAllCharts(state);
+                    const tableChart = allCharts.find(c => c.tableRef === triggerTableId && c.source === 'user');
+                    if (tableChart) {
+                        state.focusedId = { type: 'chart', chartId: tableChart.id };
+                    } else {
+                        state.focusedId = { type: 'table', tableId: triggerTableId };
+                    }
+                } else if (collectAllTables(state).length > 0) {
+                    const tables = collectAllTables(state);
+                    state.focusedId = { type: 'table', tableId: tables[tables.length - 1].id };
+                } else {
+                    state.focusedId = undefined;
+                }
+                state.viewMode = 'editor';
+            }
+        },
+        updateGeneratedReportContent: (state, action: PayloadAction<{ id: string; content: string; status?: GeneratedReport['status']; title?: string; triggerTableId?: string; parentNodeId?: string }>) => {
+            const { id, content, status, title, triggerTableId, parentNodeId } = action.payload;
+            const report = state.generatedReports.find(r => r.id === id);
+            if (report) {
+                report.content = content;
+                if (title) report.title = title;
+                if (status) report.status = status;
+                // Re-anchor the report to the latest table produced during the
+                // run so it renders against the newest thread item (like charts).
+                if (triggerTableId) report.triggerTableId = triggerTableId;
+                if (parentNodeId) report.parentNodeId = parentNodeId;
+                // Once real report text starts streaming, switch the indicator to
+                // the "writing" phase. When generation ends, clear transient state.
+                if (content) report.generatingPhase = 'writing';
+                if (status === 'completed' || status === 'error') {
+                    report.generatingPhase = undefined;
+                    report.inspectionSteps = undefined;
+                }
+                report.updatedAt = Date.now();
+            }
+        },
+        updateGeneratedReportProgress: (state, action: PayloadAction<{ id: string; kind: 'start' | 'end'; label?: string; doneLabel?: string; charts?: { chartType: string; name: string }[] }>) => {
+            const { id, kind, label, doneLabel, charts } = action.payload;
+            const report = state.generatedReports.find(r => r.id === id);
+            if (!report) return;
+            report.generatingPhase = 'inspecting';
+            const steps = report.inspectionSteps ?? [];
+            if (kind === 'start' && label) {
+                steps.push({ label, doneLabel, done: false, charts, startedAt: Date.now() });
+            } else if (kind === 'end') {
+                // Flip the first still-pending step to done (FIFO matches the
+                // order the backend emits start/end), so concurrent tool calls
+                // each resolve independently rather than adding a new message.
+                const pending = steps.find(s => !s.done);
+                if (pending) {
+                    pending.done = true;
+                    if (pending.startedAt) pending.durationMs = Date.now() - pending.startedAt;
+                }
+            }
+            report.inspectionSteps = steps;
+        },
+        clearGeneratedReports: (state) => {
+            state.generatedReports = [];
+            // Redux Persist will handle persistence automatically
+        }
+    },
+    extraReducers: (builder) => {
+        builder
+        .addCase(REHYDRATE, (state: any, action: any) => {
+            // On a normal page refresh, redux-persist replays the persisted
+            // state directly into the reducer — it does NOT go through our
+            // `loadState` action. Any draft that was `running` or
+            // `clarifying` when the tab closed will rehydrate in that
+            // status, but the SSE stream that was driving it is gone, so
+            // the UI gets stuck on a "thinking…" banner with a runaway
+            // elapsed-time counter. Mark those drafts as interrupted and
+            // clear transient agent flags, mirroring the same cleanup
+            // `loadState` performs for session loads.
+            const incoming = action.payload;
+            if (!incoming) return;
+            const migrated = migrateState(incoming);
+            if (migrated !== incoming) {
+                for (const key of Object.keys(incoming)) delete incoming[key];
+                Object.assign(incoming, migrated);
+            }
+            if (Array.isArray(incoming.draftNodes)) {
+                incoming.draftNodes = incoming.draftNodes.map((node: DraftNode) => {
+                    if (node.derive?.status === 'running' || node.derive?.status === 'clarifying') {
+                        return {
+                            ...node,
+                            derive: {
+                                ...node.derive,
+                                status: 'interrupted' as const,
+                                runningPlan: undefined,
+                                trigger: {
+                                    ...node.derive.trigger,
+                                    interaction: [
+                                        ...(node.derive.trigger.interaction || []),
+                                        {
+                                            from: 'data-agent' as const,
+                                            to: 'user' as const,
+                                            role: 'error' as const,
+                                            content: 'Interrupted by page refresh. You can retry or delete this step.',
+                                            timestamp: Date.now(),
+                                        },
+                                    ],
+                                },
+                            },
+                        };
+                    }
+                    return node;
+                });
+            }
+            // A payload saved before a collection existed rehydrates that key as
+            // undefined, and consumers treat these as always-present arrays
+            // (e.g. `draftNodes.length`). Backfill them the way `loadState` does.
+            for (const [key, value] of Object.entries(initialState)) {
+                if (Array.isArray(value) && !Array.isArray(incoming[key])) {
+                    incoming[key] = [];
+                }
+            }
+            // Reset other transient in-progress flags that snuck into the
+            // persisted blob (chartSynthesisInProgress is already blacklisted
+            // in store.ts).
+            incoming.cleanInProgress = false;
+            incoming.dataLoadingChatInProgress = false;
+            incoming.sessionLoading = false;
+            incoming.sessionLoadingLabel = '';
+            incoming.messages = [];
+            incoming.displayedMessageIdx = -1;
+        })
+        .addCase(fetchFieldSemanticType.fulfilled, (state, action) => {
+            let data = action.payload;
+            let tableId = action.meta.arg.id;
+            const table = collectAllTables(state).find(t => t.id == tableId);
+            if (!table) return;
+
+            if (data["result"]?.length > 0) {
+                let typeMap = data['result'][0]['fields'];
+                const fields: TableSemanticsInfo['fields'] = {};
+                for (let name of table.names) {
+                    const inferred = typeMap[name];
+                    if (!inferred) continue;
+                    fields[name] = {
+                        ...(inferred.semantic_type ? { semanticType: inferred.semantic_type } : {}),
+                        ...(Array.isArray(inferred.sort_order) && inferred.sort_order.length > 0 ? { sortOrder: inferred.sort_order } : {}),
+                        ...(inferred.intrinsic_domain ? { intrinsicDomain: inferred.intrinsic_domain } : {}),
+                        ...(inferred.unit ? { unit: inferred.unit } : {}),
+                    };
+                }
+
+                const displayName = data["result"][0]["suggested_table_name"] as string | undefined;
+                const info = { tableId, ...(displayName ? { displayName } : {}), fields };
+                const existingIndex = state.tableSemantics.findIndex(item => item.tableId === tableId);
+                if (existingIndex >= 0) state.tableSemantics[existingIndex] = info;
+                else state.tableSemantics.push(info);
+            }
+        })
+        .addCase(fetchColumnStats.fulfilled, (state, action) => {
+            const { tableId, statistics } = action.payload as {
+                tableId: string;
+                statistics: Array<{ column: string; statistics: any }>;
+            };
+            const table = collectAllTables(state).find(t => t.id === tableId);
+            if (!table) return;
+            for (const entry of statistics) {
+                const name = entry?.column;
+                if (!name || !(name in table.metadata)) continue;
+                const s = entry.statistics || {};
+                const prev = table.metadata[name];
+                const hasExistingLevels = Array.isArray(prev.levels) && prev.levels.length > 0;
+                const incomingLevels = Array.isArray(s.levels) ? s.levels : undefined;
+                const incomingCounts = Array.isArray(s.level_counts) ? s.level_counts : undefined;
+                table.metadata[name] = {
+                    ...prev,
+                    distinctCount: typeof s.unique_count === 'number' ? s.unique_count : prev.distinctCount,
+                    nullCount: typeof s.null_count === 'number' ? s.null_count : prev.nullCount,
+                    // Curated levels win; only fill when empty.
+                    levels: hasExistingLevels ? prev.levels : (incomingLevels || []),
+                    levelCounts: hasExistingLevels ? prev.levelCounts : incomingCounts,
+                };
+            }
+            replaceStoredTable(state, table);
+        })
+        .addCase(fetchGlobalModelList.fulfilled, (state, action) => {
+            // Populate globalModels so the UI renders every configured model
+            // immediately. Server-configured models are trusted by default:
+            // they start as "unknown" and are selectable without a connectivity
+            // check. Users can click "Test" to verify manually if they want.
+            const models: ModelConfig[] = action.payload;
+            state.globalModels = models;
+
+            // Reset stale global model statuses on every app start so a previous
+            // session's "ok"/"error" doesn't linger. User-added model test
+            // results are preserved.
+            const globalIds = new Set(models.map(m => m.id));
+            state.testedModels = [
+                ...models.map(m => ({ id: m.id, status: 'unknown' as const, message: '' })),
+                ...state.testedModels.filter(t => !globalIds.has(t.id)),
+            ];
+
+            // Auto-select the first global model when nothing is selected.
+            if (state.selectedModelId == undefined && models.length > 0) {
+                state.selectedModelId = models[0].id;
+            }
+        })
+        .addCase(fetchGlobalModelList.rejected, (state, action) => {
+            if (action.error?.name !== 'AbortError') {
+                state.messages.push({
+                    timestamp: Date.now(), type: 'warning',
+                    component: 'model list',
+                    value: i18n.t('messages.globalModelListFailed'),
+                });
+            }
+        })
+        .addCase(fetchAvailableModels.fulfilled, (state, action) => {
+            // Phase 2 (after connectivity checks): update statuses for each model.
+            const serverModels: (ModelConfig & { status: string; error: string | null })[] = action.payload;
+
+            // Update globalModels with the full response (may include extra fields).
+            state.globalModels = serverModels;
+
+            // Replace global model entries in testedModels with real statuses,
+            // preserving user-model test results.
+            state.testedModels = [
+                ...serverModels.map(m => ({
+                    id: m.id,
+                    status: (m.status === 'connected' ? 'ok' : 'error') as 'ok' | 'error' | 'testing' | 'unknown',
+                    message: m.error ?? '',
+                })),
+                ...state.testedModels.filter(t => !serverModels.some(m => m.id === t.id)),
+            ];
+
+            // Auto-select the first connected global model when nothing is selected.
+            if (state.selectedModelId == undefined) {
+                const firstConnected = serverModels.find(m => m.status === 'connected');
+                if (firstConnected) {
+                    state.selectedModelId = firstConnected.id;
+                }
+            }
+        })
+        .addCase(fetchAvailableModels.rejected, (state, action) => {
+            if (action.error?.name === 'AbortError') {
+                return;
+            }
+
+            state.testedModels = state.testedModels.map(model =>
+                model.status === 'testing'
+                    ? { ...model, status: 'unknown' as const, message: '' }
+                    : model
+            );
+            state.messages.push({
+                timestamp: Date.now(), type: 'warning',
+                component: 'model list',
+                value: i18n.t('messages.availableModelsFailed'),
+            });
+        })
+        .addCase(fetchCodeExpl.fulfilled, (state, action) => {
+            let codeExplResponse = action.payload;
+            let derivedTableId = action.meta.arg.id;
+            let derivedTable = state.derivedTables.find(t => t.id == derivedTableId)
+            if (derivedTable?.derive) {
+                derivedTable.derive.explanation = codeExplResponse;
+            }
+        })
+        .addCase(fetchCodeExpl.rejected, (state, action) => {
+            if (action.error?.name !== 'AbortError') {
+                state.messages.push({
+                    timestamp: Date.now(), type: 'warning',
+                    component: 'code explanation',
+                    value: 'Failed to generate code explanation',
+                });
+            }
+        })
+        .addCase(fetchFieldSemanticType.rejected, (state, action) => {
+            if (action.error?.name !== 'AbortError') {
+                state.messages.push({
+                    timestamp: Date.now(), type: 'warning',
+                    component: 'semantic type',
+                    value: 'Failed to infer field semantic types',
+                });
+            }
+        })
+        // Matched by action type rather than by importing the thunk, which
+        // would close an import cycle (tableThunks already imports this slice).
+        .addMatcher(
+            (action: any) => action.type === 'dataFormulator/loadTable/pending',
+            (state) => { state.tableLoadsInFlight += 1; },
+        )
+        .addMatcher(
+            (action: any) => action.type === 'dataFormulator/loadTable/fulfilled'
+                || action.type === 'dataFormulator/loadTable/rejected',
+            (state) => { state.tableLoadsInFlight = Math.max(0, state.tableLoadsInFlight - 1); },
+        )
+    },
+})
+
+// ??? Memoized granular selectors ?????????????????????????????????????????????
+// These avoid re-renders in components that don't care about row data changes.
+
+const selectAllTables = createSelector(
+    [
+        (state: DataFormulatorState) => state.inputTables,
+        (state: DataFormulatorState) => state.derivedTables,
+    ],
+    materializeTables,
+);
+
+/** The workspace input tables, materialized for components that render table cards. */
+const selectInputTables = createSelector(
+    [(state: DataFormulatorState) => state.inputTables],
+    (inputTables) => inputTables.map((table) => materializeInputTablePreview(table)),
+);
+
+/** Returns a stable array of table IDs. Only changes when tables are added/removed/reordered. */
+export const selectTableIds = createSelector(
+    [selectAllTables],
+    (tables) => tables.map(t => t.id),
+    {
+        memoizeOptions: {
+            resultEqualityCheck: (prev: string[], next: string[]) => {
+                if (prev.length !== next.length) return false;
+                for (let i = 0; i < prev.length; i++) {
+                    if (prev[i] !== next[i]) return false;
+                }
+                return true;
+            }
+        }
+    }
+);
+
+/**
+ * Returns a stable "refresh config" fingerprint for auto-refresh timer management.
+ * Only changes when a table's autoRefresh/refreshIntervalSeconds/source.type changes,
+ * or when tables are added/removed ??NOT when rows are updated.
+ */
+export const selectRefreshConfigs = createSelector(
+    [selectAllTables],
+    (tables) => tables.map(t => ({
+        id: t.id,
+        autoRefresh: t.source?.autoRefresh ?? false,
+        refreshIntervalSeconds: t.source?.refreshIntervalSeconds,
+        sourceType: t.source?.type,
+        canRefresh: t.source?.canRefresh ?? false,
+        url: t.source?.url,
+        hasVirtual: !!t.virtual?.tableId,
+        hasDerive: !!t.derive,
+    })),
+    {
+        memoizeOptions: {
+            resultEqualityCheck: (prev: any[], next: any[]) => {
+                if (prev.length !== next.length) return false;
+                for (let i = 0; i < prev.length; i++) {
+                    const a = prev[i], b = next[i];
+                    if (a.id !== b.id || a.autoRefresh !== b.autoRefresh ||
+                        a.refreshIntervalSeconds !== b.refreshIntervalSeconds ||
+                        a.sourceType !== b.sourceType || a.canRefresh !== b.canRefresh ||
+                        a.url !== b.url || a.hasVirtual !== b.hasVirtual ||
+                        a.hasDerive !== b.hasDerive) return false;
+                }
+                return true;
+            }
+        }
+    }
+);
+
+/**
+ * Extracts trigger charts from tables. Uses a stable serialization key so the
+ * output array only changes when trigger charts are actually added/removed/modified
+ * ??not when table rows change.
+ */
+const selectTriggerCharts = createSelector(
+    [(state: DataFormulatorState) => state.derivedTables],
+    (tables) => {
+        return tables
+            .filter(t => t.derive?.trigger?.chart)
+            .map(t => t.derive?.trigger?.chart) as Chart[];
+    },
+    {
+        memoizeOptions: {
+            // Use a result equality check so row-only changes don't produce a new array
+            // if trigger charts themselves haven't changed.
+            resultEqualityCheck: (prev: Chart[], next: Chart[]) => {
+                if (prev.length !== next.length) return false;
+                for (let i = 0; i < prev.length; i++) {
+                    if (prev[i] !== next[i]) return false;
+                }
+                return true;
+            }
+        }
+    }
+);
+
+export const dfSelectors = {
+    getAllTables: selectAllTables,
+    getInputTables: selectInputTables,
+    getDerivedTables: (state: DataFormulatorState) => state.derivedTables,
+    /**
+     * True when the session holds nothing worth keeping.
+     *
+     * This answers "is this worth saving on exit?" — NOT "is a session active?".
+     * A session's existence is `activeWorkspace`: it starts when one is
+     * assigned and ends when the user exits. Deleting the last table empties
+     * the workspace without ending the session.
+     */
+    selectSessionEmpty: (state: DataFormulatorState): boolean => (
+        // Counted raw rather than via `selectAllTables`, which materializes
+        // every table from its snapshot just to answer "are there any?".
+        (state.inputTables?.length ?? 0) === 0
+        && (state.derivedTables?.length ?? 0) === 0
+        && (state.textTurns?.length ?? 0) === 0
+        && (state.draftNodes?.length ?? 0) === 0
+        && (state.generatedReports?.length ?? 0) === 0
+        && (state.dataLoadingChatMessages?.length ?? 0) === 0
+        && state.analystChatPending == null
+        && state.dataLoadingChatPending == null
+    ),
+    /** All models visible in the UI: global (server-managed) first, then user-added. */
+    getAllModels: (state: DataFormulatorState): ModelConfig[] => {
+        return [...(state.globalModels ?? []), ...state.models];
+    },
+    getActiveModel: (state: DataFormulatorState): ModelConfig | undefined => {
+        const all = [...(state.globalModels ?? []), ...state.models];
+        return all.find(m => m.id == state.selectedModelId) ?? all[0];
+    },
+    getEffectiveTableId: (state: DataFormulatorState): string | undefined => {
+        if (!state.focusedId) return undefined;
+        if (state.focusedId.type === 'table') return state.focusedId.tableId;
+        // A focused text artifact is non-canvas-owning (design-docs/41): resolve
+        // it to its source chart's table, else its thread-parent table.
+        if (state.focusedId.type === 'text') {
+            const textId = state.focusedId.textId;
+            const art = state.textTurns.find(a => a.id === textId);
+            if (!art) return undefined;
+            if (art.sourceChartId) {
+                const c = collectAllCharts(state).find(ch => ch.id === art.sourceChartId);
+                if (c) return c.tableRef;
+            }
+            // Walk parentNodeId to the turn's thread-parent table (design-docs/42).
+            let cur: TextTurn | undefined = art;
+            const seen = new Set<string>();
+            while (cur && !seen.has(cur.id)) {
+                seen.add(cur.id);
+                const p: string | undefined = cur.parentNodeId;
+                if (!p) break;
+                if (selectAllTables(state).some(t => t.id === p)) return p;
+                cur = state.textTurns.find(tt => tt.id === p);
+            }
+            return undefined;
+        }
+        // type === 'chart': derive table from the chart's tableRef
+        let allCharts = collectAllCharts(state);
+        let chart = allCharts.find(c => c.id === (state.focusedId as { type: 'chart'; chartId: string }).chartId);
+        return chart?.tableRef;
+    },
+    /**
+    * The focus the CANVAS should render for. Data-operation text artifacts
+    * own the canvas; ordinary clarification/explanation turns resolve to their
+    * source chart or table as before.
+     * Memoized so consuming components don't re-render on unrelated dispatches.
+     */
+    selectCanvasTarget: createSelector(
+        [
+            (state: DataFormulatorState) => state.focusedId,
+            (state: DataFormulatorState) => state.textTurns,
+            (state: DataFormulatorState) => state.charts,
+            selectTriggerCharts,
+            selectAllTables,
+        ],
+        (focusedId, textTurns, userCharts, triggerCharts, tables): FocusedId => {
+            if (focusedId?.type !== 'text') return focusedId;
+            const art = textTurns.find(a => a.id === focusedId.textId);
+            if (!art) return undefined;
+            if (art.dataOperation || art.form) return focusedId;
+            if (art.sourceChartId
+                && [...userCharts, ...triggerCharts].some(c => c.id === art.sourceChartId)) {
+                return { type: 'chart', chartId: art.sourceChartId };
+            }
+            // Resolve the turn's thread position to the nearest canvas-owning
+            // artifact above it. Follow-up explanations keep a form or data
+            // preview visible while their own text opens over the chat.
+            let cur: TextTurn | undefined = art;
+            const seen = new Set<string>();
+            while (cur && !seen.has(cur.id)) {
+                seen.add(cur.id);
+                const p: string | undefined = cur.parentNodeId;
+                if (!p) break;
+                const parentTurn: TextTurn | undefined = textTurns.find(tt => tt.id === p);
+                if (parentTurn?.dataOperation || parentTurn?.form) {
+                    return { type: 'text', textId: parentTurn.id };
+                }
+                if (tables.some(t => t.id === p)) {
+                    // Charts render in `getAllCharts` order, so the last one on
+                    // the table is the chart sitting just above this turn.
+                    const tableCharts = [...userCharts, ...triggerCharts].filter(c => c.tableRef === p);
+                    const nearest = tableCharts[tableCharts.length - 1];
+                    return nearest ? { type: 'chart', chartId: nearest.id } : { type: 'table', tableId: p };
+                }
+                cur = parentTurn;
+            }
+            return undefined;
+        },
+    ),
+    getFocusedChartId: (state: DataFormulatorState): string | undefined => {
+        return state.focusedId?.type === 'chart' ? state.focusedId.chartId : undefined;
+    },
+    getActiveBaseTableIds: (state: DataFormulatorState) => {
+        let effectiveTableId = dfSelectors.getEffectiveTableId(state);
+        let tables = selectAllTables(state);
+        let focusedTable = tables.find(t => t.id == effectiveTableId);
+        let sourceTables = focusedTable?.derive?.source || [focusedTable?.id];
+        return sourceTables;
+    },
+    
+    // Memoized chart selector that combines both sources.
+    // Decoupled from row-data changes via selectTriggerCharts.
+    getAllCharts: createSelector(
+        [(state: DataFormulatorState) => state.charts, 
+         selectTriggerCharts],
+        (userCharts, triggerCharts) => {
+            return [...userCharts, ...triggerCharts];
+        }
+    ),
+
+    /**
+     * Subscribe to a single chart's thumbnail without re-rendering whenever
+     * any other chart's thumbnail changes. Use as
+     *   `useSelector(dfSelectors.getChartThumbnail(chartId))`.
+     */
+    getChartThumbnail: (chartId: string) =>
+        (state: DataFormulatorState): string | undefined =>
+            state.chartThumbnails?.[chartId],
+
+    replaceChart: (state: DataFormulatorState, chart: Chart) => {
+        if (state.charts.find(c => c.id == chart.id)) {
+            // chart is from charts
+            state.charts = state.charts.map(c => c.id == chart.id ? chart : c);
+        } else {
+            // chart is from tables
+            let table = state.derivedTables.find(t => t.derive?.trigger?.chart?.id == chart.id) as DictTable;
+            if (table.derive?.trigger) {
+                table.derive = { ...table.derive, trigger: { ...table.derive?.trigger, chart: chart } };
+            }
+        }
+    },
+    // Generated reports selectors
+    getAllGeneratedReports: (state: DataFormulatorState) => state.generatedReports,
+    getReportById: (state: DataFormulatorState, reportId: string) => 
+        state.generatedReports.find(r => r.id === reportId),
+}
+
+// derived field: extra all field items from the table
+export const getDataFieldItems = (baseTable: DictTable): FieldItem[] => {
+
+    let dataFieldItems = baseTable.names.map((name) => {
+        const id = `original--${baseTable.id}--${name}`;
+        return { id, name, source: "original", tableRef: baseTable.id } as FieldItem;
+    }) || [];
+
+    return dataFieldItems;
+}
+
+// Action creators are generated for each case reducer function
+export const dfActions = dataFormulatorSlice.actions;
+export const dataFormulatorReducer = dataFormulatorSlice.reducer;

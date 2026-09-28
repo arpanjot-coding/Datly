@@ -1,0 +1,1082 @@
+import argparse
+import random
+import sys
+import os
+import mimetypes
+import re
+mimetypes.add_type('application/javascript', '.js')
+mimetypes.add_type('application/javascript', '.mjs')
+
+import flask
+from flask import request, Blueprint, current_app, Response, stream_with_context, g
+import logging
+
+import json
+import pandas as pd
+
+from data_formulator.agents.agent_sort_data import SortDataAgent
+from data_formulator.agents.agent_starter_questions import StarterQuestionsAgent
+from data_formulator.agents.agent_simple import SimpleAgents
+from data_formulator.auth.identity import get_identity_id
+from data_formulator.security.code_signing import sign_result, require_signed_code
+from data_formulator.datalake.parquet_utils import df_to_safe_records
+from data_formulator.datalake.workspace import Workspace, get_user_home
+from data_formulator.workspace_factory import get_workspace
+from data_formulator.agents.agent_data_load import DataLoadAgent
+from data_formulator.agents.agent_data_loading_chat import DataLoadingAgent
+from data_formulator.agents.agent_code_explanation import CodeExplanationAgent
+from data_formulator.agents.client_utils import Client
+from data_formulator.model_registry import model_registry
+from data_formulator.knowledge.store import KnowledgeStore
+from data_formulator.data_operations import DataOperationExecutor, DataOperationRepository
+from data_formulator.datalake.parquet_utils import make_json_safe
+
+from data_formulator.analyst.agent import AnalystAgent
+from data_formulator.agents.agent_language import build_language_instruction
+from data_formulator.security.sanitize import classify_llm_error, sanitize_error_message
+from data_formulator.error_handler import json_ok, stream_preflight_error, classify_and_wrap_llm_error
+from data_formulator.errors import AppError, ErrorCode
+
+# Get logger for this module (logging config done in app.py)
+logger = logging.getLogger(__name__)
+
+
+def _get_ui_lang() -> str:
+    """Extract the primary language code from the Accept-Language header."""
+    return request.headers.get('Accept-Language', 'en').split(',')[0].split('-')[0].strip().lower()
+
+
+def get_language_instruction(*, mode: str = "full") -> str:
+    """Read the UI language from the Accept-Language header and build the prompt instruction.
+
+    mode: "full" for text-heavy agents, "compact" for code-generation agents.
+    """
+    return build_language_instruction(_get_ui_lang(), mode=mode)
+
+
+def _get_knowledge_store(identity_id: str) -> KnowledgeStore | None:
+    """Create a KnowledgeStore for the given user, or None on failure."""
+    try:
+        from data_formulator.datalake.workspace import get_user_home
+        return KnowledgeStore(get_user_home(identity_id))
+    except Exception:
+        logger.warning("Failed to create KnowledgeStore", exc_info=True)
+        return None
+
+
+agent_bp = Blueprint('agent', __name__, url_prefix='/api/agent')
+
+from data_formulator.clean_steps.api import register_clean_step_routes
+register_clean_step_routes(agent_bp)
+
+# Enough rows to scroll through and judge the data, small enough that proposing
+# several tables stays cheap on the source.
+PREVIEW_ROW_LIMIT = 50
+
+
+@agent_bp.route('/data-operation-preview', methods=['POST'])
+def preview_data_operation():
+    """Return bounded display rows for an opaque operation plan."""
+    if not request.is_json:
+        raise AppError(ErrorCode.INVALID_REQUEST, "Invalid request format")
+    identity_id = get_identity_id()
+    if not identity_id:
+        raise AppError(ErrorCode.AUTH_REQUIRED, "Identity ID required")
+
+    content = request.get_json()
+    operation_id = str(content.get("operation_id", "")).strip()
+    plan_id = str(content.get("plan_id", "")).strip()
+    if not operation_id or not plan_id:
+        raise AppError(ErrorCode.INVALID_REQUEST, "operation_id and plan_id are required")
+
+    workspace = get_workspace(identity_id)
+    operation = DataOperationRepository.for_workspace(workspace).get(operation_id)
+    if operation is None:
+        raise AppError(ErrorCode.INVALID_REQUEST, "Unknown data operation")
+    plan = next((item for item in operation.plans if item.id == plan_id), None)
+    if plan is None:
+        raise AppError(ErrorCode.INVALID_REQUEST, "Unknown data operation plan")
+
+    from data_formulator.data_connector import resolve_live_loader
+    from data_formulator.datalake.catalog_cache import load_catalog
+    previews = []
+    for step in plan.steps:
+        table_description = None
+        user_home = getattr(workspace, "user_home", None)
+        if user_home:
+            catalog = load_catalog(user_home, step.source_id) or []
+            catalog_table = next(
+                (item for item in catalog if item.get("table_key") == step.table_key),
+                None,
+            )
+            if catalog_table:
+                metadata = catalog_table.get("metadata") or {}
+                table_description = (
+                    metadata.get("source_description")
+                    or metadata.get("description")
+                    or catalog_table.get("description")
+                )
+        # Per-step failures: one unreachable source shouldn't blank the whole
+        # canvas, and the frontend needs the source to offer a reconnect.
+        try:
+            loader = resolve_live_loader(step.source_id)
+            options = DataOperationExecutor._build_import_options(step)
+            requested = options.get("size")
+            preview_size = min(requested, PREVIEW_ROW_LIMIT) if isinstance(requested, int) and requested > 0 else PREVIEW_ROW_LIMIT
+            options["size"] = preview_size
+            table = loader.fetch_data_as_arrow(step.source_table, options)
+            from data_formulator.data_loader.external_data_loader import apply_import_projection
+            table = apply_import_projection(table, options)
+            table = table.slice(0, preview_size)
+        except Exception as exc:
+            logger.warning("Preview failed for %s", step.display_name, exc_info=True)
+            previews.append({
+                "display_name": step.display_name,
+                "source_id": step.source_id,
+                **({"table_description": str(table_description).strip()} if table_description else {}),
+                "error": str(exc),
+            })
+            continue
+        previews.append({
+            "display_name": step.display_name,
+            "source_id": step.source_id,
+            **({"table_description": str(table_description).strip()} if table_description else {}),
+            "columns": table.column_names,
+            "rows": make_json_safe(table.to_pylist()),
+        })
+    return json_ok({"previews": previews})
+
+
+def _with_warnings(gen):
+    """Wrap an NDJSON generator to flush accumulated stream warnings.
+
+    Any code running during chunk generation (e.g. agent helpers) may
+    call :func:`collect_stream_warning`.  This wrapper drains the
+    accumulated warnings before each application chunk so the frontend
+    receives them in chronological order.
+    """
+    from data_formulator.error_handler import flush_stream_warnings
+    for chunk in gen:
+        for w in flush_stream_warnings():
+            yield w
+        yield chunk
+    for w in flush_stream_warnings():
+        yield w
+
+
+@agent_bp.after_request
+def _set_cors(response):
+    """Set CORS headers from server configuration.
+
+    By default no ``Access-Control-Allow-Origin`` header is emitted
+    (same-origin only).  To allow cross-origin requests set the
+    ``CORS_ORIGIN`` env-var (e.g. ``CORS_ORIGIN=https://my-embed-host``).
+    Use ``CORS_ORIGIN=*`` only for development / fully trusted networks.
+    """
+    origin = os.environ.get('CORS_ORIGIN', '')
+    if origin:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
+
+def get_client(model_config, trusted=False):
+    """Build a LiteLLM client for *model_config*.
+
+    ``trusted`` marks a config that came from the server-side registry rather
+    than from a request body.  Callers that already resolved a config through
+    ``model_registry`` pass ``trusted=True``; everything reached from an HTTP
+    payload must leave it ``False``.
+    """
+    # ``is_global`` arrives inside the request body, so it is only a *claim*
+    # that some id names a server-configured model.  Trust has to come from
+    # that lookup actually succeeding -- never from the flag itself.  Treating
+    # the flag as proof let a caller attach it to a config it fully controlled
+    # and inherit the exemptions granted to global models below, turning
+    # ``api_base`` into an SSRF sink that the server signs with its own
+    # credentials.
+    if not trusted and model_config.get("is_global"):
+        resolved = model_registry.get_config(model_config.get("id"))
+        if resolved is None:
+            # Fail closed.  Continuing with the caller's own config would hand
+            # it exactly the trust it just failed to prove.
+            logger.warning(
+                "Rejected is_global request for unregistered model id: %r",
+                model_config.get("id"),
+            )
+            raise AppError(
+                ErrorCode.ACCESS_DENIED,
+                "Unknown global model. Pick a model from the server's "
+                "configured list, or supply your own API credentials.",
+            )
+        model_config = resolved
+        trusted = True
+
+    # Copy before normalising: a registry config is shared server-wide and must
+    # not be mutated in place by the strip below.
+    model_config = dict(model_config)
+    for key in model_config:
+        if isinstance(model_config[key], str):
+            model_config[key] = model_config[key].strip()
+
+    # Validate caller-provided api_base against the allowlist (SSRF
+    # protection).  Registry configs are exempt because their api_base is set
+    # by the operator's env vars, not by a request.
+    if not trusted:
+        from data_formulator.security.url_allowlist import validate_api_base
+        try:
+            validate_api_base(model_config.get("api_base"))
+        except ValueError as e:
+            # url_allowlist stays framework-agnostic and signals with
+            # ValueError; translate it here so the caller gets a 403 instead
+            # of a generic 500.
+            raise AppError(ErrorCode.ACCESS_DENIED, str(e)) from e
+
+    client = Client(
+        model_config["endpoint"],
+        model_config["model"],
+        model_config.get("api_key") or None,
+        model_config.get("api_base") or None,
+        model_config.get("api_version") or None,
+    )
+
+    return client
+
+
+@agent_bp.route('/list-global-models', methods=['GET', 'POST'])
+def list_global_models():
+    """Return all globally configured models instantly, without connectivity checks.
+
+    The frontend calls this first to render the model list immediately (with a
+    'checking' status), then calls /check-available-models to get real statuses.
+    """
+    public_models = model_registry.list_public()
+    return json_ok(public_models)
+
+
+@agent_bp.route('/check-available-models', methods=['GET', 'POST'])
+def check_available_models():
+    """
+    Return all globally configured models with their connectivity status.
+
+    Connectivity checks run in parallel (ThreadPoolExecutor) so the total
+    wall-clock time equals the slowest single model, not the sum of all.
+    Sensitive credentials (api_key) are never sent to the client.
+    """
+    import time
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    all_public = model_registry.list_public()
+    logger.info("=" * 60)
+    logger.info(f"[check-available-models] Checking {len(all_public)} global models")
+    from data_formulator.security.log_sanitizer import sanitize_url
+    for p in all_public:
+        logger.info("  -> %s  (endpoint=%s, model=%s, api_base=%s)",
+                     p['id'], p['endpoint'], p['model'], sanitize_url(p.get('api_base', '')))
+    overall_start = time.time()
+
+    def _check_one(public_info: dict) -> dict:
+        model_id = public_info["id"]
+        t0 = time.time()
+        full_config = model_registry.get_config(model_id)
+        status = "disconnected"
+        error = None
+
+        try:
+            client = get_client(full_config, trusted=True)
+            logger.info(f"  [{model_id}] Sending connectivity ping (max_tokens=3)...")
+            client.ping(timeout=10)
+            status = "connected"
+            logger.info(f"  [{model_id}] Connected ({time.time() - t0:.1f}s)")
+        except Exception as e:
+            elapsed = time.time() - t0
+            logger.warning(f"  [{model_id}] Failed ({elapsed:.1f}s): {type(e).__name__}: {e}")
+            error = classify_llm_error(e)
+
+        return {**public_info, "status": status, "error": error}
+
+    results = []
+    if all_public:
+        with ThreadPoolExecutor(max_workers=min(len(all_public), 8)) as executor:
+            futures = {executor.submit(_check_one, p): p["id"] for p in all_public}
+            for future in as_completed(futures):
+                try:
+                    results.append(future.result())
+                except Exception as e:
+                    model_id = futures[future]
+                    logger.error(f"  [{model_id}] Thread exception: {e}")
+                    pub = next(p for p in all_public if p["id"] == model_id)
+                    results.append({**pub, "status": "disconnected", "error": "Check thread exception"})
+
+    id_order = [p["id"] for p in all_public]
+    results.sort(key=lambda r: id_order.index(r["id"]))
+
+    total_elapsed = time.time() - overall_start
+    connected = sum(1 for r in results if r["status"] == "connected")
+    logger.info(f"[check-available-models] Done: {connected}/{len(results)} connected, total {total_elapsed:.1f}s")
+    logger.info("=" * 60)
+
+    return json_ok(results)
+
+@agent_bp.route('/test-model', methods=['GET', 'POST'])
+def test_model():
+    if not request.is_json:
+        raise AppError(ErrorCode.INVALID_REQUEST, "Invalid request format")
+
+    logger.info("# test-model request")
+    content = request.get_json()
+
+    logger.debug("content------------------------------")
+    logger.debug(content)
+
+    try:
+        client = get_client(content['model'])
+        response = client.get_completion(
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "Respond 'I can hear you.' if you can hear me. Do not say anything other than 'I can hear you.'"},
+            ]
+        )
+
+        logger.debug(f"model: {content['model']}")
+        logger.debug(f"welcome message: {response.choices[0].message.content}")
+
+        if "I can hear you." in response.choices[0].message.content:
+            return json_ok({"model": content['model'], "message": ""})
+        else:
+            raise AppError(ErrorCode.AGENT_ERROR, "Model responded but did not pass connectivity check")
+    except AppError:
+        raise
+    except Exception as e:
+        logger.exception(
+            "Error testing model %s request_id=%s",
+            content['model'].get('id', ''),
+            getattr(g, 'request_id', 'unknown'),
+        )
+        raise classify_and_wrap_llm_error(e) from e
+
+@agent_bp.route('/process-data-on-load', methods=['GET', 'POST'])
+def process_data_on_load_request():
+    if not request.is_json:
+        raise AppError(ErrorCode.INVALID_REQUEST, "Invalid request format")
+
+    logger.info("# process-data-on-load request")
+    content = request.get_json()
+    input_data = content["input_data"]
+
+    client = get_client(content['model'])
+
+    logger.debug(f" model: {content['model']}")
+
+    try:
+        identity_id = get_identity_id()
+        workspace = get_workspace(identity_id)
+
+        language_instruction = get_language_instruction(mode="compact")
+        agent = DataLoadAgent(client=client, workspace=workspace, language_instruction=language_instruction)
+        candidates = agent.run(content["input_data"])
+        candidates = [c['content'] for c in candidates if c['status'] == 'ok']
+
+        return json_ok({"result": candidates})
+    except Exception as e:
+        logger.exception(e)
+        raise classify_and_wrap_llm_error(e) from e
+
+
+@agent_bp.route('/sort-data', methods=['GET', 'POST'])
+def sort_data_request():
+    if not request.is_json:
+        raise AppError(ErrorCode.INVALID_REQUEST, "Invalid request format")
+
+    logger.info("# sort-data request")
+    content = request.get_json()
+
+    try:
+        client = get_client(content['model'])
+
+        language_instruction = get_language_instruction(mode="compact")
+        agent = SortDataAgent(client=client, language_instruction=language_instruction)
+        candidates = agent.run(content['field'], content['items'])
+
+        candidates = candidates if candidates != None else []
+        return json_ok({"result": candidates})
+    except Exception as e:
+        logger.error("Error in sort-data", exc_info=e)
+        raise classify_and_wrap_llm_error(e) from e
+
+@agent_bp.route('/derive-starter-questions', methods=['GET', 'POST'])
+def derive_starter_questions_request():
+    """Generate a few short, data-tailored starter exploration questions.
+
+    Called once when a workspace's set of root tables changes (e.g. after
+    data is loaded). Input: ``input_tables`` (list of {name, columns,
+    sample_rows, description}) and ``model``. Returns ``{"result": [..]}``.
+    """
+    if not request.is_json:
+        raise AppError(ErrorCode.INVALID_REQUEST, "Invalid request format")
+
+    logger.info("# derive-starter-questions request")
+    content = request.get_json()
+
+    try:
+        client = get_client(content['model'])
+
+        n = content.get('n', 2)
+        language_instruction = get_language_instruction(mode="compact")
+        agent = StarterQuestionsAgent(client=client, language_instruction=language_instruction)
+        questions = agent.run(content.get('input_tables', []), primary_table=content.get('primary_table'), n=n)
+
+        questions = questions if questions is not None else []
+        return json_ok({"result": questions})
+    except Exception as e:
+        logger.error("Error in derive-starter-questions", exc_info=e)
+        raise classify_and_wrap_llm_error(e) from e
+
+@agent_bp.route('/analyst-streaming', methods=['GET', 'POST'])
+def analyst_streaming():
+    """Unified AnalystAgent streaming endpoint (design-docs/35 + /36).
+
+    The single ``AnalystAgent`` subsumes both data exploration and report
+    writing: it gathers with inspection tools, commits one action per turn
+    (``visualize`` / ``ask_user`` / ``delegate`` / ``write_report``), and streams
+    the report live on the ``report`` channel (same ``text_delta`` event the
+    frontend already routes).
+
+    Streams newline-delimited JSON. Terminal events: ``completion`` (the run
+    finished or hit its budget), ``interact`` (a question widget pauses the run),
+    and ``error``. To resume after ``interact`` the client sends ``trajectory``
+    (from the event) plus ``user_question`` (the assembled reply).
+    """
+    from data_formulator.error_handler import stream_error_event
+
+    if not request.is_json:
+        return stream_preflight_error(AppError(ErrorCode.INVALID_REQUEST, "Invalid request format"))
+
+    content = request.get_json()
+
+    identity_id = get_identity_id()
+    if not identity_id:
+        return stream_preflight_error(AppError(ErrorCode.AUTH_REQUIRED, "Identity ID required"))
+
+    workspace = get_workspace(identity_id)
+
+    input_tables = content["input_tables"]
+    user_question = content.get("user_question", "")
+    max_iterations = content.get("max_iterations", 5)
+    max_repair_attempts = content.get("max_repair_attempts", 1)
+    agent_exploration_rules = content.get("agent_exploration_rules", "")
+    agent_coding_rules = content.get("agent_coding_rules", "")
+    focused_thread = content.get("focused_thread", None)
+    other_threads = content.get("other_threads", None)
+    primary_tables = content.get("primary_tables", None)
+    attached_images = content.get("attached_images", None)
+    scratch_files = content.get("scratch_files", None)
+    charts = content.get("charts", None)
+    resume_trajectory = content.get("trajectory", None)
+    completed_step_count = content.get("completed_step_count", 0)
+    conversation_id = str(content.get("conversation_id", "")).strip()
+    interaction_response = content.get("interaction_response")
+    execution_operation = None
+    operation_repository = None
+
+    if resume_trajectory is not None and not str(user_question or "").strip():
+        return stream_preflight_error(AppError(ErrorCode.INVALID_REQUEST, "user_question is required to resume after interaction"))
+
+    if interaction_response is not None:
+        from data_formulator.data_operations import (
+            DataOperationRepository,
+            resolve_interaction_response,
+        )
+
+        if resume_trajectory is None or not isinstance(interaction_response, dict):
+            return stream_preflight_error(AppError(
+                ErrorCode.INVALID_REQUEST,
+                "interaction_response requires an interaction resume",
+            ))
+        try:
+            operation_repository = DataOperationRepository.for_workspace(workspace)
+            user_question = resolve_interaction_response(
+                operation_repository,
+                interaction_response,
+            )
+            if interaction_response.get("action") != "elaborate":
+                operation_id = str(interaction_response.get("operation_id", ""))
+                execution_operation = operation_repository.get(operation_id)
+                if execution_operation is None:
+                    raise KeyError(f"Unknown data operation: {operation_id}")
+        except KeyError:
+            execution_operation = None
+            operation_repository = None
+            interaction_response = None
+            user_question = (
+                "The previous loading proposal expired because temporary session "
+                "state is unavailable. Reassess the user's request, rediscover the "
+                "source, and propose fresh loading options if the data is still needed."
+            )
+        except ValueError as exc:
+            return stream_preflight_error(AppError(
+                ErrorCode.INVALID_REQUEST,
+                str(exc),
+            ))
+
+    logger.setLevel(logging.INFO)
+    logger.info("# analyst-streaming request")
+    logger.debug("== input tables ===>")
+    for table in input_tables:
+        logger.debug(f"===> Table: {table['name']}")
+    logger.debug(f"== user question ===> {user_question}")
+    if attached_images:
+        logger.info(f"== attached_images ===> {len(attached_images)} image(s), sizes: {[len(img) for img in attached_images]}")
+
+    language_instruction = get_language_instruction(mode="full")
+
+    def generate():
+        try:
+            if execution_operation is not None and operation_repository is not None:
+                from data_formulator.data_operations import (
+                    DataOperationExecutor,
+                    DataOperationStatus,
+                    OperationError,
+                )
+
+                try:
+                    if execution_operation.status in {
+                        DataOperationStatus.LOADED,
+                        DataOperationStatus.PARTIALLY_LOADED,
+                        DataOperationStatus.FAILED,
+                    }:
+                        completed_operation = execution_operation
+                    else:
+                        execution_result = DataOperationExecutor(workspace).execute(
+                            execution_operation
+                        )
+                        completed_operation = operation_repository.finish(
+                            execution_operation.id,
+                            execution_result.result_table_ids,
+                            execution_result.failed_steps,
+                        )
+                except Exception as exc:
+                    logger.error(
+                        "Data operation execution failed: %s",
+                        execution_operation.id,
+                        exc_info=exc,
+                    )
+                    app_error = (
+                        exc if isinstance(exc, AppError)
+                        else classify_and_wrap_llm_error(exc)
+                    )
+                    completed_operation = operation_repository.fail(
+                        execution_operation.id,
+                        OperationError(
+                            code=str(app_error.code),
+                            message=app_error.message,
+                        ),
+                    )
+                yield json.dumps({
+                    "type": "data_operation_result",
+                    "operation": completed_operation.to_public_dict(),
+                }, ensure_ascii=False) + '\n'
+                logger.setLevel(logging.WARNING)
+                return
+
+            client = get_client(content['model'])
+            agent = AnalystAgent(
+                client=client,
+                workspace=workspace,
+                agent_exploration_rules=agent_exploration_rules,
+                agent_coding_rules=agent_coding_rules,
+                language_instruction=language_instruction,
+                max_iterations=max_iterations,
+                max_repair_attempts=max_repair_attempts,
+                identity_id=identity_id,
+            )
+
+            trajectory = None
+            if resume_trajectory:
+                # Append the user's reply (already assembled by the frontend
+                # from option clicks + any typed instructions) as a normal user
+                # message; the LLM correlates the selections back to the
+                # questions in the immediately preceding assistant turn.
+                trajectory = list(resume_trajectory)
+                trajectory.append({
+                    "role": "user",
+                    "content": user_question,
+                })
+                logger.debug("== resuming after interaction ===>")
+
+            for event in agent.run(
+                input_tables=input_tables,
+                user_question=user_question,
+                focused_thread=focused_thread,
+                other_threads=other_threads,
+                trajectory=trajectory,
+                completed_step_count=completed_step_count,
+                primary_tables=primary_tables,
+                attached_images=attached_images,
+                charts=charts,
+                scratch_files=scratch_files,
+                conversation_id=conversation_id,
+            ):
+                yield json.dumps(event, ensure_ascii=False) + '\n'
+
+                if event.get("type") in ("completion", "interact"):
+                    break
+
+        except Exception as e:
+            logger.error("Error in analyst-streaming", exc_info=e)
+            yield stream_error_event(classify_and_wrap_llm_error(e))
+
+        logger.setLevel(logging.WARNING)
+
+    return Response(
+        stream_with_context(_with_warnings(generate())),
+        mimetype='application/x-ndjson',
+    )
+
+
+@agent_bp.route('/code-expl', methods=['GET', 'POST'])
+def request_code_expl():
+    if not request.is_json:
+        raise AppError(ErrorCode.INVALID_REQUEST, "Invalid request format")
+
+    logger.info("# code-expl request")
+    content = request.get_json()
+    client = get_client(content['model'])
+
+    input_tables = content["input_tables"]
+    code = content["code"]
+
+    identity_id = get_identity_id()
+    workspace = get_workspace(identity_id)
+
+    language_instruction = get_language_instruction()
+
+    try:
+        code_expl_agent = CodeExplanationAgent(client=client, workspace=workspace, language_instruction=language_instruction)
+        candidates = code_expl_agent.run(input_tables, code)
+
+        if candidates and len(candidates) > 0:
+            result = candidates[0]
+            return json_ok(result)
+        else:
+            raise AppError(ErrorCode.AGENT_ERROR, "No explanation generated")
+    except AppError:
+        raise
+    except Exception as e:
+        logger.error("Error in code-expl", exc_info=e)
+        raise classify_and_wrap_llm_error(e) from e
+
+@agent_bp.route('/refresh-derived-data', methods=['POST'])
+def refresh_derived_data():
+    """
+    Re-run Python transformation code with updated input data to refresh a derived table.
+    
+    Security: The code must have been previously signed by the server (via
+    ``code_signing.sign_result``) when it was first generated by an agent.
+    The frontend must send the original ``code_signature`` back alongside
+    the code.  This endpoint verifies the signature before executing,
+    preventing execution of tampered or injected code.
+    
+    This endpoint:
+    1. Verifies the code signature (HMAC-SHA256)
+    2. Gets input tables from workspace (extending with temp data if needed)
+    3. Re-runs the transformation code in workspace context
+    4. Updates the derived table in workspace if virtual flag is true
+    
+    Request body:
+    - input_tables: list of {name: string, rows: list} objects representing the parent tables
+    - code: the Python transformation code to execute
+    - code_signature: HMAC-SHA256 signature of the code (required)
+    - output_variable: the variable name containing the result DataFrame (required)
+    - output_table_name: the workspace table name to update with results (required if virtual=true)
+    - virtual: boolean flag indicating whether to save result to workspace
+    
+    Returns:
+    - status: 'ok' or 'error'
+    - rows: the resulting rows if successful (limited to max_display_rows)
+    - virtual: {table_name: string, row_count: number} if output was saved to workspace
+    - message: error message if failed
+    """
+    from data_formulator.sandbox import create_sandbox
+    from flask import current_app
+
+    data = request.get_json()
+    input_tables = data.get('input_tables', [])
+    code = data.get('code', '')
+    code_signature = data.get('code_signature', '')
+    output_variable = data.get('output_variable')
+    output_table_name = data.get('output_table_name')
+    virtual = data.get('virtual', False)
+
+    if not input_tables:
+        raise AppError(ErrorCode.VALIDATION_ERROR, "No input tables provided")
+
+    require_signed_code(code, code_signature)
+
+    if len(input_tables) > 50:
+        raise AppError(ErrorCode.VALIDATION_ERROR, "Too many input tables (max 50)")
+
+    if not output_variable:
+        raise AppError(ErrorCode.VALIDATION_ERROR, "No output_variable provided")
+
+    if not output_variable.isidentifier():
+        raise AppError(ErrorCode.VALIDATION_ERROR, "output_variable must be a valid Python identifier")
+
+    if virtual and not output_table_name:
+        raise AppError(ErrorCode.VALIDATION_ERROR, "output_table_name is required when virtual=true")
+
+    try:
+        identity_id = get_identity_id()
+        workspace = get_workspace(identity_id)
+
+        cli_args = current_app.config.get('CLI_ARGS', {})
+        max_display_rows = cli_args.get('max_display_rows', 5000)
+
+        sandbox = create_sandbox(cli_args.get('sandbox', 'local'))
+
+        result = sandbox.run_python_code(
+            code=code,
+            workspace=workspace,
+            output_variable=output_variable,
+        )
+
+        if result['status'] == 'ok':
+            result_df = result['content']
+            row_count = len(result_df)
+
+            response_data = {
+                "message": "Successfully refreshed derived data",
+                "row_count": row_count,
+            }
+
+            if virtual:
+                workspace.write_parquet(result_df, output_table_name)
+                response_data["virtual"] = {
+                    "table_name": output_table_name,
+                    "row_count": row_count
+                }
+                if row_count > max_display_rows:
+                    display_df = result_df.head(max_display_rows)
+                else:
+                    display_df = result_df
+                display_df = display_df.loc[:, ~display_df.columns.duplicated()]
+                response_data["rows"] = df_to_safe_records(display_df)
+            else:
+                result_df = result_df.loc[:, ~result_df.columns.duplicated()]
+                response_data["rows"] = df_to_safe_records(result_df)
+
+            return json_ok(response_data)
+        else:
+            raise AppError(
+                ErrorCode.CODE_EXECUTION_ERROR,
+                sanitize_error_message(
+                    result.get('content', 'Unknown error during transformation')
+                ),
+            )
+
+    except AppError:
+        raise
+    except Exception as e:
+        logger.error("Error refreshing derived data", exc_info=e)
+        raise classify_and_wrap_llm_error(e) from e
+
+
+@agent_bp.route('/workspace-name', methods=['POST'])
+def workspace_name():
+    """Generate a short display name for the current workspace.
+
+    Called after the first agent interaction to auto-name the workspace.
+    Expects: { model: <model_config>, context: { tables: [...], userQuery: "..." } }
+    Returns: { status: "success", data: { display_name: "short name" } }
+    """
+    if not request.is_json:
+        raise AppError(ErrorCode.INVALID_REQUEST, "Invalid request format")
+
+    content = request.get_json() or {}
+    model_config = content.get('model')
+    if not model_config:
+        raise AppError(ErrorCode.INVALID_REQUEST, "No model configured")
+
+    try:
+        client = get_client(model_config)
+        ctx = content.get('context', {})
+
+        language_instruction = get_language_instruction(mode="full")
+        agent = SimpleAgents(client=client, language_instruction=language_instruction)
+        display_name = agent.workspace_name(
+            table_names=ctx.get('tables', []),
+            user_query=ctx.get('userQuery', ''),
+        )
+        return json_ok({"display_name": display_name})
+
+    except AppError:
+        raise
+    except Exception as e:
+        logger.warning("Failed to generate workspace name", exc_info=e)
+        raise classify_and_wrap_llm_error(e) from e
+
+
+# ---------------------------------------------------------------------------
+# NL → structured filter conditions
+# ---------------------------------------------------------------------------
+
+@agent_bp.route('/nl-to-filter', methods=['POST'])
+def nl_to_filter():
+    """Translate a natural language filter instruction to structured conditions.
+
+    Request body:
+        model: model config object (same as other agent routes)
+        columns: [{name, type}, ...]  — the table's column schema
+        instruction: str — the user's NL filter description
+
+    Response:
+        {status: "success", data: {conditions, sort_columns?, sort_order?, limit?}}
+    """
+    try:
+        content = request.get_json() or {}
+        instruction = (content.get("instruction") or "").strip()
+        columns = content.get("columns") or []
+        model_config = content.get("model")
+
+        if not instruction:
+            return json_ok({"conditions": [], "sort_columns": [], "sort_order": None, "limit": None})
+
+        if not model_config:
+            raise AppError(ErrorCode.INVALID_REQUEST, "No model configured")
+
+        client = get_client(model_config)
+        agent = SimpleAgents(client=client)
+        result = agent.nl_to_filter(columns=columns, instruction=instruction)
+
+        return json_ok(result)
+
+    except AppError:
+        raise
+    except json.JSONDecodeError:
+        raise AppError(ErrorCode.AGENT_ERROR, "Failed to parse LLM response as JSON")
+    except Exception as e:
+        logger.warning(f"NL-to-filter failed: {e}")
+        raise classify_and_wrap_llm_error(e) from e
+
+
+@agent_bp.route('/classify-chart-intent', methods=['POST'])
+def classify_chart_intent():
+    """Classify a chart-prompt as STYLE or DATA.
+
+    Used by the encoding-shelf input on Enter to route the prompt to either
+    the chart-restyle agent (visual changes) or the data agent (data shape /
+    chart-type changes). Multilingual by design — keyword heuristics are too
+    brittle for non-English prompts. See agent_simple.classify_chart_intent
+    and the chat discussion in design history.
+
+    Request body:
+        model: model config object
+        instruction: str — the user's NL prompt
+
+    Response:
+        {status: "success", data: {intent: "style" | "data"}}
+        On any failure the agent itself defaults to 'data' (the safe choice);
+        only transport / model-config errors return non-2xx here.
+    """
+    try:
+        content = request.get_json() or {}
+        instruction = (content.get("instruction") or "").strip()
+        model_config = content.get("model")
+
+        if not instruction:
+            return json_ok({"intent": "data"})
+
+        if not model_config:
+            raise AppError(ErrorCode.INVALID_REQUEST, "No model configured")
+
+        client = get_client(model_config)
+        agent = SimpleAgents(client=client)
+        intent = agent.classify_chart_intent(instruction=instruction)
+        return json_ok({"intent": intent})
+
+    except AppError:
+        raise
+    except Exception as e:
+        logger.warning(f"classify-chart-intent failed: {e}")
+        raise classify_and_wrap_llm_error(e) from e
+
+
+# ---------------------------------------------------------------------------
+# Chart style refinement (restyle agent)
+# ---------------------------------------------------------------------------
+
+@agent_bp.route('/chart-restyle', methods=['POST'])
+def chart_restyle():
+    """Apply a natural-language STYLE instruction to a Vega-Lite spec.
+
+    Request body:
+        model: model config object (same shape as other agent routes)
+        instruction: str — the user's NL style instruction
+        vlSpec: dict — current Vega-Lite spec (data block already stripped client-side)
+        chartType: str — chart template label (e.g. "Bar Chart")
+        dataSample: list[dict] (optional) — first ~10 rows of the underlying table
+
+    Response:
+        On success: {status: "success", data: {vlSpec: <new spec>, rationale: str}}
+        On out-of-scope (data change): {status: "success", data: {out_of_scope: True, rationale: str}}
+
+    See design-docs/28-chart-style-refinement-agent.md.
+    """
+    from data_formulator.agents.agent_chart_restyle import ChartRestyleAgent
+
+    if not request.is_json:
+        raise AppError(ErrorCode.INVALID_REQUEST, "Invalid request format")
+
+    content = request.get_json() or {}
+    instruction = (content.get("instruction") or "").strip()
+    vl_spec = content.get("vlSpec")
+    chart_type = (content.get("chartType") or "").strip()
+    data_sample = content.get("dataSample") or []
+    style_reference_spec = content.get("styleReferenceSpec")
+    model_config = content.get("model")
+
+    if not instruction:
+        raise AppError(ErrorCode.VALIDATION_ERROR, "Instruction is required")
+    if not isinstance(vl_spec, dict):
+        raise AppError(ErrorCode.VALIDATION_ERROR, "vlSpec must be a JSON object")
+    if not model_config:
+        raise AppError(ErrorCode.INVALID_REQUEST, "Model configuration is required")
+
+    client = get_client(model_config)
+
+    try:
+        agent = ChartRestyleAgent(client=client, language_instruction=get_language_instruction(mode="compact"))
+        result = agent.run(
+            vl_spec=vl_spec,
+            instruction=instruction,
+            chart_type=chart_type,
+            data_sample=data_sample if isinstance(data_sample, list) else [],
+            style_reference_spec=style_reference_spec if isinstance(style_reference_spec, dict) else None,
+        )
+        return json_ok(result)
+    except AppError:
+        raise
+    except Exception as e:
+        logger.warning("chart-restyle failed", exc_info=e)
+        raise classify_and_wrap_llm_error(e) from e
+
+
+# ---------------------------------------------------------------------------
+# Scratch folder APIs (for conversational data loading)
+# ---------------------------------------------------------------------------
+
+@agent_bp.route('/workspace/scratch/upload', methods=['POST'])
+def scratch_upload():
+    """Upload a file to the workspace scratch/ folder.
+
+    Accepts multipart/form-data with a 'file' field.
+    Returns: { status: "success", data: { path, url } }
+    """
+    import hashlib
+    from werkzeug.utils import secure_filename as _werkzeug_secure_filename
+
+    if 'file' not in request.files:
+        raise AppError(ErrorCode.INVALID_REQUEST, "No file in request")
+
+    file = request.files['file']
+    if not file.filename:
+        raise AppError(ErrorCode.INVALID_REQUEST, "No filename")
+
+    identity_id = get_identity_id()
+    workspace = get_workspace(identity_id)
+    scratch_jail = workspace.confined_scratch
+
+    raw = file.read()
+    file_hash = hashlib.sha256(raw).hexdigest()[:8]
+    safe_name = _werkzeug_secure_filename(file.filename)
+    base, ext = os.path.splitext(safe_name)
+    final_name = f"{base}_{file_hash}{ext}"
+
+    try:
+        dest = scratch_jail.resolve(final_name)
+    except ValueError:
+        raise AppError(ErrorCode.VALIDATION_ERROR, "Invalid filename")
+    dest.write_bytes(raw)
+
+    return json_ok({
+        "path": f"scratch/{final_name}",
+        "url": f"/api/workspace/scratch/{final_name}",
+    })
+
+
+@agent_bp.route('/workspace/scratch/<path:filename>', methods=['GET'])
+def scratch_serve(filename):
+    """Serve a file from the workspace scratch/ folder."""
+    from flask import send_file
+
+    identity_id = get_identity_id()
+    workspace = get_workspace(identity_id)
+    scratch_jail = workspace.confined_scratch
+
+    try:
+        target = scratch_jail.resolve(filename)
+    except ValueError:
+        raise AppError(ErrorCode.ACCESS_DENIED, "Access denied")
+
+    if not target.exists():
+        raise AppError(ErrorCode.TABLE_NOT_FOUND, "File not found")
+
+    return send_file(target)
+
+
+# ---------------------------------------------------------------------------
+# Conversational data loading agent
+# ---------------------------------------------------------------------------
+
+@agent_bp.route('/data-loading-chat', methods=['POST'])
+def data_loading_chat():
+    """Conversational data loading agent endpoint.
+
+    Streams newline-delimited JSON events (SSE-style).
+    """
+    from data_formulator.error_handler import stream_error_event
+
+    if not request.is_json:
+        return stream_preflight_error(AppError(ErrorCode.INVALID_REQUEST, "Invalid request format"))
+
+    content = request.get_json()
+    logger.info("# data-loading-chat request")
+
+    messages = content.get("messages", [])
+    client = get_client(content['model'])
+    identity_id = get_identity_id()
+    workspace = get_workspace(identity_id)
+
+    from data_formulator.example_datasets_config import EXAMPLE_DATASETS
+    available_datasets = [
+        {"name": ds["name"], "description": ds.get("description", "")}
+        for ds in EXAMPLE_DATASETS
+    ]
+
+    language_instruction = get_language_instruction()
+    knowledge_store = _get_knowledge_store(identity_id)
+
+    def generate():
+        try:
+            agent = DataLoadingAgent(
+                client=client,
+                workspace=workspace,
+                available_datasets=available_datasets,
+                language_instruction=language_instruction,
+                knowledge_store=knowledge_store,
+                row_limit=content.get("row_limit"),
+            )
+
+            for event in agent.stream(messages):
+                raw = json.dumps(event, ensure_ascii=False, default=str)
+                raw = raw.replace(': NaN,', ': null,').replace(': NaN}', ': null}').replace(':NaN,', ':null,').replace(':NaN}', ':null}')
+                yield raw + "\n"
+
+        except Exception as e:
+            logger.exception("data-loading-chat error")
+            yield stream_error_event(classify_and_wrap_llm_error(e))
+
+    return Response(
+        stream_with_context(_with_warnings(generate())),
+        mimetype='application/x-ndjson',
+    )

@@ -1,0 +1,197 @@
+import React from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { DataSourceSidebar } from '../../../../src/views/DataSourceSidebar';
+import { apiRequest } from '../../../../src/app/apiClient';
+import { listWorkspaces } from '../../../../src/app/workspaceService';
+
+const { dispatch, mockState } = vi.hoisted(() => ({
+    dispatch: vi.fn(),
+    mockState: {
+        dataSourceSidebarOpen: true,
+        dataSourceSidebarTab: 'sources',
+        serverConfig: { DISABLE_DATA_CONNECTORS: false },
+        activeWorkspace: null,
+        identity: { type: 'browser', id: 'test-browser' },
+        inputTables: [],
+        derivedTables: [],
+    },
+}));
+
+vi.mock('../../../../src/app/apiClient', () => ({
+    apiRequest: vi.fn(),
+}));
+
+vi.mock('react-i18next', () => ({
+    initReactI18next: {
+        type: '3rdParty',
+        init: vi.fn(),
+    },
+    useTranslation: () => ({
+        t: (key: string, params?: Record<string, any>) => params?.defaultValue || key,
+    }),
+}));
+
+vi.mock('react-redux', () => ({
+    useDispatch: () => dispatch,
+    useSelector: (selector: (state: any) => unknown) => selector(mockState),
+}));
+
+vi.mock('../../../../src/app/dfSlice', () => ({
+    dfActions: {
+        addMessages: (payload: any) => ({ type: 'messages/add', payload }),
+        setDataSourceSidebarOpen: (payload: any) => ({ type: 'sidebar/setOpen', payload }),
+        setSessionLoading: (payload: any) => ({ type: 'session/setLoading', payload }),
+        loadState: (payload: any) => ({ type: 'state/load', payload }),
+        setActiveWorkspace: (payload: any) => ({ type: 'workspace/setActive', payload }),
+        resetState: () => ({ type: 'state/reset' }),
+    },
+    dfSelectors: {
+        getAllTables: (state: any) => [...(state.inputTables ?? []), ...(state.derivedTables ?? [])],
+    },
+    fetchFieldSemanticType: vi.fn(),
+}));
+
+vi.mock('../../../../src/app/utils', () => ({
+    CONNECTOR_URLS: {
+        LIST: '/api/connectors',
+        DELETE: (id: string) => `/api/connectors/${id}`,
+    },
+    CONNECTOR_ACTION_URLS: {
+        GET_CATALOG: '/api/connectors/get-catalog',
+        GET_CATALOG_TREE: '/api/connectors/get-catalog-tree',
+        GET_CACHED_CATALOG_TREE: '/api/connectors/get-cached-catalog-tree',
+        SYNC_CATALOG_METADATA: '/api/connectors/sync-catalog-metadata',
+        SEARCH_CATALOG: '/api/connectors/search-catalog',
+        PREVIEW_DATA: '/api/connectors/preview-data',
+        REFRESH_DATA: '/api/connectors/refresh-data',
+        DISCONNECT: '/api/connectors/disconnect',
+    },
+    translateBackend: (message: string) => message,
+    fetchWithIdentity: vi.fn(),
+}));
+
+vi.mock('../../../../src/app/tableThunks', () => ({
+    loadTable: vi.fn(),
+    buildDictTableFromWorkspace: vi.fn(),
+}));
+
+vi.mock('../../../../src/app/workspaceService', () => ({
+    listWorkspaces: vi.fn(() => Promise.resolve([])),
+    loadWorkspace: vi.fn(),
+    deleteWorkspace: vi.fn(),
+    onWorkspaceListChanged: vi.fn(() => () => {}),
+}));
+
+vi.mock('../../../../src/components/VirtualizedCatalogTree', () => ({
+    VirtualizedCatalogTree: () => <div data-testid="catalog-tree" />,
+}));
+
+vi.mock('../../../../src/components/ConnectorTablePreview', () => ({
+    ConnectorTablePreview: () => null,
+}));
+
+vi.mock('../../../../src/components/ResizeHandle', () => ({
+    ResizeHandle: () => null,
+}));
+
+vi.mock('../../../../src/views/KnowledgePanel', () => ({
+    KnowledgePanel: () => null,
+}));
+
+describe('DataSourceSidebar', () => {
+    beforeEach(() => {
+        dispatch.mockClear();
+        mockState.dataSourceSidebarTab = 'sources';
+        vi.stubGlobal('ResizeObserver', class {
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        });
+        vi.mocked(apiRequest).mockReset();
+        vi.mocked(apiRequest).mockResolvedValue({ data: { connectors: [] } });
+        vi.mocked(listWorkspaces).mockReset();
+        vi.mocked(listWorkspaces).mockResolvedValue([]);
+    });
+
+    it('leaves loading state when catalog fetch fails', async () => {
+        vi.mocked(apiRequest).mockImplementation((url: string) => {
+            if (url === '/api/connectors') {
+                return Promise.resolve({
+                    data: {
+                        connectors: [{
+                            id: 'warehouse',
+                            display_name: 'Warehouse',
+                            source_type: 'PostgreSQLDataLoader',
+                            connected: true,
+                            deletable: false,
+                        }],
+                    },
+                });
+            }
+            if (url === '/api/connectors/get-catalog-tree') {
+                return Promise.reject({ apiError: { message: 'Data connector error' } });
+            }
+            return Promise.resolve({ data: {} });
+        });
+
+        render(<DataSourceSidebar />);
+
+        fireEvent.click(await screen.findByText('Warehouse'));
+
+        await waitFor(() => {
+            expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: 'messages/add',
+                payload: expect.objectContaining({
+                    component: 'data-source-sidebar',
+                    type: 'warning',
+                    value: 'Data connector error',
+                }),
+            }));
+        });
+    });
+
+    it('returns to the landing state without creating an empty workspace', async () => {
+        mockState.dataSourceSidebarTab = 'sessions';
+        render(<DataSourceSidebar />);
+
+        fireEvent.click(await screen.findByRole('button', { name: 'New session' }));
+
+        expect(dispatch).toHaveBeenCalledWith({ type: 'state/reset' });
+        expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({
+            type: 'state/load',
+            payload: expect.objectContaining({
+                activeWorkspace: expect.objectContaining({ displayName: 'Untitled Session' }),
+            }),
+        }));
+    });
+
+    it('shows recently modified sessions first and can switch to creation order', async () => {
+        mockState.dataSourceSidebarTab = 'sessions';
+        vi.mocked(listWorkspaces).mockResolvedValue([
+            {
+                id: 'newer-creation',
+                display_name: 'Newer creation',
+                created_at: '2026-08-15T10:00:00Z',
+                saved_at: '2026-08-15T10:00:00Z',
+            },
+            {
+                id: 'recently-edited',
+                display_name: 'Recently edited',
+                created_at: '2026-08-01T10:00:00Z',
+                saved_at: '2026-08-15T11:00:00Z',
+            },
+        ]);
+
+        render(<DataSourceSidebar />);
+
+        const recentlyEdited = await screen.findByText('Recently edited');
+        const newerCreation = screen.getByText('Newer creation');
+        expect(recentlyEdited.compareDocumentPosition(newerCreation) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: 'sidebar.sortSessions' }));
+        fireEvent.click(await screen.findByText('sidebar.sortNewestFirst'));
+
+        expect(newerCreation.compareDocumentPosition(recentlyEdited) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+});

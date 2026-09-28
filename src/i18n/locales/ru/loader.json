@@ -1,0 +1,116 @@
+{
+  "loader": {
+    "mysql": {
+      "user": "Имя пользователя MySQL",
+      "password": "оставьте пустым, если пароля нет",
+      "host": "адрес сервера",
+      "port": "порт сервера",
+      "database": "Имя базы (оставьте пустым, чтобы видеть все базы)",
+      "authInstructions": "**Пример:** пользователь: `root` · хост: `localhost` · порт: `3306` · база: `mydb`\n\n**Локально:** убедитесь, что MySQL запущен: `brew services list` (macOS) или `systemctl status mysql` (Linux). Если пароля нет, оставьте поле пустым.\n\n**Удалённо:** хост, порт, имя пользователя и пароль выдаёт администратор базы. Сервер должен принимать удалённые подключения, а ваш IP быть в белом списке.\n\n**Область:** оставьте *базу* пустой, чтобы видеть все базы на сервере, или укажите её, чтобы сразу перейти к таблицам этой базы.\n\n**Если не получается:** проверьте командой `mysql -u <user> -p -h <host> -P <port> <database>`"
+    },
+    "mssql": {
+      "server": "Адрес узла SQL Server или имя экземпляра",
+      "database": "Имя базы (оставьте пустым, чтобы видеть все базы)",
+      "user": "Имя пользователя (оставьте пустым для Entra ID / Windows)",
+      "password": "Пароль (оставьте пустым для Entra ID / Windows)",
+      "port": "Порт SQL Server (по умолчанию: 1433)",
+      "encrypt": "Включить шифрование (yes/no)",
+      "trust_server_certificate": "Доверять сертификату сервера (yes/no)",
+      "connection_timeout": "Тайм-аут подключения в секундах",
+      "authInstructions": "**Microsoft Entra ID (рекомендуется):** один раз выполните `az login` в терминале, затем запустите Datly. Выберите *Microsoft Entra ID*, заполните только `server` и при необходимости `database`, имя и пароль оставьте пустыми: будут использованы учётные данные Azure CLI. Управляемая идентичность, VS Code и переменные среды тоже работают через `DefaultAzureCredential`.\n\n> У вашей личности Entra должен быть доступ к базе. Например, администратор выполняет `CREATE USER [you@contoso.com] FROM EXTERNAL PROVIDER;` и выдаёт нужные роли.\n\n**Пример (Entra ID):** сервер: `myserver.database.windows.net` · база: `mydb` (имя и пароль пустые)\n\n**Проверка подлинности SQL Server:** выберите *проверка подлинности SQL Server* и укажите имя и пароль.\n\n**Пример (SQL):** сервер: `localhost` · база: `mydb` · пользователь: `sa` · пароль: `MyP@ss` · порт: `1433`\n\n**Проверка Windows (только Windows):** выберите *проверка Windows* и оставьте имя и пароль пустыми.\n\n**Драйвер:** драйвер Microsoft SQL Server входит в Datly, отдельно ставить ODBC не нужно. Для Entra ID установите Azure CLI и выполните `az login`.\n\n**Если не получается:** убедитесь, что вход выполнен: `az account show`. Служба SQL Server должна быть запущена, TCP/IP включён. SQL-вход проверьте командой `sqlcmd -S <server> -d <database> -U <user> -P <password>`."
+    },
+    "postgresql": {
+      "user": "Имя пользователя PostgreSQL",
+      "password": "оставьте пустым, если пароля нет",
+      "host": "Хост PostgreSQL",
+      "port": "Порт PostgreSQL",
+      "database": "Имя базы (оставьте пустым, чтобы видеть все базы)",
+      "authInstructions": "**Пример:** пользователь: `postgres` · хост: `localhost` · порт: `5432` · база: `mydb`\n\n**Локально:** убедитесь, что PostgreSQL запущен: `brew services list` (macOS) или `systemctl status postgresql` (Linux). Если пароля нет, оставьте поле пустым.\n\n**Удалённо:** хост, порт, имя пользователя и пароль выдаёт администратор базы. У пользователя должно быть право SELECT на нужные таблицы.\n\n**Область:** оставьте *базу* пустой, чтобы видеть все базы на сервере, или укажите её, чтобы сразу перейти к схемам и таблицам этой базы.\n\n**Если не получается:** проверьте командой `psql -U <user> -h <host> -p <port> -d <database>`"
+    },
+    "mongodb": {
+      "host": "адрес сервера",
+      "port": "порт сервера",
+      "username": "оставьте пустым, если вход не нужен",
+      "password": "оставьте пустым, если вход не нужен",
+      "database": "имя базы",
+      "collection": "оставьте пустым, чтобы показать все коллекции",
+      "authSource": "база для входа (по умолчанию целевая база)",
+      "authInstructions": "**Пример:** хост: `localhost` · порт: `27017` · база: `mydb` · коллекция: `users`\n\n**Локально:** убедитесь, что MongoDB запущен. Если проверка подлинности выключена, имя и пароль оставьте пустыми.\n\n**Удалённо:** хост, порт, имя пользователя и пароль выдаёт администратор базы.\n\n**Если не получается:** проверьте командой `mongosh --host <host> --port <port>`"
+    },
+    "cosmosdb": {
+      "endpoint": "URL конечной точки учётной записи Cosmos DB",
+      "key": "ключ учётной записи или эмулятора",
+      "database": "имя базы",
+      "container": "оставьте пустым, чтобы показать все контейнеры",
+      "authInstructions": "**Пример:** конечная точка: `https://myaccount.documents.azure.com:443/` · база: `mydb`\n\n**В Azure:** конечную точку и ключ найдите на портале Azure в разделе *Ключи* учётной записи Cosmos DB.\n\n**Локальный эмулятор:** используйте `https://localhost:8081` и известный ключ эмулятора.\n\n**Если не получается:** брандмауэр учётной записи должен разрешать ваш IP, либо подключайтесь из разрешённой сети."
+    },
+    "bigquery": {
+      "project_id": "Идентификатор проекта Google Cloud",
+      "dataset_id": "Идентификаторы наборов: пусто для всех или один/несколько через запятую",
+      "credentials_path": "Путь к JSON-файлу учётной записи службы (необязательно)",
+      "location": "Регион BigQuery (по умолчанию: US)",
+      "authInstructions": "**Пример:** project_id: `my-gcp-project` · dataset_id: `analytics` · credentials_path: `/path/to/key.json` · location: `US`\n\n**Вариант 1. Application Default Credentials (рекомендуется):**\nУстановите [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) и выполните `gcloud auth application-default login`. Поле `credentials_path` оставьте пустым.\n\n**Вариант 2. Ключ учётной записи службы:**\nСоздайте учётную запись службы в Google Cloud Console, скачайте JSON-ключ и укажите полный путь в `credentials_path`. Выдайте роли **BigQuery Data Viewer** и **BigQuery Job User**.\n\n**Вариант 3. Переменная среды:**\nЗадайте `GOOGLE_APPLICATION_CREDENTIALS` как путь к JSON-файлу учётной записи. Поле `credentials_path` оставьте пустым."
+    },
+    "athena": {
+      "aws_profile": "Имя профиля AWS из ~/.aws/credentials (если задано, ключ и секрет не нужны)",
+      "aws_access_key_id": "Идентификатор ключа доступа AWS (не нужен при aws_profile)",
+      "aws_secret_access_key": "Секретный ключ доступа AWS (не нужен при aws_profile)",
+      "aws_session_token": "Сеансовый токен AWS (нужен для временных учётных данных)",
+      "region_name": "Имя региона AWS",
+      "workgroup": "Имя рабочей группы Athena (путь вывода берётся из её настроек)",
+      "output_location": "Путь S3 для результатов запросов (например, s3://bucket/path/). Если пусто, берётся настройка рабочей группы.",
+      "database": "База или каталог по умолчанию для запросов",
+      "query_timeout": "Тайм-аут выполнения запроса в секундах (по умолчанию: 300 = 5 минут)",
+      "authInstructions": "**Пример (профиль):** aws_profile: `default` · region_name: `us-east-1` · workgroup: `primary` · database: `my_database`\n\n**Пример (ключи):** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1`\n\n**Вариант 1. Профиль AWS (рекомендуется):**\nУкажите в `aws_profile` имя из `~/.aws/credentials`. Настройка: `aws configure --profile <name>`. Ключ и секрет не нужны.\n\n**Вариант 2. Явные учётные данные:**\nВведите `aws_access_key_id` и `aws_secret_access_key`. Для временных данных добавьте `aws_session_token`.\n\n**Нужные права IAM:** `athena:StartQueryExecution`, `athena:GetQueryExecution`, `athena:GetQueryResults`, `athena:GetWorkGroup`, `athena:ListDatabases`, `athena:ListTableMetadata`, а также права S3 и Glue на корзины данных и результатов."
+    },
+    "kusto": {
+      "kusto_cluster": "например, https://mycluster.region.kusto.windows.net",
+      "kusto_database": "Имя базы (обязательно)",
+      "client_id": "Только для субъекта-службы",
+      "client_secret": "Только для субъекта-службы",
+      "tenant_id": "Только для субъекта-службы",
+      "authInstructions": "**Вариант 1. Вход Entra ID (рекомендуется):** войдите от своего имени и используйте уже выданные права Kusto. Этот вариант появляется, если на сервере задан `KUSTO_OAUTH_CLIENT_ID`.\n\n**Вариант 2. Идентичность Azure по умолчанию:** вход Azure CLI (`az login`), управляемая идентичность, учётные данные VS Code или переменные среды.\n\n**Вариант 3. Субъект-служба:** укажите `client_id`, `client_secret` и `tenant_id` субъекта с доступом к кластеру.\n\nУ каждой идентичности уже должен быть доступ к плоскости данных выбранной базы Kusto."
+    },
+    "databricks": {
+      "server_hostname": "например, adb-1234567890.11.azuredatabricks.net",
+      "http_path": "HTTP-путь SQL-склада, например /sql/1.0/warehouses/abc123",
+      "catalog": "Имя Unity Catalog (оставьте пустым, чтобы видеть все каталоги)",
+      "schema": "Имя схемы (оставьте пустым, чтобы видеть все схемы каталога)",
+      "access_token": "Персональный токен доступа Databricks (dapi...)",
+      "authInstructions": "**Где взять:** в рабочей области Databricks откройте **SQL → SQL Warehouses** (левая панель), выберите склад и вкладку **Сведения о подключении**: скопируйте **имя узла сервера** и **HTTP-путь**.\n\n**Токен доступа:** аватар (справа сверху) → **Параметры → Разработчик → Токены доступа → Создать токен**. Он начинается с `dapi` и показывается только один раз.\n\n**Права:** у пользователя токена нужны `USE CATALOG` / `USE SCHEMA` и `SELECT` на объекты Unity Catalog, которые вы читаете.\n\n**Область:** оставьте *каталог* и *схему* пустыми, чтобы видеть всё доступное, или задайте их, чтобы сразу перейти к нужному месту. Например, встроенный каталог `samples` → `nyctaxi` → `trips`.\n\n**Нет учётной записи?** Databricks Free Edition работает без сервера, бесплатно и уже содержит каталог `samples`. Кластер и склад настраивать не нужно."
+    },
+    "superset": {
+      "url": "Базовый URL Superset (например, https://bi.company.com)",
+      "username": "Имя пользователя Superset (необязательно при SSO)",
+      "password": "Пароль Superset (необязательно при SSO)",
+      "authInstructions": "**Пример:** url: `https://bi.company.com` · username: `admin` · password: `***`\n\n**Настройка:** укажите базовый URL экземпляра Superset и учётные данные пользователя с ролью не ниже **Gamma** (чтение наборов).\n\n**SSO:** если в Superset включён SSO, используйте мост SSO вместо пароля (настройка через `PLG_SUPERSET_SSO_LOGIN_URL`)."
+    },
+    "azure_blob": {
+      "account_name": "Имя учётной записи хранения Azure",
+      "container_name": "Имя контейнера Blob Azure",
+      "connection_string": "Строка подключения хранилища Azure (вместо имени учётной записи и ключей)",
+      "credential_chain": "Упорядоченный список поставщиков учётных данных Azure (cli;managed_identity;env)",
+      "account_key": "Ключ учётной записи хранения Azure",
+      "sas_token": "Токен SAS Azure",
+      "endpoint": "Переопределение конечной точки Azure",
+      "authInstructions": "**Пример (строка подключения):** connection_string: `DefaultEndpointsProtocol=https;AccountName=...` · container_name: `mydata`\n\n**Пример (ключ учётной записи):** account_name: `mystorageacct` · container_name: `mydata` · account_key: `abc123...`\n\n**Вариант 1. Строка подключения (проще всего):**\nВозьмите её на портале Azure → учётная запись хранения → ключи доступа. Вставьте в `connection_string`; `account_name` можно не указывать.\n\n**Вариант 2. Ключ учётной записи:**\nПортал Azure → учётная запись хранения → ключи доступа. Используйте `account_name` + `account_key`.\n\n**Вариант 3. Токен SAS (удобно для ограниченного доступа):**\nСоздайте на портале Azure → учётная запись хранения → Shared access signature. Используйте `account_name` + `sas_token`. Можно ограничить по времени и правам.\n\n**Вариант 4. Azure CLI / управляемая идентичность (безопаснее всего):**\nДостаточно `account_name` + `container_name`. Нужен `az login` или управляемая идентичность.\n\n**Поддерживаемые форматы:** CSV, Parquet, JSON, JSONL"
+    },
+    "s3": {
+      "aws_access_key_id": "Идентификатор ключа доступа AWS",
+      "aws_secret_access_key": "Секретный ключ доступа AWS",
+      "aws_session_token": "Сеансовый токен AWS (нужен для временных учётных данных)",
+      "region_name": "Имя региона AWS",
+      "bucket": "Имя корзины S3",
+      "authInstructions": "**Пример:** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1` · bucket: `my-data-bucket`\n\n**Как получить ключи:** консоль AWS → IAM → Пользователи → учётные данные безопасности → создать ключ доступа → «приложение вне AWS».\n\n**Нужные права:** `s3:GetObject` и `s3:ListBucket` на вашу корзину.\n\n**Поддерживаемые форматы:** CSV, Parquet, JSON, JSONL"
+    },
+    "local_folder": {
+      "root_dir": "Абсолютный путь к локальному каталогу для просмотра",
+      "recursive": "Включить файлы во вложенных папках",
+      "file_pattern": "Шаблон glob для фильтра файлов (например, '*.csv')",
+      "authInstructions": "Укажите в `root_dir` локальный каталог с файлами данных.\n\n**Поддерживаемые форматы:** CSV, TSV, Parquet, JSON, JSONL, Excel (.xlsx/.xls)\n\nНажмите **Выбрать папку**, чтобы открыть выбор папки, или вставьте путь к каталогу."
+    },
+    "_common": {
+      "table_filter": "Фильтр таблиц по словам (например, 'sales')"
+    }
+  }
+}

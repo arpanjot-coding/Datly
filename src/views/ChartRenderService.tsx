@@ -1,0 +1,357 @@
+/**
+ * ChartRenderService — headless chart rendering background service.
+ *
+ * This invisible component watches all charts in the Redux store and
+ * renders them off-screen using Vega's headless rendering pipeline:
+ *   vegaLite.compile() → vega.parse() → new vega.View() → toSVG() / toImageURL('png')
+ *
+ * Results are stored in:
+ *   1. Module-level chartCache (SVG + PNG) — for VisualizationView to read
+ *   2. `state.chartThumbnails[chartId]` in Redux (PNG data URL) — for
+ *      DataThread / ChartRecBox / etc. <img> tags. Kept in its own slice
+ *      so thumbnail updates don't invalidate the `charts` array reference.
+ *
+ * This eliminates redundant DOM-based Vega rendering in DataThread
+ * and EncodingShelfThread, replacing heavy <VegaLite> / embed() calls
+ * with lightweight <img src={thumbnail}> elements.
+ */
+
+import { FC, useEffect, useRef, useCallback } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { DataFormulatorState, dfActions, dfSelectors } from '../app/dfSlice';
+import { Chart, DictTable, FieldItem, FieldSemanticsInfo } from '../components/ComponentType';
+import { assembleVegaChart, prepVisTable } from '../app/utils';
+import { buildEmbeddedDataForChart } from '../app/restyle';
+import { getDataTable, checkChartAvailability } from './ChartUtils';
+import { getCachedChart, setCachedChart, computeCacheKey, invalidateChart, ChartCacheEntry } from '../app/chartCache';
+import { surface } from '../app/tokens';
+import { displayRowsCache, computeDisplayRowsCacheKey } from '../app/displayRowsCache';
+import { compile } from 'vega-lite';
+import { parse, View } from 'vega';
+import _ from 'lodash';
+
+/** Thumbnail rendering dimensions (matches DataThread's 100×80 spec assembly) */
+const THUMB_WIDTH = 120;
+const THUMB_HEIGHT = 90;
+
+/** Full-size base rendering dimensions */
+const FULL_WIDTH = 300;
+const FULL_HEIGHT = 300;
+
+interface RenderJob {
+    chart: Chart;
+    table: DictTable;
+    conceptShelfItems: FieldItem[];
+    cacheKey: string;
+    fieldSemantics?: Record<string, FieldSemanticsInfo>;
+}
+
+/**
+ * Render a Vega-Lite spec headlessly to SVG and PNG.
+ * Uses vega.View with no DOM attachment — pure string/canvas output.
+ */
+async function renderHeadless(
+    vlSpec: any,
+): Promise<{ svg: string; pngDataUrl: string; width: number; height: number }> {
+    // Compile Vega-Lite → Vega spec
+    const vgSpec = compile(vlSpec as any).spec;
+
+    // Parse into Vega runtime dataflow
+    const runtime = parse(vgSpec);
+
+    // Create a headless View (no DOM container needed)
+    const view = new View(runtime, { renderer: 'none' });
+
+    // Initialize the view (runs dataflow)
+    await view.runAsync();
+
+    // Generate SVG string and PNG data URL in parallel
+    const [svg, pngDataUrl] = await Promise.all([
+        view.toSVG(),
+        view.toImageURL('png', 2),  // scale factor 2 for retina
+    ]);
+
+    // Capture the intrinsic size the engine laid the chart out at (includes
+    // axes / legends / titles), so consumers can preserve its true aspect
+    // ratio instead of forcing a fixed box.
+    const { width, height } = extractSvgSize(svg);
+
+    // Finalize the view to free resources
+    view.finalize();
+
+    return { svg, pngDataUrl, width, height };
+}
+
+/**
+ * Extract the intrinsic pixel dimensions from a Vega-rendered SVG string.
+ * Vega emits `<svg ... width="W" height="H" ...>`; we read those so the
+ * chart's engine-decided aspect ratio is preserved downstream. Falls back to
+ * the base render size if the attributes can't be parsed.
+ */
+function extractSvgSize(svg: string): { width: number; height: number } {
+    const tag = svg.match(/<svg\b[^>]*>/i)?.[0] ?? '';
+    const w = tag.match(/\bwidth="([\d.]+)"/);
+    const h = tag.match(/\bheight="([\d.]+)"/);
+    return {
+        width: w ? Math.round(parseFloat(w[1])) : FULL_WIDTH,
+        height: h ? Math.round(parseFloat(h[1])) : FULL_HEIGHT,
+    };
+}
+
+/**
+ * Scale a PNG data URL down to the given dimensions.
+ * Renders the full-size image onto a smaller canvas to produce a
+ * properly downscaled thumbnail that preserves the chart's visual
+ * appearance (avoiding Vega-Lite layout optimizations for small sizes).
+ */
+async function scalePngDown(
+    pngDataUrl: string,
+    targetWidth: number,
+    targetHeight: number,
+): Promise<string> {
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = pngDataUrl;
+    });
+
+    // Compute scaled size that fits within target bounds while preserving aspect ratio
+    const scale = Math.min(targetWidth / img.width, targetHeight / img.height, 1);
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w * 2;   // 2x for retina
+    canvas.height = h * 2;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = surface.plot;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    return canvas.toDataURL('image/png');
+}
+
+export const ChartRenderService: FC = () => {
+    const dispatch = useDispatch();
+
+    const charts = useSelector(dfSelectors.getAllCharts);
+    const tables = useSelector(dfSelectors.getAllTables);
+    const conceptShelfItems = useSelector((state: DataFormulatorState) => state.conceptShelfItems);
+    // The canvas types fields (and so picks color scales) from these, so the
+    // thumbnail must read them too or the two renders disagree.
+    const tableSemantics = useSelector((state: DataFormulatorState) => state.tableSemantics);
+    const chartSynthesisInProgress = useSelector((state: DataFormulatorState) => state.chartSynthesisInProgress);
+    const maxStretchFactor = useSelector((state: DataFormulatorState) => state.config.maxStretchFactor);
+    // Re-run when the focused canvas caches a fresh display-row sample so
+    // thumbnails can use the same richer data the main chart is rendering.
+    const displayRowsTick = useSelector((state: DataFormulatorState) => state.displayRowsTick);
+    // Read the thumbnails map via a ref so we can check current values inside
+    // the effect without adding the map to the dep list (the dispatch we
+    // issue below mutates it, and including it would re-enter the effect).
+    const chartThumbnailsRef = useRef<Record<string, string>>({});
+    chartThumbnailsRef.current = useSelector((state: DataFormulatorState) => state.chartThumbnails) || {};
+
+    // Track which charts are currently being rendered to avoid duplicates
+    const renderingRef = useRef<Set<string>>(new Set());
+
+    // Track previous chart count for cleanup
+    const prevChartIdsRef = useRef<Set<string>>(new Set());
+
+    const processChart = useCallback(async (job: RenderJob) => {
+        const { chart, table, conceptShelfItems: items, cacheKey, fieldSemantics } = job;
+
+        // Skip if already rendering this chart
+        if (renderingRef.current.has(chart.id)) return;
+        renderingRef.current.add(chart.id);
+
+        try {
+            // --- Prepare data (mirror MemoizedChartObject's pipeline) ---
+            // Prefer the same sample VisualizationView fetched for the
+            // focused canvas — for virtual tables `table.rows` is only a
+            // small preview slice, so rendering from it produces a
+            // thumbnail that doesn't match the main chart. The canvas
+            // populates `displayRowsCache` with up to 1000 server-sampled
+            // rows; reuse that when present.
+            const dispKey = computeDisplayRowsCacheKey(table, chart, items);
+            const cachedDisplay = displayRowsCache.get(dispKey);
+            let visTableRows: any[] = cachedDisplay
+                ? structuredClone(cachedDisplay.rows)
+                : structuredClone(table.rows);
+
+            // Pre-aggregate for the encoding map
+            visTableRows = prepVisTable(visTableRows, items, chart.encodingMap);
+
+            // --- Resolve the spec to render ---
+            // If a style variant is active, render its stored Vega-Lite spec so
+            // the thumbnail matches what the user sees in the focused canvas.
+            // Otherwise assemble the default spec from the encoding map.
+            // (See design-docs/28-chart-style-refinement-agent.md.)
+            const activeVariant = chart.activeVariantId
+                ? chart.styleVariants?.find(v => v.id === chart.activeVariantId)
+                : undefined;
+
+            let fullSpec: any;
+            if (activeVariant) {
+                fullSpec = JSON.parse(JSON.stringify(activeVariant.vlSpec));
+                // Plug data using the same conversion the assemble pipeline
+                // applies (e.g. Year 1980 → "1980"). Variants embed axis
+                // formats / timeUnit chosen against the converted shape, so
+                // re-attaching raw rows would mismatch those formats.
+                const variantValues = buildEmbeddedDataForChart(
+                    chart, visTableRows, table.metadata, items,
+                );
+                fullSpec.data = { values: variantValues };
+            } else {
+                fullSpec = assembleVegaChart(
+                    chart.chartType,
+                    chart.encodingMap,
+                    items,
+                    visTableRows,
+                    table.metadata,
+                    FULL_WIDTH,
+                    FULL_HEIGHT,
+                    true,   // add tooltips
+                    chart.config,
+                    1,
+                    maxStretchFactor,
+                    undefined,
+                    fieldSemantics,
+                    undefined,
+                    undefined,
+                    chart.themeId,
+                );
+            }
+
+            if (!fullSpec || fullSpec === "Table") return;
+            // --- Render headlessly (single full-size render) ---
+            const fullResult = await renderHeadless(fullSpec);
+
+            // Scale the full-size PNG down to thumbnail dimensions
+            const thumbnailPng = await scalePngDown(
+                fullResult.pngDataUrl,
+                THUMB_WIDTH,
+                THUMB_HEIGHT,
+            );
+
+            // --- Store in cache ---
+            const entry: ChartCacheEntry = {
+                svg: fullResult.svg,
+                thumbnailDataUrl: thumbnailPng,
+                fullPngDataUrl: fullResult.pngDataUrl,
+                specKey: cacheKey,
+                naturalWidth: fullResult.width,
+                naturalHeight: fullResult.height,
+            };
+            setCachedChart(chart.id, entry);
+
+            // --- Dispatch thumbnail to Redux for DataThread ---
+            dispatch(dfActions.updateChartThumbnail({
+                chartId: chart.id,
+                thumbnail: thumbnailPng,
+            }));
+
+        } catch (err) {
+            // Rendering failures are non-fatal — chart will just show skeleton
+            console.warn(`ChartRenderService: failed to render chart ${chart.id}`, err);
+        } finally {
+            renderingRef.current.delete(chart.id);
+        }
+    }, [dispatch]);
+
+    useEffect(() => {
+        // Clean up cache entries for deleted charts
+        const currentIds = new Set(charts.map(c => c.id));
+        for (const prevId of prevChartIdsRef.current) {
+            if (!currentIds.has(prevId)) {
+                invalidateChart(prevId);
+            }
+        }
+        prevChartIdsRef.current = currentIds;
+
+        // Build render jobs for charts that need (re-)rendering
+        const jobs: RenderJob[] = [];
+
+        for (const chart of charts) {
+            // Skip non-renderable chart types
+            if (['Auto', '?', 'Table'].includes(chart.chartType)) continue;
+
+            // Skip charts whose synthesis is in progress
+            if (chartSynthesisInProgress.includes(chart.id)) continue;
+
+            // Get the chart's data table
+            const table = getDataTable(chart, tables, charts, conceptShelfItems);
+            if (!table || table.rows.length === 0) continue;
+
+            // Check if chart fields are available in the table
+            if (!checkChartAvailability(chart, conceptShelfItems, table.rows)) continue;
+
+            // Compute cache key and check if rendering is needed
+            const activeVariant = chart.activeVariantId
+                ? chart.styleVariants?.find(v => v.id === chart.activeVariantId)
+                : undefined;
+            // Mix in the canvas's display-row sample fingerprint so a
+            // thumbnail rendered from the preview slice gets re-rendered
+            // once the richer server sample arrives in `displayRowsCache`.
+            const displayEntry = displayRowsCache.get(
+                computeDisplayRowsCacheKey(table, chart, conceptShelfItems),
+            );
+            const displayFingerprint = displayEntry
+                ? `disp:${displayEntry.rows.length}/${displayEntry.totalCount}`
+                : `preview:${table.rows.length}`;
+            const fieldSemantics = tableSemantics.find(info => info.tableId === table.id)?.fields;
+            const cacheKey = computeCacheKey(
+                chart.chartType,
+                chart.encodingMap,
+                chart.config,
+                table.rows.length,
+                `${table.contentHash || ''}|${displayFingerprint}`,
+                table.id,
+                table.metadata,
+                activeVariant?.id,
+                activeVariant?.vlSpec,
+                fieldSemantics,
+                chart.themeId,
+            );
+
+            const cached = getCachedChart(chart.id);
+            if (cached && cached.specKey === cacheKey) {
+                // Already up-to-date — but ensure the Redux thumbnail slice
+                // matches (e.g. after a page reload where the module cache
+                // is repopulated but the slice was reset to {}).
+                const current = chartThumbnailsRef.current[chart.id];
+                if (!current || current !== cached.thumbnailDataUrl) {
+                    dispatch(dfActions.updateChartThumbnail({
+                        chartId: chart.id,
+                        thumbnail: cached.thumbnailDataUrl,
+                    }));
+                }
+                continue;
+            }
+
+            jobs.push({ chart, table, conceptShelfItems, cacheKey, fieldSemantics });
+        }
+
+        // Process jobs sequentially to avoid overwhelming the browser
+        // Use a small delay between renders to keep the UI responsive
+        if (jobs.length > 0) {
+            let cancelled = false;
+
+            const processJobs = async () => {
+                for (const job of jobs) {
+                    if (cancelled) break;
+                    await processChart(job);
+                    // Small yield to let React process updates
+                    await new Promise(resolve => setTimeout(resolve, 16));
+                }
+            };
+
+            processJobs();
+
+            return () => { cancelled = true; };
+        }
+    }, [charts, tables, conceptShelfItems, tableSemantics, chartSynthesisInProgress, displayRowsTick, processChart, dispatch]);
+
+    // This component renders nothing
+    return null;
+};

@@ -1,0 +1,57 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for more information:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+# https://containers.dev/guide/dependabot
+
+version: 2
+updates:
+ - package-ecosystem: "devcontainers"
+   directory: "/"
+   target-branch: "main"
+   schedule:
+     interval: weekly
+
+ # Frontend JavaScript dependencies (package.json / yarn.lock)
+ - package-ecosystem: "npm"
+   directory: "/"
+   target-branch: "main"
+   schedule:
+     interval: weekly
+   groups:
+     frontend-minor-patch:
+       patterns:
+         - "*"
+       update-types:
+         - minor
+         - patch
+
+ # Backend Python dependencies (pyproject.toml / uv.lock)
+ - package-ecosystem: "uv"
+   directory: "/"
+   target-branch: "main"
+   schedule:
+     interval: weekly
+   groups:
+     python-minor-patch:
+       patterns:
+         - "*"
+       update-types:
+         - minor
+         - patch
+   ignore:
+     # LiteLLM 1.92+ no longer provides portable Windows/macOS wheels.
+     - dependency-name: "litellm"
+       versions:
+         - ">=1.92"
+
+ # GitHub Actions workflow dependencies
+ - package-ecosystem: "github-actions"
+   directory: "/"
+   target-branch: "main"
+   schedule:
+     interval: weekly
+   groups:
+     github-actions:
+       patterns:
+         - "*"

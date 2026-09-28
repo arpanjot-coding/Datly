@@ -1,0 +1,18 @@
+{
+  "navigation": {
+    "startExploration": "Verkenning starten",
+    "installLocally": "Lokaal installeren",
+    "tryOnlineDemo": "Online demo proberen",
+    "video": "Video",
+    "github": "GitHub",
+    "contactUs": "Contact",
+    "termsOfUse": "Gebruiksvoorwaarden",
+    "about": "Over Datly",
+    "home": "Start",
+    "data": "Gegevens",
+    "visualization": "Visualisatie",
+    "report": "Rapport",
+    "chat": "Chat",
+    "agentRules": "Agentregels"
+  }
+}

@@ -1,0 +1,45 @@
+# Core dependencies
+pandas
+flask
+flask-cors
+flask-limiter
+openai
+python-dotenv
+# litellm 1.92+ is Rust/maturin (manylinux-only wheels) — hangs on Windows/macOS
+# without a Rust toolchain. Pin below it; >=1.84.0 keeps the CVE fix.
+litellm>=1.84.0,<1.92
+duckdb
+numpy
+vl-convert-python
+beautifulsoup4
+scikit-learn
+pyyaml
+pyarrow>=13.0.0
+xlrd
+openpyxl>=3.1.0
+lxml
+yfinance
+
+# Data-loader deps (all included; try/except at import time keeps things safe)
+pymongo
+azure-cosmos
+azure-storage-blob
+azure-identity
+azure-kusto-data
+azure-keyvault-secrets
+pymysql
+clickhouse-connect
+mssql-python>=1.11.0
+psycopg2-binary
+boto3
+google-cloud-bigquery
+google-auth
+db-dtypes
+databricks-sql-connector
+
+# SSO / Auth deps
+PyJWT[crypto]>=2.8.0
+requests
+flask-session>=0.8.0
+argon2-cffi>=23.1.0
+-e .

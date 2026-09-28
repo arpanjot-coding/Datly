@@ -1,0 +1,116 @@
+{
+  "loader": {
+    "mysql": {
+      "user": "Όνομα χρήστη MySQL",
+      "password": "αφήστε κενό αν δεν υπάρχει κωδικός",
+      "host": "διεύθυνση διακομιστή",
+      "port": "θύρα διακομιστή",
+      "database": "Όνομα βάσης (αφήστε κενό για περιήγηση σε όλες τις βάσεις)",
+      "authInstructions": "**Παράδειγμα:** user: `root` · host: `localhost` · port: `3306` · database: `mydb`\n\n**Τοπική εγκατάσταση:** Βεβαιωθείτε ότι η MySQL εκτελείται: `brew services list` (macOS) ή `systemctl status mysql` (Linux). Αφήστε τον κωδικό κενό αν δεν έχει οριστεί.\n\n**Απομακρυσμένη εγκατάσταση:** Ζητήστε host, port, όνομα χρήστη και κωδικό από τον διαχειριστή βάσης. Βεβαιωθείτε ότι ο διακομιστής επιτρέπει απομακρυσμένες συνδέσεις και ότι η IP σας είναι στη λίστα επιτρεπόμενων.\n\n**Εύρος:** Αφήστε το *database* κενό για περιήγηση σε όλες τις βάσεις του διακομιστή, ή συμπληρώστε το για να πάτε απευθείας στους πίνακες εκείνης της βάσης.\n\n**Αντιμετώπιση προβλημάτων:** Δοκιμή με `mysql -u <user> -p -h <host> -P <port> <database>`"
+    },
+    "mssql": {
+      "server": "Διεύθυνση κεντρικού υπολογιστή SQL Server ή όνομα παρουσίας",
+      "database": "Όνομα βάσης (αφήστε κενό για περιήγηση σε όλες τις βάσεις)",
+      "user": "Όνομα χρήστη (αφήστε κενό για Entra ID / Windows auth)",
+      "password": "Κωδικός (αφήστε κενό για Entra ID / Windows auth)",
+      "port": "Θύρα SQL Server (προεπιλογή: 1433)",
+      "encrypt": "Ενεργοποίηση κρυπτογράφησης (yes/no)",
+      "trust_server_certificate": "Εμπιστοσύνη πιστοποιητικού διακομιστή (yes/no)",
+      "connection_timeout": "Χρονικό όριο σύνδεσης σε δευτερόλεπτα",
+      "authInstructions": "**Microsoft Entra ID (συνιστάται):** Εκτελέστε μία φορά `az login` στο τερματικό και κατόπιν ξεκινήστε το Datly. Επιλέξτε *Microsoft Entra ID*, συμπληρώστε μόνο `server` και (προαιρετικά) `database`, και αφήστε όνομα χρήστη/κωδικό κενά. Χρησιμοποιούνται αυτόματα τα διαπιστευτήρια του Azure CLI. Λειτουργούν επίσης Managed Identity, VS Code και διαπιστευτήρια περιβάλλοντος μέσω `DefaultAzureCredential`.\n\n> Η ταυτότητα Entra πρέπει να έχει πρόσβαση στη βάση, π.χ. ένας διαχειριστής εκτελεί `CREATE USER [you@contoso.com] FROM EXTERNAL PROVIDER;` και εκχωρεί τους απαραίτητους ρόλους.\n\n**Παράδειγμα (Entra ID):** server: `myserver.database.windows.net` · database: `mydb` (όνομα χρήστη/κωδικός κενά)\n\n**Ταυτοποίηση SQL Server:** Επιλέξτε *Ταυτοποίηση SQL Server* και δώστε όνομα χρήστη και κωδικό.\n\n**Παράδειγμα (SQL auth):** server: `localhost` · database: `mydb` · user: `sa` · password: `MyP@ss` · port: `1433`\n\n**Ταυτοποίηση Windows (μόνο Windows):** Επιλέξτε *Ταυτοποίηση Windows* και αφήστε όνομα χρήστη/κωδικό κενά.\n\n**Πρόγραμμα οδήγησης:** Το πρόγραμμα οδήγησης Microsoft SQL Server συνοδεύει το Datly. Δεν χρειάζεται ξεχωριστή εγκατάσταση ODBC. Για Entra ID, εγκαταστήστε το Azure CLI και εκτελέστε `az login`.\n\n**Αντιμετώπιση προβλημάτων:** Επιβεβαιώστε ότι είστε συνδεδεμένοι με `az account show`. Βεβαιωθείτε ότι η υπηρεσία SQL Server εκτελείται και ότι το TCP/IP είναι ενεργό. Δοκιμή SQL auth με `sqlcmd -S <server> -d <database> -U <user> -P <password>`."
+    },
+    "postgresql": {
+      "user": "Όνομα χρήστη PostgreSQL",
+      "password": "αφήστε κενό αν δεν υπάρχει κωδικός",
+      "host": "Κεντρικός υπολογιστής PostgreSQL",
+      "port": "Θύρα PostgreSQL",
+      "database": "Όνομα βάσης (αφήστε κενό για περιήγηση σε όλες τις βάσεις)",
+      "authInstructions": "**Παράδειγμα:** user: `postgres` · host: `localhost` · port: `5432` · database: `mydb`\n\n**Τοπική εγκατάσταση:** Βεβαιωθείτε ότι η PostgreSQL εκτελείται: `brew services list` (macOS) ή `systemctl status postgresql` (Linux). Αφήστε τον κωδικό κενό αν δεν έχει οριστεί.\n\n**Απομακρυσμένη εγκατάσταση:** Ζητήστε host, port, όνομα χρήστη και κωδικό από τον διαχειριστή βάσης. Ο χρήστης πρέπει να έχει δικαιώματα SELECT στους πίνακες που θέλετε να προσπελάσετε.\n\n**Εύρος:** Αφήστε το *database* κενό για περιήγηση σε όλες τις βάσεις του διακομιστή, ή συμπληρώστε το για να πάτε απευθείας σε σχήματα/πίνακες εκείνης της βάσης.\n\n**Αντιμετώπιση προβλημάτων:** Δοκιμή με `psql -U <user> -h <host> -p <port> -d <database>`"
+    },
+    "mongodb": {
+      "host": "διεύθυνση διακομιστή",
+      "port": "θύρα διακομιστή",
+      "username": "αφήστε κενό αν δεν υπάρχει ταυτοποίηση",
+      "password": "αφήστε κενό αν δεν υπάρχει ταυτοποίηση",
+      "database": "όνομα βάσης",
+      "collection": "αφήστε κενό για λίστα όλων των συλλογών",
+      "authSource": "βάση ταυτοποίησης (προεπιλογή η βάση προορισμού)",
+      "authInstructions": "**Παράδειγμα:** host: `localhost` · port: `27017` · database: `mydb` · collection: `users`\n\n**Τοπική εγκατάσταση:** Βεβαιωθείτε ότι η MongoDB εκτελείται. Αφήστε όνομα χρήστη και κωδικό κενά αν η ταυτοποίηση δεν είναι ενεργή.\n\n**Απομακρυσμένη εγκατάσταση:** Ζητήστε host, port, όνομα χρήστη και κωδικό από τον διαχειριστή βάσης.\n\n**Αντιμετώπιση προβλημάτων:** Δοκιμή με `mongosh --host <host> --port <port>`"
+    },
+    "cosmosdb": {
+      "endpoint": "URL τελικού σημείου λογαριασμού Cosmos DB",
+      "key": "κλειδί λογαριασμού ή κλειδί εξομοιωτή",
+      "database": "όνομα βάσης",
+      "container": "αφήστε κενό για λίστα όλων των περιεκτών",
+      "authInstructions": "**Παράδειγμα:** endpoint: `https://myaccount.documents.azure.com:443/` · database: `mydb`\n\n**Ρύθμιση Azure:** Βρείτε το τελικό σημείο και το κλειδί στην πύλη Azure, στην ενότητα *Keys* του λογαριασμού Cosmos DB.\n\n**Τοπικός εξομοιωτής:** Χρησιμοποιήστε endpoint `https://localhost:8081` με το γνωστό κλειδί εξομοιωτή.\n\n**Αντιμετώπιση προβλημάτων:** Βεβαιωθείτε ότι το τείχος προστασίας του λογαριασμού επιτρέπει την IP σας, ή συνδεθείτε από επιτρεπόμενο δίκτυο."
+    },
+    "bigquery": {
+      "project_id": "Αναγνωριστικό έργου Google Cloud",
+      "dataset_id": "Αναγνωριστικά συνόλων δεδομένων: αφήστε κενό για όλα, ή ορίστε ένα ή περισσότερα χωρισμένα με κόμματα",
+      "credentials_path": "Διαδρομή αρχείου JSON λογαριασμού υπηρεσίας (προαιρετικό)",
+      "location": "Τοποθεσία BigQuery (προεπιλογή: US)",
+      "authInstructions": "**Παράδειγμα:** project_id: `my-gcp-project` · dataset_id: `analytics` · credentials_path: `/path/to/key.json` · location: `US`\n\n**Επιλογή 1. Application Default Credentials (συνιστάται):**\nΕγκαταστήστε το [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) και εκτελέστε `gcloud auth application-default login`. Αφήστε το `credentials_path` κενό.\n\n**Επιλογή 2. Αρχείο κλειδιού λογαριασμού υπηρεσίας:**\nΔημιουργήστε λογαριασμό υπηρεσίας στην Κονσόλα Google Cloud, κατεβάστε το κλειδί JSON και εισαγάγετε την πλήρη διαδρομή στο `credentials_path`. Εκχωρήστε τους ρόλους **BigQuery Data Viewer** και **BigQuery Job User**.\n\n**Επιλογή 3. Μεταβλητή περιβάλλοντος:**\nΟρίστε το `GOOGLE_APPLICATION_CREDENTIALS` στη διαδρομή του αρχείου JSON του λογαριασμού υπηρεσίας. Αφήστε το `credentials_path` κενό."
+    },
+    "athena": {
+      "aws_profile": "Όνομα προφίλ AWS από ~/.aws/credentials (αν οριστεί, δεν απαιτούνται κλειδί πρόσβασης και μυστικό)",
+      "aws_access_key_id": "Αναγνωριστικό κλειδιού πρόσβασης AWS (δεν απαιτείται αν χρησιμοποιείτε aws_profile)",
+      "aws_secret_access_key": "Μυστικό κλειδί πρόσβασης AWS (δεν απαιτείται αν χρησιμοποιείτε aws_profile)",
+      "aws_session_token": "Διακριτικό συνεδρίας AWS (απαιτείται για προσωρινά διαπιστευτήρια)",
+      "region_name": "Όνομα περιοχής AWS",
+      "workgroup": "Όνομα ομάδας εργασίας Athena (η θέση εξόδου λαμβάνεται από τη ρύθμιση της ομάδας)",
+      "output_location": "Θέση εξόδου S3 για αποτελέσματα ερωτημάτων (π.χ. s3://bucket/path/). Αν είναι κενή, χρησιμοποιείται η ρύθμιση της ομάδας εργασίας.",
+      "database": "Προεπιλεγμένη βάση/κατάλογος για ερωτήματα",
+      "query_timeout": "Χρονικό όριο εκτέλεσης ερωτήματος σε δευτερόλεπτα (προεπιλογή: 300 = 5 λεπτά)",
+      "authInstructions": "**Παράδειγμα (προφίλ):** aws_profile: `default` · region_name: `us-east-1` · workgroup: `primary` · database: `my_database`\n\n**Παράδειγμα (κλειδιά):** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1`\n\n**Επιλογή 1. Προφίλ AWS (συνιστάται):**\nΟρίστε το `aws_profile` σε όνομα προφίλ από `~/.aws/credentials`. Ρύθμιση με `aws configure --profile <name>`. Δεν χρειάζεται κλειδί πρόσβασης ή μυστικό.\n\n**Επιλογή 2. Ρητά διαπιστευτήρια:**\nΕισαγάγετε απευθείας `aws_access_key_id` και `aws_secret_access_key`. Προσθέστε `aws_session_token` για προσωρινά διαπιστευτήρια.\n\n**Απαιτούμενα δικαιώματα IAM:** `athena:StartQueryExecution`, `athena:GetQueryExecution`, `athena:GetQueryResults`, `athena:GetWorkGroup`, `athena:ListDatabases`, `athena:ListTableMetadata`, καθώς και δικαιώματα S3 και Glue στους κάδους δεδομένων/αποτελεσμάτων."
+    },
+    "kusto": {
+      "kusto_cluster": "π.χ. https://mycluster.region.kusto.windows.net",
+      "kusto_database": "Όνομα βάσης (υποχρεωτικό)",
+      "client_id": "Μόνο για υπηρεσιακή αρχή",
+      "client_secret": "Μόνο για υπηρεσιακή αρχή",
+      "tenant_id": "Μόνο για υπηρεσιακή αρχή",
+      "authInstructions": "**Επιλογή 1. Σύνδεση Entra ID (συνιστάται):** Συνδεθείτε ως εσείς και χρησιμοποιήστε τα υπάρχοντα δικαιώματα Kusto. Η επιλογή εμφανίζεται όταν ο διακομιστής έχει ρυθμισμένο το `KUSTO_OAUTH_CLIENT_ID`.\n\n**Επιλογή 2. Azure Default Identity:** Χρησιμοποιήστε τη σύνδεση Azure CLI (`az login`), Managed Identity, διαπιστευτήρια VS Code ή διαπιστευτήρια περιβάλλοντος.\n\n**Επιλογή 3. Υπηρεσιακή αρχή:** Δώστε `client_id`, `client_secret` και `tenant_id` για υπηρεσιακή αρχή με πρόσβαση στο σύμπλεγμα.\n\nΚάθε ταυτότητα πρέπει ήδη να έχει πρόσβαση επιπέδου δεδομένων στην επιλεγμένη βάση Kusto."
+    },
+    "databricks": {
+      "server_hostname": "π.χ. adb-1234567890.11.azuredatabricks.net",
+      "http_path": "Διαδρομή HTTP αποθήκης SQL, π.χ. /sql/1.0/warehouses/abc123",
+      "catalog": "Όνομα Unity Catalog (αφήστε κενό για περιήγηση σε όλους τους καταλόγους)",
+      "schema": "Όνομα σχήματος (αφήστε κενό για περιήγηση σε όλα τα σχήματα του καταλόγου)",
+      "access_token": "Προσωπικό διακριτικό πρόσβασης Databricks (dapi...)",
+      "authInstructions": "**Πού θα τα βρείτε:** Στον χώρο εργασίας Databricks, ανοίξτε **SQL → SQL Warehouses** (αριστερή πλευρική γραμμή), κάντε κλικ στην αποθήκη και ανοίξτε την καρτέλα **Connection details**. Αντιγράψτε από εκεί το **Server hostname** και το **HTTP path**.\n\n**Διακριτικό πρόσβασης:** Κάντε κλικ στο άβατάρ (πάνω δεξιά) → **Settings → Developer → Access tokens → Generate new token**. Ξεκινά με `dapi` και εμφανίζεται μόνο μία φορά.\n\n**Δικαιώματα:** Ο χρήστης του διακριτικού χρειάζεται `USE CATALOG` / `USE SCHEMA` και `SELECT` στα αντικείμενα Unity Catalog που θέλετε να διαβάσετε.\n\n**Εύρος:** Αφήστε *catalog* και *schema* κενά για περιήγηση σε ό,τι έχετε πρόσβαση, ή ορίστε τα για να πάτε απευθείας σε συγκεκριμένο κατάλογο/σχήμα, π.χ. δοκιμάστε τον ενσωματωμένο κατάλογο `samples` → `nyctaxi` → `trips`.\n\n**Χωρίς λογαριασμό;** Η Databricks Free Edition είναι χωρίς διακομιστή, δωρεάν και περιλαμβάνει τον κατάλογο `samples`. Δεν χρειάζεται ρύθμιση συμπλέγματος ή αποθήκης."
+    },
+    "superset": {
+      "url": "Βασικό URL του Superset (π.χ. https://bi.company.com)",
+      "username": "Όνομα χρήστη Superset (προαιρετικό αν χρησιμοποιείτε SSO)",
+      "password": "Κωδικός Superset (προαιρετικό αν χρησιμοποιείτε SSO)",
+      "authInstructions": "**Παράδειγμα:** url: `https://bi.company.com` · username: `admin` · password: `***`\n\n**Ρύθμιση:** Δώστε το βασικό URL της παρουσίας Superset και διαπιστευτήρια χρήστη με τουλάχιστον ρόλο **Gamma** (ανάγνωση συνόλων δεδομένων).\n\n**SSO:** Αν το Superset χρησιμοποιεί SSO, χρησιμοποιήστε τη ροή γέφυρας SSO αντί για ταυτοποίηση με κωδικό (ρύθμιση μέσω `PLG_SUPERSET_SSO_LOGIN_URL`)."
+    },
+    "azure_blob": {
+      "account_name": "Όνομα λογαριασμού αποθήκευσης Azure",
+      "container_name": "Όνομα περιέκτη blob Azure",
+      "connection_string": "Συμβολοσειρά σύνδεσης αποθήκευσης Azure (εναλλακτική αντί για account_name + διαπιστευτήρια)",
+      "credential_chain": "Διατεταγμένη λίστα παρόχων διαπιστευτηρίων Azure (cli;managed_identity;env)",
+      "account_key": "Κλειδί λογαριασμού αποθήκευσης Azure",
+      "sas_token": "Διακριτικό SAS Azure",
+      "endpoint": "Παράκαμψη τελικού σημείου Azure",
+      "authInstructions": "**Παράδειγμα (συμβολοσειρά σύνδεσης):** connection_string: `DefaultEndpointsProtocol=https;AccountName=...` · container_name: `mydata`\n\n**Παράδειγμα (κλειδί λογαριασμού):** account_name: `mystorageacct` · container_name: `mydata` · account_key: `abc123...`\n\n**Επιλογή 1. Συμβολοσειρά σύνδεσης (απλούστερη):**\nΑπό την πύλη Azure → Storage Account → Access keys. Εισαγάγετε στο `connection_string`. Το `account_name` μπορεί να παραλειφθεί.\n\n**Επιλογή 2. Κλειδί λογαριασμού:**\nΑπό την πύλη Azure → Storage Account → Access keys. Χρησιμοποιήστε `account_name` + `account_key`.\n\n**Επιλογή 3. Διακριτικό SAS (συνιστάται για περιορισμένη πρόσβαση):**\nΔημιουργία από την πύλη Azure → Storage Account → Shared access signature. Χρησιμοποιήστε `account_name` + `sas_token`. Μπορεί να έχει χρονικό όριο και περιορισμένα δικαιώματα.\n\n**Επιλογή 4. Azure CLI / Managed Identity (πιο ασφαλές):**\nΔώστε μόνο `account_name` + `container_name`. Απαιτεί `az login` ή Managed Identity.\n\n**Υποστηριζόμενες μορφές:** CSV, Parquet, JSON, JSONL"
+    },
+    "s3": {
+      "aws_access_key_id": "Αναγνωριστικό κλειδιού πρόσβασης AWS",
+      "aws_secret_access_key": "Μυστικό κλειδί πρόσβασης AWS",
+      "aws_session_token": "Διακριτικό συνεδρίας AWS (απαιτείται για προσωρινά διαπιστευτήρια)",
+      "region_name": "Όνομα περιοχής AWS",
+      "bucket": "Όνομα κάδου S3",
+      "authInstructions": "**Παράδειγμα:** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1` · bucket: `my-data-bucket`\n\n**Λήψη διαπιστευτηρίων:** Κονσόλα AWS → IAM → Users → Security credentials → Create access key → επιλέξτε «Application running outside AWS».\n\n**Απαιτούμενα δικαιώματα:** `s3:GetObject` και `s3:ListBucket` στον κάδο σας.\n\n**Υποστηριζόμενες μορφές:** CSV, Parquet, JSON, JSONL"
+    },
+    "local_folder": {
+      "root_dir": "Απόλυτη διαδρομή στον τοπικό κατάλογο για περιήγηση",
+      "recursive": "Συμπερίληψη αρχείων σε υποκαταλόγους",
+      "file_pattern": "Μοτίβο glob για φιλτράρισμα αρχείων (π.χ. '*.csv')",
+      "authInstructions": "Ορίστε το `root_dir` σε τοπικό κατάλογο με αρχεία δεδομένων.\n\n**Υποστηριζόμενες μορφές:** CSV, TSV, Parquet, JSON, JSONL, Excel (.xlsx/.xls)\n\nΚάντε κλικ στο **Επιλογή φακέλου** για να ορίσετε κατάλογο, ή επικολλήστε διαδρομή."
+    },
+    "_common": {
+      "table_filter": "Φιλτράρισμα πίνακα με λέξεις-κλειδιά (π.χ. 'sales')"
+    }
+  }
+}

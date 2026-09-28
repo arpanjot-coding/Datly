@@ -1,0 +1,22 @@
+---
+description: Desktop identity is the OS account
+globs: py-src/data_formulator/auth/**/*.py
+alwaysApply: false
+---
+
+# Desktop Identity
+
+After `init_auth()`, the default identity is `local:<os_username>`.
+
+- Do not reintroduce a `browser:` identity or trust `X-Identity-Id` for workspace binding.
+- `ALLOW_ANONYMOUS` and `AUTH_PROVIDER` no longer select an identity path.
+- There is **no application login**. Do not add sign-in routes, providers,
+  or an `AuthProvider` abstraction back.
+- Connector auth is a different concern and stays: `auth/token_store.py`,
+  `auth/vault/`, `auth/gateways/kusto_oauth_gateway.py` (data-source Entra
+  sign-in), and `auth/gateways/service_tokens.py` (`/api/auth/tokens/*`).
+- `TokenStore.get_sso_token()` returns `None` by design; a connector that
+  declares `sso_exchange` resolves through the vault or a delegated popup
+  token. Use `has_cached_token()` for cheap list/discovery checks so those
+  endpoints never trigger a refresh.
+---

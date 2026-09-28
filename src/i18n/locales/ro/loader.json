@@ -1,0 +1,116 @@
+{
+  "loader": {
+    "mysql": {
+      "user": "Nume de utilizator MySQL",
+      "password": "lăsați gol dacă nu există parolă",
+      "host": "adresa serverului",
+      "port": "portul serverului",
+      "database": "Numele bazei de date (lăsați gol pentru a răsfoi toate bazele)",
+      "authInstructions": "**Exemplu:** user: `root` · host: `localhost` · port: `3306` · database: `mydb`\n\n**Configurare locală:** Asigurați-vă că MySQL rulează: `brew services list` (macOS) sau `systemctl status mysql` (Linux). Lăsați parola goală dacă nu este setată.\n\n**Configurare la distanță:** Obțineți gazda, portul, numele de utilizator și parola de la administratorul bazei de date. Asigurați-vă că serverul permite conexiuni la distanță și că IP-ul dumneavoastră este pe lista albă.\n\n**Domeniu:** Lăsați *database* gol pentru a răsfoi toate bazele de pe server, sau completați-l pentru a trece direct la tabelele din acea bază.\n\n**Depanare:** Testați cu `mysql -u <user> -p -h <host> -P <port> <database>`"
+    },
+    "mssql": {
+      "server": "Adresa gazdei SQL Server sau numele instanței",
+      "database": "Numele bazei de date (lăsați gol pentru a răsfoi toate bazele)",
+      "user": "Nume de utilizator (lăsați gol pentru Entra ID / autentificare Windows)",
+      "password": "Parolă (lăsați gol pentru Entra ID / autentificare Windows)",
+      "port": "Port SQL Server (implicit: 1433)",
+      "encrypt": "Activați criptarea (yes/no)",
+      "trust_server_certificate": "Aveți încredere în certificatul serverului (yes/no)",
+      "connection_timeout": "Termen de conexiune în secunde",
+      "authInstructions": "**Microsoft Entra ID (recomandat):** Rulați `az login` o dată în terminal, apoi porniți Datly. Alegeți *Microsoft Entra ID*, completați doar `server` și (opțional) `database`, și lăsați numele de utilizator/parola goale: acreditările Azure CLI sunt folosite automat. Managed Identity, VS Code și acreditările din mediu funcționează și ele prin `DefaultAzureCredential`.\n\n> Identitatea Entra trebuie să aibă acces la baza de date. De exemplu, un administrator rulează `CREATE USER [you@contoso.com] FROM EXTERNAL PROVIDER;` și acordă rolurile necesare.\n\n**Exemplu (Entra ID):** server: `myserver.database.windows.net` · database: `mydb` (nume de utilizator/parolă goale)\n\n**Autentificare SQL Server:** Alegeți *Autentificare SQL Server* și furnizați numele de utilizator și parola.\n\n**Exemplu (auth SQL):** server: `localhost` · database: `mydb` · user: `sa` · password: `MyP@ss` · port: `1433`\n\n**Autentificare Windows (doar Windows):** Alegeți *Autentificare Windows* și lăsați numele de utilizator/parola goale.\n\n**Driver:** Driverul Microsoft SQL Server este inclus în Datly; nu este necesară o instalare ODBC separată. Pentru Entra ID, instalați Azure CLI și rulați `az login`.\n\n**Depanare:** Confirmați că sunteți conectat cu `az account show`. Asigurați-vă că serviciul SQL Server rulează și că TCP/IP este activat. Testați autentificarea SQL cu `sqlcmd -S <server> -d <database> -U <user> -P <password>`."
+    },
+    "postgresql": {
+      "user": "Nume de utilizator PostgreSQL",
+      "password": "lăsați gol dacă nu există parolă",
+      "host": "Gazdă PostgreSQL",
+      "port": "Port PostgreSQL",
+      "database": "Numele bazei de date (lăsați gol pentru a răsfoi toate bazele)",
+      "authInstructions": "**Exemplu:** user: `postgres` · host: `localhost` · port: `5432` · database: `mydb`\n\n**Configurare locală:** Asigurați-vă că PostgreSQL rulează: `brew services list` (macOS) sau `systemctl status postgresql` (Linux). Lăsați parola goală dacă nu este setată.\n\n**Configurare la distanță:** Obțineți gazda, portul, numele de utilizator și parola de la administratorul bazei de date. Utilizatorul trebuie să aibă drepturi SELECT pe tabelele pe care doriți să le accesați.\n\n**Domeniu:** Lăsați *database* gol pentru a răsfoi toate bazele de pe server, sau completați-l pentru a trece direct la schemele/tabelele din acea bază.\n\n**Depanare:** Testați cu `psql -U <user> -h <host> -p <port> -d <database>`"
+    },
+    "mongodb": {
+      "host": "adresa serverului",
+      "port": "portul serverului",
+      "username": "lăsați gol dacă nu există autentificare",
+      "password": "lăsați gol dacă nu există autentificare",
+      "database": "numele bazei de date",
+      "collection": "lăsați gol pentru a lista toate colecțiile",
+      "authSource": "baza de autentificare (implicit: baza țintă)",
+      "authInstructions": "**Exemplu:** host: `localhost` · port: `27017` · database: `mydb` · collection: `users`\n\n**Configurare locală:** Asigurați-vă că MongoDB rulează. Lăsați numele de utilizator și parola goale dacă autentificarea nu este activată.\n\n**Configurare la distanță:** Obțineți gazda, portul, numele de utilizator și parola de la administratorul bazei de date.\n\n**Depanare:** Testați cu `mongosh --host <host> --port <port>`"
+    },
+    "cosmosdb": {
+      "endpoint": "URL-ul punctului de acces al contului Cosmos DB",
+      "key": "cheia contului sau cheia emulatorului",
+      "database": "numele bazei de date",
+      "container": "lăsați gol pentru a lista toate containerele",
+      "authInstructions": "**Exemplu:** endpoint: `https://myaccount.documents.azure.com:443/` · database: `mydb`\n\n**Configurare Azure:** Găsiți punctul de acces și cheia în portalul Azure, la *Keys* pentru contul Cosmos DB.\n\n**Emulator local:** Folosiți punctul de acces `https://localhost:8081` cu cheia cunoscută a emulatorului.\n\n**Depanare:** Asigurați-vă că paravanul de protecție al contului permite IP-ul dumneavoastră, sau conectați-vă dintr-o rețea autorizată."
+    },
+    "bigquery": {
+      "project_id": "ID-ul proiectului Google Cloud",
+      "dataset_id": "ID-ul setului (seturilor) de date: lăsați gol pentru toate, sau specificați unul sau mai multe, separate prin virgule",
+      "credentials_path": "Calea către fișierul JSON al contului de serviciu (opțional)",
+      "location": "Locație BigQuery (implicit: US)",
+      "authInstructions": "**Exemplu:** project_id: `my-gcp-project` · dataset_id: `analytics` · credentials_path: `/path/to/key.json` · location: `US`\n\n**Opțiunea 1: acreditări implicite ale aplicației (recomandat):**\nInstalați [Google Cloud SDK](https://cloud.google.com/sdk/docs/install), apoi rulați `gcloud auth application-default login`. Lăsați `credentials_path` gol.\n\n**Opțiunea 2: fișier cheie de cont de serviciu:**\nCreați un cont de serviciu în Google Cloud Console, descărcați cheia JSON și introduceți calea completă în `credentials_path`. Acordați contului rolurile **BigQuery Data Viewer** și **BigQuery Job User**.\n\n**Opțiunea 3: variabilă de mediu:**\nSetați `GOOGLE_APPLICATION_CREDENTIALS` pe calea fișierului JSON al contului de serviciu. Lăsați `credentials_path` gol."
+    },
+    "athena": {
+      "aws_profile": "Numele profilului AWS din ~/.aws/credentials (dacă este setat, cheia de acces și secretul nu sunt necesare)",
+      "aws_access_key_id": "ID-ul cheii de acces AWS (nu este necesar dacă folosiți aws_profile)",
+      "aws_secret_access_key": "Cheia secretă de acces AWS (nu este necesară dacă folosiți aws_profile)",
+      "aws_session_token": "Token de sesiune AWS (necesar pentru acreditări temporare)",
+      "region_name": "Numele regiunii AWS",
+      "workgroup": "Numele grupului de lucru Athena (locația de ieșire este citită din configurația grupului)",
+      "output_location": "Locație S3 pentru rezultatele interogărilor (ex. s3://bucket/path/). Dacă este goală, se folosește configurația grupului de lucru.",
+      "database": "Baza/catalogul implicit pentru interogări",
+      "query_timeout": "Termen de execuție a interogărilor în secunde (implicit: 300 = 5 minute)",
+      "authInstructions": "**Exemplu (profil):** aws_profile: `default` · region_name: `us-east-1` · workgroup: `primary` · database: `my_database`\n\n**Exemplu (chei):** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1`\n\n**Opțiunea 1: profil AWS (recomandat):**\nSetați `aws_profile` pe un nume de profil din `~/.aws/credentials`. Configurați cu `aws configure --profile <name>`. Nu este nevoie de cheie de acces sau secret.\n\n**Opțiunea 2: acreditări explicite:**\nIntroduceți `aws_access_key_id` și `aws_secret_access_key` direct. Adăugați `aws_session_token` pentru acreditări temporare.\n\n**Permisiuni IAM necesare:** `athena:StartQueryExecution`, `athena:GetQueryExecution`, `athena:GetQueryResults`, `athena:GetWorkGroup`, `athena:ListDatabases`, `athena:ListTableMetadata`, plus permisiuni S3 și Glue pe bucket-urile de date/rezultate."
+    },
+    "kusto": {
+      "kusto_cluster": "ex. https://mycluster.region.kusto.windows.net",
+      "kusto_database": "Numele bazei de date (obligatoriu)",
+      "client_id": "Doar principal de serviciu",
+      "client_secret": "Doar principal de serviciu",
+      "tenant_id": "Doar principal de serviciu",
+      "authInstructions": "**Opțiunea 1: conectare Entra ID (recomandat):** Conectați-vă cu propriul cont și folosiți permisiunile Kusto existente. Această opțiune apare când serverul are `KUSTO_OAUTH_CLIENT_ID` configurat.\n\n**Opțiunea 2: identitate Azure implicită:** Folosiți conectarea Azure CLI (`az login`), Managed Identity, acreditările VS Code sau acreditările din mediu.\n\n**Opțiunea 3: principal de serviciu:** Furnizați `client_id`, `client_secret` și `tenant_id` pentru un principal de serviciu cu acces la cluster.\n\nFiecare identitate trebuie să aibă deja acces la planul de date al bazei Kusto selectate."
+    },
+    "databricks": {
+      "server_hostname": "ex. adb-1234567890.11.azuredatabricks.net",
+      "http_path": "Calea HTTP a depozitului SQL, ex. /sql/1.0/warehouses/abc123",
+      "catalog": "Numele catalogului Unity (lăsați gol pentru a răsfoi toate cataloagele)",
+      "schema": "Numele schemei (lăsați gol pentru a răsfoi toate schemele din catalog)",
+      "access_token": "Token de acces personal Databricks (dapi...)",
+      "authInstructions": "**Unde le găsiți:** În spațiul Databricks, deschideți **SQL → SQL Warehouses** (bara din stânga), faceți clic pe depozit, apoi deschideți fila **Connection details**: copiați de acolo **Server hostname** și **HTTP path**.\n\n**Token de acces:** Faceți clic pe avatar (sus-dreapta) → **Settings → Developer → Access tokens → Generate new token**. Începe cu `dapi` și este afișat o singură dată.\n\n**Permisiuni:** Utilizatorul tokenului are nevoie de `USE CATALOG` / `USE SCHEMA` și `SELECT` pe obiectele Unity Catalog pe care doriți să le citiți.\n\n**Domeniu:** Lăsați *catalog* și *schema* goale pentru a răsfoi tot ce puteți accesa, sau setați-le pentru a trece direct la un catalog/schemă anume, de ex. catalogul inclus `samples` → `nyctaxi` → `trips`.\n\n**Nu aveți cont?** Databricks Free Edition este serverless, gratuit și include catalogul `samples`, fără configurare de cluster sau depozit."
+    },
+    "superset": {
+      "url": "URL-ul de bază Superset (ex. https://bi.company.com)",
+      "username": "Nume de utilizator Superset (opțional dacă folosiți SSO)",
+      "password": "Parolă Superset (opțional dacă folosiți SSO)",
+      "authInstructions": "**Exemplu:** url: `https://bi.company.com` · username: `admin` · password: `***`\n\n**Configurare:** Furnizați URL-ul de bază al instanței Superset și acreditările unui utilizator cu cel puțin rolul **Gamma** (acces de citire la seturile de date).\n\n**SSO:** Dacă Superset folosește SSO, folosiți fluxul de punte SSO în locul autentificării cu parolă (configurați prin `PLG_SUPERSET_SSO_LOGIN_URL`)."
+    },
+    "azure_blob": {
+      "account_name": "Numele contului de stocare Azure",
+      "container_name": "Numele containerului blob Azure",
+      "connection_string": "Șirul de conexiune Azure Storage (alternativă la account_name + acreditări)",
+      "credential_chain": "Listă ordonată a furnizorilor de acreditări Azure (cli;managed_identity;env)",
+      "account_key": "Cheia contului de stocare Azure",
+      "sas_token": "Token SAS Azure",
+      "endpoint": "Înlocuire a punctului de acces Azure",
+      "authInstructions": "**Exemplu (șir de conexiune):** connection_string: `DefaultEndpointsProtocol=https;AccountName=...` · container_name: `mydata`\n\n**Exemplu (cheie de cont):** account_name: `mystorageacct` · container_name: `mydata` · account_key: `abc123...`\n\n**Opțiunea 1: șir de conexiune (cea mai simplă):**\nObțineți-l din portalul Azure → Cont de stocare → Chei de acces. Introduceți-l în `connection_string`; `account_name` poate fi omis.\n\n**Opțiunea 2: cheie de cont:**\nDin portalul Azure → Cont de stocare → Chei de acces. Folosiți `account_name` + `account_key`.\n\n**Opțiunea 3: token SAS (recomandat pentru acces limitat):**\nGenerați-l din portalul Azure → Cont de stocare → Semnătură de acces partajat. Folosiți `account_name` + `sas_token`. Poate fi limitat în timp și în permisiuni.\n\n**Opțiunea 4: Azure CLI / Managed Identity (cea mai sigură):**\nFurnizați doar `account_name` + `container_name`. Necesită `az login` sau Managed Identity.\n\n**Formate acceptate:** CSV, Parquet, JSON, JSONL"
+    },
+    "s3": {
+      "aws_access_key_id": "ID-ul cheii de acces AWS",
+      "aws_secret_access_key": "Cheia secretă de acces AWS",
+      "aws_session_token": "Token de sesiune AWS (necesar pentru acreditări temporare)",
+      "region_name": "Numele regiunii AWS",
+      "bucket": "Numele bucket-ului S3",
+      "authInstructions": "**Exemplu:** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1` · bucket: `my-data-bucket`\n\n**Obținerea acreditărilor:** Consola AWS → IAM → Users → Security credentials → Create access key → alegeți „Application running outside AWS”.\n\n**Permisiuni necesare:** `s3:GetObject` și `s3:ListBucket` pe bucket-ul dumneavoastră.\n\n**Formate acceptate:** CSV, Parquet, JSON, JSONL"
+    },
+    "local_folder": {
+      "root_dir": "Calea absolută către directorul local de răsfoit",
+      "recursive": "Includeți fișierele din subdirectoare",
+      "file_pattern": "Model glob pentru filtrarea fișierelor (ex. '*.csv')",
+      "authInstructions": "Indicați `root_dir` către un director local care conține fișiere de date.\n\n**Formate acceptate:** CSV, TSV, Parquet, JSON, JSONL, Excel (.xlsx/.xls)\n\nFaceți clic pe **Răsfoiți** pentru a deschide un selector de dosar, sau lipiți o cale de director."
+    },
+    "_common": {
+      "table_filter": "Filtrați tabelul după cuvinte cheie (ex. 'vânzări')"
+    }
+  }
+}

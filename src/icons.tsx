@@ -1,0 +1,288 @@
+import React from 'react';
+
+import { SvgIcon, SvgIconProps } from '@mui/material';
+import { Box, SxProps } from '@mui/material';
+
+// ── MUI domain icon re-exports ──────────────────────────────────────────
+// Centralized so every file imports domain icons from one place.
+// Chart-template icons (managed in ChartTemplates.tsx) are NOT included.
+export { default as TableIcon } from '@mui/icons-material/TableRowsOutlined';
+export { default as StreamIcon } from '@mui/icons-material/Stream';
+export { default as AgentIcon } from '@mui/icons-material/PrecisionManufacturing';
+export { default as InsightIcon } from '@mui/icons-material/Insights';
+export { default as AnchorIcon } from '@mui/icons-material/Anchor';
+export { default as FolderOpenIcon } from '@mui/icons-material/FolderOpen';
+
+// ── Data-loader / connector category icons ──────────────────────────────
+// Generic icons representing data source *categories*, not brand logos.
+// Used in the data source card grid and Add Connection sidebar.
+
+/** Relational Database — classic cylinder icon (MySQL, PostgreSQL, MSSQL) */
+const RelationalDBIcon: React.FC<SvgIconProps> = (props) => (
+    <SvgIcon {...props} viewBox="0 0 24 24">
+        <ellipse cx="12" cy="5.5" rx="8" ry="3" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M4 5.5v13c0 1.66 3.58 3 8 3s8-1.34 8-3v-13" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M4 11.5c0 1.66 3.58 3 8 3s8-1.34 8-3" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.4"/>
+    </SvgIcon>
+);
+
+/** Document Store — stacked documents icon (MongoDB, CosmosDB) */
+const DocumentStoreIcon: React.FC<SvgIconProps> = (props) => (
+    <SvgIcon {...props} viewBox="0 0 24 24">
+        <path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M15 2v5h5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+        <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="1.2" opacity="0.4"/>
+        <line x1="8" y1="15.5" x2="14" y2="15.5" stroke="currentColor" strokeWidth="1.2" opacity="0.4"/>
+    </SvgIcon>
+);
+
+/** Cloud Storage — cloud with arrow icon (S3, Azure Blob) */
+const CloudStorageIcon: React.FC<SvgIconProps> = (props) => (
+    <SvgIcon {...props} viewBox="0 0 24 24">
+        <path d="M6.5 18.5h11a4.5 4.5 0 00.5-8.97A7 7 0 004.05 12 3.5 3.5 0 006.5 18.5z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M12 13v5M9.5 15.5L12 13l2.5 2.5" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
+    </SvgIcon>
+);
+
+/** Query Engine — magnifying glass with data (BigQuery, Kusto, Athena) */
+const QueryEngineIcon: React.FC<SvgIconProps> = (props) => (
+    <SvgIcon {...props} viewBox="0 0 24 24">
+        <circle cx="10.5" cy="10.5" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+        <line x1="15.5" y1="15.5" x2="21" y2="21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="7.5" y1="9" x2="7.5" y2="14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.5"/>
+        <line x1="10.5" y1="7" x2="10.5" y2="14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.5"/>
+        <line x1="13.5" y1="10" x2="13.5" y2="14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.5"/>
+    </SvgIcon>
+);
+
+/** Dashboard / BI — grid with mini chart (Superset) */
+const DashboardIcon: React.FC<SvgIconProps> = (props) => (
+    <SvgIcon {...props} viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+        <line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" strokeWidth="1.2" opacity="0.4"/>
+        <line x1="9" y1="9" x2="9" y2="21" stroke="currentColor" strokeWidth="1.2" opacity="0.4"/>
+        <polyline points="12,17 14.5,13 17,15.5" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" opacity="0.6"/>
+    </SvgIcon>
+);
+
+/** Generic fallback — simple database cylinder */
+const GenericDBIcon: React.FC<SvgIconProps> = (props) => (
+    <SvgIcon {...props} viewBox="0 0 24 24">
+        <ellipse cx="12" cy="6" rx="8" ry="3" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M4 6v12c0 1.66 3.58 3 8 3s8-1.34 8-3V6" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+    </SvgIcon>
+);
+
+import FolderOpenIconMui from '@mui/icons-material/FolderOpen';
+import LanguageIconMui from '@mui/icons-material/Language';
+
+/** Map source_type string to a category icon. */
+const CONNECTOR_ICON_MAP: Record<string, React.FC<SvgIconProps>> = {
+    // Relational databases
+    mysql: RelationalDBIcon,
+    postgresql: RelationalDBIcon,
+    mssql: RelationalDBIcon,
+    // Document stores
+    mongodb: DocumentStoreIcon,
+    cosmosdb: DocumentStoreIcon,
+    // Cloud storage
+    s3: CloudStorageIcon,
+    azure_blob: CloudStorageIcon,
+    // Query engines
+    bigquery: QueryEngineIcon,
+    kusto: QueryEngineIcon,
+    athena: QueryEngineIcon,
+    databricks: QueryEngineIcon,
+    // BI / dashboards
+    superset: DashboardIcon,
+    // Local
+    local_folder: FolderOpenIconMui,
+    // Web / public URL
+    web: LanguageIconMui,
+    WebDataLoader: LanguageIconMui,
+};
+
+/** Category sort order for data source sidebar. Lower = higher in the list.
+ *  The backend exposes connector type in two shapes depending on the
+ *  endpoint:
+ *    - `/api/connectors` (sidebar): `source_type` is the loader class name
+ *      (`MySQLDataLoader`, `SampleDatasetsLoader`, ...).
+ *    - `/api/data-loaders` (upload dialog): `type` is the loader id
+ *      (`mysql`, `sample_datasets`, ...).
+ *  We index by both so a single comparator works for both call sites. */
+const CONNECTOR_CATEGORY_ORDER: Record<string, number> = {
+    // Example Datasets (always top)
+    sample_datasets: -100, SampleDatasetsLoader: -100,
+    // Web (public URL; after samples, before local)
+    web: -50, WebDataLoader: -50,
+    // Local
+    local_folder: -1, LocalFolderDataLoader: -1,
+    // Relational DB
+    mysql: 0, MySQLDataLoader: 0,
+    mssql: 0, MSSQLDataLoader: 0,
+    postgresql: 0, PostgreSQLDataLoader: 0,
+    // Document Store
+    mongodb: 1, MongoDBDataLoader: 1,
+    cosmosdb: 1, CosmosDBDataLoader: 1,
+    // Cloud Storage
+    s3: 2, S3DataLoader: 2,
+    azure_blob: 2, AzureBlobDataLoader: 2,
+    // Query Engine
+    bigquery: 3, BigQueryDataLoader: 3,
+    kusto: 3, KustoDataLoader: 3,
+    athena: 3, AthenaDataLoader: 3,
+    databricks: 3, DatabricksDataLoader: 3,
+    // Dashboard
+    superset: 4, SupersetLoader: 4,
+};
+
+/** Sort comparator: group by category, then alphabetical within each group. */
+export const connectorSortOrder = (a: string, b: string): number => {
+    const catA = CONNECTOR_CATEGORY_ORDER[a] ?? 99;
+    const catB = CONNECTOR_CATEGORY_ORDER[b] ?? 99;
+    if (catA !== catB) return catA - catB;
+    return a.localeCompare(b);
+};
+
+/**
+ * Return a React element for the given data-loader source type.
+ * Falls back to a generic database icon for unknown types.
+ */
+export const getConnectorIcon = (sourceType: string, props?: SvgIconProps): React.ReactElement => {
+    const Icon = CONNECTOR_ICON_MAP[sourceType] || GenericDBIcon;
+    return <Icon {...(props || {})} />;
+};
+
+export { GenericDBIcon as DatabaseIcon };
+export { RelationalDBIcon };
+
+// ── Custom SVG domain icons ─────────────────────────────────────────────
+
+/** Grid-lines-in-a-rectangle icon — represents a database table. */
+// export const TableIcon: React.FC<{ sx?: SxProps }> = ({ sx }) => (
+//     <Box
+//         component="svg"
+//         viewBox="0 0 16 16"
+//         sx={{
+//             width: 16,
+//             height: 16,
+//             ...sx
+//         }}
+//     >
+//         <rect x="2" y="2" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.2" rx="0.5"/>
+//         <line x1="2" y1="6" x2="14" y2="6" stroke="currentColor" strokeWidth="1"/>
+//         <line x1="2" y1="10" x2="14" y2="10" stroke="currentColor" strokeWidth="1"/>
+//         <line x1="6" y1="2" x2="6" y2="14" stroke="currentColor" strokeWidth="1"/>
+//         <line x1="10" y1="2" x2="10" y2="14" stroke="currentColor" strokeWidth="1"/>
+//     </Box>
+// );
+
+/** Two overlapping rectangles — represents a database view. */
+export const DatabaseViewIcon: React.FC<{ sx?: SxProps }> = ({ sx }) => (
+    <Box
+        component="svg"
+        viewBox="0 0 16 16"
+        sx={{
+            width: 16,
+            height: 16,
+            ...sx
+        }}
+    >
+        <rect x="2" y="2" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.2" rx="0.5" opacity="0.8"/>
+        <rect x="4" y="4" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.2" rx="0.5"/>
+    </Box>
+);
+
+// ── Data-type icons (existing) ──────────────────────────────────────────
+
+const BooleanIcon: React.FunctionComponent<SvgIconProps> = (props) => {
+    return (
+        <SvgIcon {...props}>
+            <path d="M8.7,2.77H5.89v8.39H4.23V2.77H1.42V1.36H8.7Z" />
+            <path d="M22,14.05H18.34V17H21.7v1.4H18.34v4.09H16.68V12.64H22Z" />
+            <rect x="0.74" y="11.45" width="22.63" height="1" transform="translate(-4.92 12.02) rotate(-45)" />
+        </SvgIcon>
+    );
+};
+
+const StringIcon: React.FunctionComponent<SvgIconProps> = (props) => {
+    return (
+        <SvgIcon {...props}>
+            <path d="M1,18.55l3.67-9.8H6.57l3.64,9.8H8.38L7.56,16.2H3.64l-.8,2.35Zm3.05-3.71h3L5.77,11c0-.1-.06-.21-.09-.31s0-.23-.07-.38h0c0,.13-.05.25-.07.36L5.41,11Z" />
+            <path d="M10.62,10.7V.9h3.17a3.66,3.66,0,0,1,2.26.61,2,2,0,0,1,.81,1.7,2.28,2.28,0,0,1-.45,1.41,2.39,2.39,0,0,1-1.23.85v0a2.43,2.43,0,0,1,1.55.75,2.24,2.24,0,0,1,.58,1.59,2.55,2.55,0,0,1-.94,2.08,3.67,3.67,0,0,1-2.45.78Zm1.66-8.47V5h1.09a1.91,1.91,0,0,0,1.28-.4,1.34,1.34,0,0,0,.47-1.09,1.14,1.14,0,0,0-.44-1,2.17,2.17,0,0,0-1.31-.32Zm0,4.11v3h1.39A2.08,2.08,0,0,0,15.06,9a1.44,1.44,0,0,0,.5-1.15A1.26,1.26,0,0,0,15,6.72a2.48,2.48,0,0,0-1.49-.38Z" />
+            <path d="M22.39,21.52a6.46,6.46,0,0,1-1.45.51,6.72,6.72,0,0,1-1.53.16,4.72,4.72,0,0,1-3.54-1.31,5,5,0,0,1-1.27-3.61A5.16,5.16,0,0,1,16,13.51a4.9,4.9,0,0,1,3.69-1.45,7.28,7.28,0,0,1,1.37.12,6.54,6.54,0,0,1,1.26.4l-.55,1.36a4.91,4.91,0,0,0-2.05-.42,3.23,3.23,0,0,0-2.42,1,3.65,3.65,0,0,0-.95,2.67,3.7,3.7,0,0,0,.87,2.6,3,3,0,0,0,2.35,1,4.65,4.65,0,0,0,2.16-.56Z" />
+        </SvgIcon>
+    );
+};
+
+const NumericalIcon: React.FunctionComponent<SvgIconProps> = (props) => {
+    return (
+        <SvgIcon {...props}>
+            <path d="M6.5,19.05H4.88v-8a4.23,4.23,0,0,1-.87.48,7.43,7.43,0,0,1-1.07.4l-.45-1.35A9.4,9.4,0,0,0,4.21,10,8.16,8.16,0,0,0,5.65,9H6.5Z" />
+            <path d="M9.55,11.62V11a3.59,3.59,0,0,1,.2-1.22,3.46,3.46,0,0,1,.54-1,4.79,4.79,0,0,1,.83-.86c.32-.26.67-.54,1.06-.82A7.58,7.58,0,0,0,13,6.47a5.14,5.14,0,0,0,.56-.62,1.88,1.88,0,0,0,.34-.62A2.55,2.55,0,0,0,14,4.49a1.51,1.51,0,0,0-.4-1.09A1.44,1.44,0,0,0,12.5,3a2.94,2.94,0,0,0-1.12.24A3.57,3.57,0,0,0,10.26,4L9.37,3a5.14,5.14,0,0,1,1.54-1,4.91,4.91,0,0,1,1.79-.32,2.89,2.89,0,0,1,2.17.79,2.54,2.54,0,0,1,.78,1.86,3.63,3.63,0,0,1-.18,1.21,3.59,3.59,0,0,1-.48.91,4.68,4.68,0,0,1-.74.81,10.42,10.42,0,0,1-.93.74l-.9.64a4.37,4.37,0,0,0-.62.55,2.29,2.29,0,0,0-.37.52,1.3,1.3,0,0,0-.12.55h4.52v1.39Z" />
+            <path d="M16.39,21.48l.7-1.11a4.36,4.36,0,0,0,1,.5,3.6,3.6,0,0,0,1.08.16,2,2,0,0,0,1.43-.46,1.49,1.49,0,0,0,.46-1.12,1.44,1.44,0,0,0-.63-1.28,3.25,3.25,0,0,0-1.81-.42h-.81V16.46h.75a2.84,2.84,0,0,0,1.64-.39,1.41,1.41,0,0,0,.54-1.24,1.28,1.28,0,0,0-.39-1,1.5,1.5,0,0,0-1-.34,3,3,0,0,0-1,.17,4.17,4.17,0,0,0-1,.51l-.7-1.07A5.05,5.05,0,0,1,18,12.41a4.9,4.9,0,0,1,1.52-.22,3.12,3.12,0,0,1,2.07.66,2.18,2.18,0,0,1,.8,1.76A2.42,2.42,0,0,1,22,16.12a2.56,2.56,0,0,1-1.36.9v0a2.53,2.53,0,0,1,1.54.77,2.16,2.16,0,0,1,.6,1.56,2.69,2.69,0,0,1-.93,2.14,3.62,3.62,0,0,1-2.47.8,5.44,5.44,0,0,1-1.55-.2A5.64,5.64,0,0,1,16.39,21.48Z" />
+        </SvgIcon>
+    );
+};
+
+const DateIcon: React.FunctionComponent<SvgIconProps> = (props) => {
+    return (
+        <SvgIcon {...props}>
+            <path d="M18,3.5v-1H17v1H7v-1H6v1H2.5v17h19V3.5Zm2.5,16H3.5V8.5h17Zm0-12H3.5v-3H6v1H7v-1H17v1h1v-1h2.5Z" />
+            <rect x="9.17" y="9.68" width="2" height="2" />
+            <rect x="12.83" y="9.68" width="2" height="2" />
+            <rect x="16.5" y="9.68" width="2" height="2" />
+            <rect x="5.5" y="13" width="2" height="2" />
+            <rect x="9.17" y="13" width="2" height="2" />
+            <rect x="12.83" y="13" width="2" height="2" />
+            <rect x="16.5" y="13" width="2" height="2" />
+            <rect x="5.5" y="16.32" width="2" height="2" />
+            <rect x="9.17" y="16.32" width="2" height="2" />
+        </SvgIcon>
+    );
+};
+
+/** Calendar + clock overlay — represents DateTime (date with time component). */
+const DateTimeIcon: React.FunctionComponent<SvgIconProps> = (props) => {
+    return (
+        <SvgIcon {...props}>
+            {/* Calendar base (scaled down to make room for clock) */}
+            <path d="M16,3.5v-1H15v1H7v-1H6v1H2.5v14h11.05A5.5,5.5,0,0,1,13,15H3.5V8.5h14v.55A5.47,5.47,0,0,1,19,8.05V3.5Zm1.5,4H3.5v-3H6v1H7v-1h8v1h1v-1h1.5Z" />
+            {/* Small clock in bottom-right corner */}
+            <circle cx="18" cy="15" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.3"/>
+            <polyline points="18,12.5 18,15 20,16.2" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+        </SvgIcon>
+    );
+};
+
+/** Pure clock icon — represents Time (no date component). */
+const TimeIcon: React.FunctionComponent<SvgIconProps> = (props) => {
+    return (
+        <SvgIcon {...props}>
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+            <polyline points="12,6.5 12,12 16,14.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+        </SvgIcon>
+    );
+};
+
+/** Hourglass icon — represents Duration / time interval. */
+const DurationIcon: React.FunctionComponent<SvgIconProps> = (props) => {
+    return (
+        <SvgIcon {...props}>
+            <path d="M6,2H18V6.5a.5.5,0,0,1-.15.35L13.5,11.2a.5.5,0,0,0,0,.6l4.35,4.35A.5.5,0,0,1,18,16.5V22H6V16.5a.5.5,0,0,1,.15-.35L10.5,11.8a.5.5,0,0,0,0-.6L6.15,6.85A.5.5,0,0,1,6,6.5Z"
+                fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+            <line x1="6" y1="2" x2="18" y2="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="6" y1="22" x2="18" y2="22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </SvgIcon>
+    );
+};
+
+const UnknownIcon: React.FunctionComponent<SvgIconProps> = (props) => {
+    return (
+        <SvgIcon {...props}>
+            <path d="M10.22,15.43c-.07-.18-.12-.42-.17-.71-.05-.29-.08-.58-.08-.86,0-.44,.09-.84,.27-1.2,.18-.36,.4-.69,.66-1.01s.55-.61,.86-.9c.31-.29,.59-.57,.86-.85s.49-.57,.66-.87,.27-.64,.27-1c0-.33-.07-.61-.2-.85-.13-.24-.31-.45-.54-.61s-.49-.29-.78-.36c-.29-.08-.61-.12-.94-.12-1.08,0-2.11,.48-3.09,1.45v-2.51c1.19-.7,2.42-1.04,3.7-1.04,.59,0,1.14,.08,1.66,.23s.98,.38,1.37,.67c.39,.3,.7,.67,.92,1.11,.22,.44,.34,.96,.34,1.54s-.09,1.06-.28,1.49-.43,.84-.71,1.2-.59,.69-.92,.97c-.33,.28-.64,.57-.92,.85-.29,.28-.52,.58-.71,.88-.19,.3-.28,.64-.28,1.01,0,.31,.04,.59,.12,.85,.08,.25,.16,.47,.24,.64h-2.29Zm1.24,4.6c-.41,0-.78-.14-1.1-.42-.3-.28-.46-.62-.46-1.02s.15-.75,.46-1.02c.31-.29,.68-.43,1.1-.43s.78,.15,1.09,.43c.3,.27,.46,.61,.46,1.02s-.15,.75-.46,1.02c-.32,.28-.68,.42-1.09,.42Z" />
+        </SvgIcon>
+    );
+};
+
+export { BooleanIcon, NumericalIcon, StringIcon, DateIcon, DateTimeIcon, TimeIcon, DurationIcon, UnknownIcon };

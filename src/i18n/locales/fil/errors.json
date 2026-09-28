@@ -1,0 +1,38 @@
+{
+  "errors": {
+    "authRequired": "Kailangan mag-log in",
+    "authExpired": "Nag-expire na ang session. Mangyaring mag-log in muli.",
+    "accessDenied": "Walang pahintulot",
+
+    "invalidRequest": "Hindi wasto ang request",
+    "tableNotFound": "Hindi nahanap ang table",
+    "fileParseError": "Hindi mabasa ang na-upload na file",
+    "fileTooLarge": "Masyadong malaki ang file",
+    "validationError": "Hindi pumasa sa validation",
+
+    "llmAuthFailed": "Hindi na-authenticate. Pakisuri ang API key ninyo.",
+    "llmRateLimit": "Naabot na ang limit ng request. Maghintay at subukan ulit.",
+    "llmContextTooLong": "Masyadong mahaba ang input. Bawasan ang data o ang haba ng prompt.",
+    "llmModelNotFound": "Hindi nahanap ang model. Pakisuri ang pangalan nito.",
+    "llmTimeout": "Naubos ang oras ng request. Pakisuri ang koneksyon at subukan ulit.",
+    "llmServiceError": "May error ang serbisyo ng model. Subukan ulit sa ibang pagkakataon.",
+    "llmContentFiltered": "Hinarang ng filter sa kaligtasan ng content ang request.",
+    "llmUnknownError": "Hindi natuloy ang request sa model",
+
+    "connectorAuthFailed": "Hindi na-authenticate ang data source",
+    "dbConnectionFailed": "Hindi makakonekta sa data source",
+    "dbQueryError": "May error sa query sa database",
+    "dataLoadError": "Hindi na-load ang data",
+    "connectorError": "May error sa data connector",
+
+    "codeExecutionError": "May naganap na error habang pinapatakbo ang code",
+    "agentError": "May nakitang error ang agent",
+
+    "catalogSyncTimeout": "Naubos ang oras ng pag-sync ng catalog. Subukan ulit.",
+    "catalogNotFound": "Hindi nahanap ang connector, o hindi ito nakakonekta",
+
+    "internalError": "May naganap na hindi inaasahang error",
+    "serviceUnavailable": "Pansamantalang hindi available ang serbisyo",
+    "storageFull": "Puno na ang storage ng workspace. Magbakante ng disk space at subukan ulit."
+  }
+}

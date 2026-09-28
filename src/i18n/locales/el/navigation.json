@@ -1,0 +1,18 @@
+{
+  "navigation": {
+    "startExploration": "Έναρξη εξερεύνησης",
+    "installLocally": "Τοπική εγκατάσταση",
+    "tryOnlineDemo": "Δοκιμή διαδικτυακής επίδειξης",
+    "video": "Βίντεο",
+    "github": "GitHub",
+    "contactUs": "Επικοινωνία",
+    "termsOfUse": "Όροι χρήσης",
+    "about": "Σχετικά",
+    "home": "Αρχική",
+    "data": "Δεδομένα",
+    "visualization": "Οπτικοποίηση",
+    "report": "Αναφορά",
+    "chat": "Συνομιλία",
+    "agentRules": "Κανόνες πράκτορα"
+  }
+}

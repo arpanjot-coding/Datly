@@ -1,0 +1,38 @@
+{
+  "errors": {
+    "authRequired": "Kimlik doğrulama gerekli",
+    "authExpired": "Oturumun süresi doldu. Lütfen yeniden oturum açın",
+    "accessDenied": "Erişim reddedildi",
+
+    "invalidRequest": "Geçersiz istek",
+    "tableNotFound": "Tablo bulunamadı",
+    "fileParseError": "Yüklenen dosya ayrıştırılamadı",
+    "fileTooLarge": "Dosya çok büyük",
+    "validationError": "Doğrulama hatası",
+
+    "llmAuthFailed": "Kimlik doğrulama başarısız. Lütfen API anahtarınızı kontrol edin",
+    "llmRateLimit": "İstek sınırı aşıldı. Lütfen bekleyip yeniden deneyin",
+    "llmContextTooLong": "Girdi çok uzun. Lütfen veri boyutunu veya istemi kısaltın",
+    "llmModelNotFound": "Model bulunamadı. Lütfen model adını kontrol edin",
+    "llmTimeout": "İstek zaman aşımına uğradı. Lütfen bağlantıyı kontrol edip yeniden deneyin",
+    "llmServiceError": "Model hizmeti bir hata döndürdü. Lütfen daha sonra yeniden deneyin",
+    "llmContentFiltered": "İstek, içerik güvenliği süzgeci tarafından engellendi",
+    "llmUnknownError": "Model isteği başarısız oldu",
+
+    "connectorAuthFailed": "Veri kaynağı kimlik doğrulaması başarısız oldu",
+    "dbConnectionFailed": "Veri kaynağına bağlanılamadı",
+    "dbQueryError": "Veritabanı sorgu hatası",
+    "dataLoadError": "Veri yüklenemedi",
+    "connectorError": "Veri bağlayıcı hatası",
+
+    "codeExecutionError": "Kod çalıştırılırken bir hata oluştu",
+    "agentError": "Ajan bir hatayla karşılaştı",
+
+    "catalogSyncTimeout": "Katalog eşitlemesi zaman aşımına uğradı. Lütfen yeniden deneyin",
+    "catalogNotFound": "Bağlayıcı bulunamadı veya bağlı değil",
+
+    "internalError": "Beklenmeyen bir hata oluştu",
+    "serviceUnavailable": "Hizmet geçici olarak kullanılamıyor",
+    "storageFull": "Çalışma alanı depolaması dolu. Diskte yer açıp yeniden deneyin."
+  }
+}

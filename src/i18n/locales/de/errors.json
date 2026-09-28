@@ -1,0 +1,38 @@
+{
+  "errors": {
+    "authRequired": "Anmeldung erforderlich",
+    "authExpired": "Sitzung abgelaufen. Bitte erneut anmelden",
+    "accessDenied": "Zugriff verweigert",
+
+    "invalidRequest": "Ungültige Anfrage",
+    "tableNotFound": "Tabelle nicht gefunden",
+    "fileParseError": "Die hochgeladene Datei konnte nicht gelesen werden",
+    "fileTooLarge": "Datei zu groß",
+    "validationError": "Validierungsfehler",
+
+    "llmAuthFailed": "Authentifizierung fehlgeschlagen. Bitte API-Schlüssel prüfen",
+    "llmRateLimit": "Limit erreicht. Bitte warten und erneut versuchen",
+    "llmContextTooLong": "Eingabe zu lang. Bitte Datenmenge oder Prompt kürzen",
+    "llmModelNotFound": "Modell nicht gefunden. Bitte Modellnamen prüfen",
+    "llmTimeout": "Zeitüberschreitung. Bitte Verbindung prüfen und erneut versuchen",
+    "llmServiceError": "Der Modelldienst hat einen Fehler gemeldet. Bitte später erneut versuchen",
+    "llmContentFiltered": "Die Anfrage wurde vom Inhaltsschutz blockiert",
+    "llmUnknownError": "Modellanfrage fehlgeschlagen",
+
+    "connectorAuthFailed": "Authentifizierung an der Datenquelle fehlgeschlagen",
+    "dbConnectionFailed": "Verbindung zur Datenquelle fehlgeschlagen",
+    "dbQueryError": "Fehler bei der Datenbankabfrage",
+    "dataLoadError": "Daten konnten nicht geladen werden",
+    "connectorError": "Fehler am Datenkonnektor",
+
+    "codeExecutionError": "Beim Ausführen des Codes ist ein Fehler aufgetreten",
+    "agentError": "Der Agent ist auf einen Fehler gestoßen",
+
+    "catalogSyncTimeout": "Katalogabgleich abgelaufen. Bitte erneut versuchen",
+    "catalogNotFound": "Konnektor nicht gefunden oder nicht verbunden",
+
+    "internalError": "Es ist ein unerwarteter Fehler aufgetreten",
+    "serviceUnavailable": "Dienst vorübergehend nicht verfügbar",
+    "storageFull": "Der Speicher des Arbeitsbereichs ist voll. Bitte Speicherplatz freigeben und erneut versuchen."
+  }
+}

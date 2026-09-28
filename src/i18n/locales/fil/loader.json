@@ -1,0 +1,116 @@
+{
+  "loader": {
+    "mysql": {
+      "user": "Username sa MySQL",
+      "password": "iwanang blangko kung walang password",
+      "host": "address ng server",
+      "port": "port ng server",
+      "database": "Pangalan ng database (iwanang blangko para makita ang lahat ng database)",
+      "authInstructions": "**Halimbawa:** user: `root` · host: `localhost` · port: `3306` · database: `mydb`\n\n**Setup sa computer:** Tiyaking tumatakbo ang MySQL: `brew services list` (macOS) o `systemctl status mysql` (Linux). Iwanang blangko ang password kung wala kayong itinakda.\n\n**Remote setup:** Kunin sa database administrator ninyo ang host, port, username, at password. Tiyaking pinapayagan ng server ang remote connection at naka-whitelist ang IP ninyo.\n\n**Saklaw:** Iwanang blangko ang *database* para makita ang lahat ng database sa server, o punan ito para diretso sa mga table ng database na iyon.\n\n**Pag-troubleshoot:** Subukan gamit ang `mysql -u <user> -p -h <host> -P <port> <database>`"
+    },
+    "mssql": {
+      "server": "Host address o pangalan ng instance ng SQL Server",
+      "database": "Pangalan ng database (iwanang blangko para makita ang lahat ng database)",
+      "user": "Username (iwanang blangko para sa Entra ID / Windows auth)",
+      "password": "Password (iwanang blangko para sa Entra ID / Windows auth)",
+      "port": "Port ng SQL Server (default: 1433)",
+      "encrypt": "I-enable ang encryption (yes/no)",
+      "trust_server_certificate": "Pagkatiwalaan ang certificate ng server (yes/no)",
+      "connection_timeout": "Timeout ng koneksyon sa segundo",
+      "authInstructions": "**Microsoft Entra ID (rekomendado):** Isang beses magpatakbo ng `az login` sa terminal, saka simulan ang Datly. Piliin ang *Microsoft Entra ID*, punuan lang ang `server` at (kung gusto) ang `database`, at iwanang blangko ang username/password: awtomatikong gagamitin ang credentials ng Azure CLI ninyo. Gumagana rin ang Managed Identity, VS Code, at environment credentials sa pamamagitan ng `DefaultAzureCredential`.\n\n> Kailangang bigyan ng access sa database ang Entra identity ninyo, hal. magpapatakbo ang admin ng `CREATE USER [you@contoso.com] FROM EXTERNAL PROVIDER;` at magbibigay ng kailangang role.\n\n**Halimbawa (Entra ID):** server: `myserver.database.windows.net` · database: `mydb` (blangko ang username/password)\n\n**SQL Server authentication:** Piliin ang *SQL Server authentication* at ilagay ang username at password.\n\n**Halimbawa (SQL auth):** server: `localhost` · database: `mydb` · user: `sa` · password: `MyP@ss` · port: `1433`\n\n**Windows authentication (Windows lang):** Piliin ang *Windows authentication* at iwanang blangko ang username/password.\n\n**Driver:** Kasama na sa Datly ang Microsoft SQL Server driver; hindi na kailangan ng hiwalay na ODBC. Para sa Entra ID, i-install ang Azure CLI at magpatakbo ng `az login`.\n\n**Pag-troubleshoot:** Tiyaking naka-sign in kayo gamit ang `az account show`. Tiyaking tumatakbo ang serbisyo ng SQL Server at naka-enable ang TCP/IP. Subukan ang SQL auth gamit ang `sqlcmd -S <server> -d <database> -U <user> -P <password>`."
+    },
+    "postgresql": {
+      "user": "Username sa PostgreSQL",
+      "password": "iwanang blangko kung walang password",
+      "host": "Host ng PostgreSQL",
+      "port": "Port ng PostgreSQL",
+      "database": "Pangalan ng database (iwanang blangko para makita ang lahat ng database)",
+      "authInstructions": "**Halimbawa:** user: `postgres` · host: `localhost` · port: `5432` · database: `mydb`\n\n**Setup sa computer:** Tiyaking tumatakbo ang PostgreSQL: `brew services list` (macOS) o `systemctl status postgresql` (Linux). Iwanang blangko ang password kung wala kayong itinakda.\n\n**Remote setup:** Kunin sa database administrator ninyo ang host, port, username, at password. Kailangang may SELECT permission ang user sa mga table na a-access ninyo.\n\n**Saklaw:** Iwanang blangko ang *database* para makita ang lahat ng database sa server, o punan ito para diretso sa schema/table ng database na iyon.\n\n**Pag-troubleshoot:** Subukan gamit ang `psql -U <user> -h <host> -p <port> -d <database>`"
+    },
+    "mongodb": {
+      "host": "address ng server",
+      "port": "port ng server",
+      "username": "iwanang blangko kung walang auth",
+      "password": "iwanang blangko kung walang auth",
+      "database": "pangalan ng database",
+      "collection": "iwanang blangko para ilista ang lahat ng collection",
+      "authSource": "database ng auth (default: ang target na database)",
+      "authInstructions": "**Halimbawa:** host: `localhost` · port: `27017` · database: `mydb` · collection: `users`\n\n**Setup sa computer:** Tiyaking tumatakbo ang MongoDB. Iwanang blangko ang username at password kung hindi naka-enable ang authentication.\n\n**Remote setup:** Kunin sa database administrator ninyo ang host, port, username, at password.\n\n**Pag-troubleshoot:** Subukan gamit ang `mongosh --host <host> --port <port>`"
+    },
+    "cosmosdb": {
+      "endpoint": "URL ng endpoint ng Cosmos DB account",
+      "key": "account key o emulator key",
+      "database": "pangalan ng database",
+      "container": "iwanang blangko para ilista ang lahat ng container",
+      "authInstructions": "**Halimbawa:** endpoint: `https://myaccount.documents.azure.com:443/` · database: `mydb`\n\n**Setup sa Azure:** Hanapin ang endpoint at key sa Azure Portal, sa ilalim ng *Keys* ng Cosmos DB account ninyo.\n\n**Local emulator:** Gamitin ang endpoint na `https://localhost:8081` kasama ang kilalang emulator key.\n\n**Pag-troubleshoot:** Tiyaking pinapayagan ng firewall ng account ang IP ninyo, o kumonekta mula sa pinapayagang network."
+    },
+    "bigquery": {
+      "project_id": "Google Cloud Project ID",
+      "dataset_id": "Dataset ID (iwanang blangko para sa lahat, o maglagay ng isa o higit pa na pinaghihiwalay ng kuwit)",
+      "credentials_path": "Path papunta sa JSON file ng service account (opsyonal)",
+      "location": "Lokasyon ng BigQuery (default: US)",
+      "authInstructions": "**Halimbawa:** project_id: `my-gcp-project` · dataset_id: `analytics` · credentials_path: `/path/to/key.json` · location: `US`\n\n**Opsyon 1: Application Default Credentials (rekomendado):**\nI-install ang [Google Cloud SDK](https://cloud.google.com/sdk/docs/install), saka magpatakbo ng `gcloud auth application-default login`. Iwanang blangko ang `credentials_path`.\n\n**Opsyon 2: Service Account Key File:**\nGumawa ng service account sa Google Cloud Console, i-download ang JSON key, at ilagay ang buong path sa `credentials_path`. Bigyan ang account ng role na **BigQuery Data Viewer** at **BigQuery Job User**.\n\n**Opsyon 3: Environment Variable:**\nItakda ang `GOOGLE_APPLICATION_CREDENTIALS` sa path ng JSON file ng service account. Iwanang blangko ang `credentials_path`."
+    },
+    "athena": {
+      "aws_profile": "Pangalan ng AWS profile mula sa ~/.aws/credentials (kung naka-set, hindi kailangan ng access key at secret)",
+      "aws_access_key_id": "AWS access key ID (hindi kailangan kung ginagamit ang aws_profile)",
+      "aws_secret_access_key": "AWS secret access key (hindi kailangan kung ginagamit ang aws_profile)",
+      "aws_session_token": "AWS session token (kailangan para sa pansamantalang credentials)",
+      "region_name": "Pangalan ng AWS region",
+      "workgroup": "Pangalan ng Athena workgroup (kinukuha ang output location mula sa configuration ng workgroup)",
+      "output_location": "S3 output location para sa resulta ng query (hal., s3://bucket/path/). Kung blangko, gagamitin ang configuration ng workgroup.",
+      "database": "Default na database/catalog na gagamitin sa mga query",
+      "query_timeout": "Timeout ng pagpapatakbo ng query sa segundo (default: 300 = 5 minuto)",
+      "authInstructions": "**Halimbawa (profile):** aws_profile: `default` · region_name: `us-east-1` · workgroup: `primary` · database: `my_database`\n\n**Halimbawa (keys):** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1`\n\n**Opsyon 1: AWS Profile (rekomendado):**\nItakda ang `aws_profile` sa pangalan ng profile mula sa `~/.aws/credentials`. I-setup gamit ang `aws configure --profile <name>`. Hindi kailangan ng access key o secret.\n\n**Opsyon 2: Direktang credentials:**\nIlagay mismo ang `aws_access_key_id` at `aws_secret_access_key`. Idagdag ang `aws_session_token` para sa pansamantalang credentials.\n\n**Kailangang IAM permission:** `athena:StartQueryExecution`, `athena:GetQueryExecution`, `athena:GetQueryResults`, `athena:GetWorkGroup`, `athena:ListDatabases`, `athena:ListTableMetadata`, dagdag pa ang S3 at Glue permission sa mga bucket ng data/results ninyo."
+    },
+    "kusto": {
+      "kusto_cluster": "hal., https://mycluster.region.kusto.windows.net",
+      "kusto_database": "Pangalan ng database (kailangan)",
+      "client_id": "Para sa service principal lang",
+      "client_secret": "Para sa service principal lang",
+      "tenant_id": "Para sa service principal lang",
+      "authInstructions": "**Opsyon 1: Mag-sign in sa Entra ID (rekomendado):** Mag-sign in bilang sarili ninyo at gamitin ang umiiral na permission sa Kusto. Lumalabas ang opsyong ito kapag may `KUSTO_OAUTH_CLIENT_ID` ang server.\n\n**Opsyon 2: Azure Default Identity:** Gamitin ang login ninyo sa Azure CLI (`az login`), Managed Identity, credentials ng VS Code, o environment credentials.\n\n**Opsyon 3: Service Principal:** Ibigay ang `client_id`, `client_secret`, at `tenant_id` ng service principal na may access sa cluster.\n\nKailangang may data-plane access na ang bawat identity sa napiling Kusto database."
+    },
+    "databricks": {
+      "server_hostname": "hal., adb-1234567890.11.azuredatabricks.net",
+      "http_path": "HTTP path ng SQL warehouse, hal., /sql/1.0/warehouses/abc123",
+      "catalog": "Pangalan ng Unity Catalog (iwanang blangko para makita ang lahat ng catalog)",
+      "schema": "Pangalan ng schema (iwanang blangko para makita ang lahat ng schema sa catalog)",
+      "access_token": "Personal access token ng Databricks (dapi...)",
+      "authInstructions": "**Saan ito mahahanap:** Sa Databricks workspace ninyo, buksan ang **SQL → SQL Warehouses** (kaliwang sidebar), i-click ang warehouse, at buksan ang tab na **Connection details**. Kopyahin doon ang **Server hostname** at **HTTP path**.\n\n**Access token:** I-click ang avatar ninyo (kanan-itaas) → **Settings → Developer → Access tokens → Generate new token**. Nagsisimula ito sa `dapi` at isang beses lang ipinapakita.\n\n**Mga permission:** Kailangan ng user ng token ang `USE CATALOG` / `USE SCHEMA` at `SELECT` sa mga Unity Catalog object na babasahin ninyo.\n\n**Saklaw:** Iwanang blangko ang *catalog* at *schema* para makita ang lahat ng pwede ninyong i-access, o itakda ang mga ito para diretso sa isang catalog/schema, hal. subukan ang built-in na catalog na `samples` → `nyctaxi` → `trips`.\n\n**Walang account?** Ang Databricks Free Edition ay serverless, libre, at kasama na ang catalog na `samples`. Hindi kailangan mag-setup ng cluster o warehouse."
+    },
+    "superset": {
+      "url": "Base URL ng Superset (hal. https://bi.company.com)",
+      "username": "Username sa Superset (opsyonal kung SSO ang gagamitin)",
+      "password": "Password sa Superset (opsyonal kung SSO ang gagamitin)",
+      "authInstructions": "**Halimbawa:** url: `https://bi.company.com` · username: `admin` · password: `***`\n\n**Setup:** Ibigay ang base URL ng Superset instance ninyo at ang credentials ng user na may **Gamma** role man lang (read access sa mga dataset).\n\n**SSO:** Kung SSO ang Superset ninyo, gamitin ang SSO bridge flow sa halip na password auth (i-configure sa `PLG_SUPERSET_SSO_LOGIN_URL`)."
+    },
+    "azure_blob": {
+      "account_name": "Pangalan ng Azure storage account",
+      "container_name": "Pangalan ng Azure blob container",
+      "connection_string": "Azure storage connection string (alternatibo sa account_name + credentials)",
+      "credential_chain": "Nakahanay na listahan ng Azure credential provider (cli;managed_identity;env)",
+      "account_key": "Azure storage account key",
+      "sas_token": "Azure SAS token",
+      "endpoint": "Override ng Azure endpoint",
+      "authInstructions": "**Halimbawa (conn string):** connection_string: `DefaultEndpointsProtocol=https;AccountName=...` · container_name: `mydata`\n\n**Halimbawa (account key):** account_name: `mystorageacct` · container_name: `mydata` · account_key: `abc123...`\n\n**Opsyon 1: Connection String (pinakasimple):**\nKunin ito sa Azure Portal → Storage Account → Access keys. Ilagay sa `connection_string`; pwedeng iwanang blangko ang `account_name`.\n\n**Opsyon 2: Account Key:**\nMula sa Azure Portal → Storage Account → Access keys. Gamitin ang `account_name` + `account_key`.\n\n**Opsyon 3: SAS Token (rekomendado para sa limitadong access):**\nGawin sa Azure Portal → Storage Account → Shared access signature. Gamitin ang `account_name` + `sas_token`. Pwedeng may expiry at saklaw ng permission.\n\n**Opsyon 4: Azure CLI / Managed Identity (pinakasecure):**\nIbigay lang ang `account_name` + `container_name`. Kailangan ng `az login` o Managed Identity.\n\n**Mga suportadong format:** CSV, Parquet, JSON, JSONL"
+    },
+    "s3": {
+      "aws_access_key_id": "AWS access key ID",
+      "aws_secret_access_key": "AWS secret access key",
+      "aws_session_token": "AWS session token (kailangan para sa pansamantalang credentials)",
+      "region_name": "Pangalan ng AWS region",
+      "bucket": "Pangalan ng S3 bucket",
+      "authInstructions": "**Halimbawa:** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1` · bucket: `my-data-bucket`\n\n**Pagkuha ng credentials:** AWS Console → IAM → Users → Security credentials → Create access key → piliin ang \"Application running outside AWS\".\n\n**Kailangang permission:** `s3:GetObject` at `s3:ListBucket` sa bucket ninyo.\n\n**Mga suportadong format:** CSV, Parquet, JSON, JSONL"
+    },
+    "local_folder": {
+      "root_dir": "Absolute path ng local na directory na titignan",
+      "recursive": "Isama ang mga file sa subdirectory",
+      "file_pattern": "Glob pattern para i-filter ang mga file (hal. '*.csv')",
+      "authInstructions": "Ituro ang `root_dir` sa local na directory na may mga data file.\n\n**Mga suportadong format:** CSV, TSV, Parquet, JSON, JSONL, Excel (.xlsx/.xls)\n\nI-click ang **Pumili ng folder** para magbukas ng folder picker, o i-paste ang path ng directory."
+    },
+    "_common": {
+      "table_filter": "I-filter ang table ayon sa keyword (hal. 'sales')"
+    }
+  }
+}

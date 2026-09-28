@@ -1,0 +1,116 @@
+{
+  "loader": {
+    "mysql": {
+      "user": "MySQL のユーザー名",
+      "password": "パスワードがない場合は空のままにします",
+      "host": "サーバーアドレス",
+      "port": "サーバーのポート",
+      "database": "データベース名（空にするとすべてのデータベースを閲覧できます）",
+      "authInstructions": "**例:** ユーザー: `root` · ホスト: `localhost` · ポート: `3306` · データベース: `mydb`\n\n**ローカル設定:** MySQL が起動していることを確認してください。`brew services list`（macOS）または `systemctl status mysql`（Linux）。パスワードがなければ空のままにします。\n\n**リモート設定:** ホスト、ポート、ユーザー名、パスワードはデータベース管理者から入手してください。サーバーがリモート接続を許可し、ご利用の IP が許可リストに入っている必要があります。\n\n**範囲:** *database* を空にするとサーバー上のすべてのデータベースを閲覧できます。入力すると、そのデータベースのテーブルに直接進めます。\n\n**トラブルシューティング:** `mysql -u <user> -p -h <host> -P <port> <database>` で確認してください"
+    },
+    "mssql": {
+      "server": "SQL Server のホストアドレスまたはインスタンス名",
+      "database": "データベース名（空にするとすべてのデータベースを閲覧できます）",
+      "user": "ユーザー名（Entra ID / Windows 認証では空にします）",
+      "password": "パスワード（Entra ID / Windows 認証では空にします）",
+      "port": "SQL Server のポート（既定: 1433）",
+      "encrypt": "暗号化を有効にする（yes/no）",
+      "trust_server_certificate": "サーバー証明書を信頼する（yes/no）",
+      "connection_timeout": "接続タイムアウト（秒）",
+      "authInstructions": "**Microsoft Entra ID（推奨）:** ターミナルで一度 `az login` を実行してから Datly を起動してください。*Microsoft Entra ID* を選び、`server` と（任意で）`database` だけを入力し、ユーザー名とパスワードは空にします。Azure CLI の資格情報が自動で使われます。マネージド ID、VS Code、環境資格情報も `DefaultAzureCredential` 経由で使えます。\n\n> Entra の ID にはデータベースへのアクセス権が必要です。例: 管理者が `CREATE USER [you@contoso.com] FROM EXTERNAL PROVIDER;` を実行し、必要なロールを付与します。\n\n**例（Entra ID）:** サーバー: `myserver.database.windows.net` · データベース: `mydb`（ユーザー名／パスワードは空）\n\n**SQL Server 認証:** *SQL Server 認証* を選び、ユーザー名とパスワードを入力してください。\n\n**例（SQL 認証）:** サーバー: `localhost` · データベース: `mydb` · ユーザー: `sa` · パスワード: `MyP@ss` · ポート: `1433`\n\n**Windows 認証（Windows のみ）:** *Windows 認証* を選び、ユーザー名とパスワードは空にします。\n\n**ドライバー:** Microsoft SQL Server ドライバーは Datly に同梱されています。別途 ODBC のインストールは不要です。Entra ID では Azure CLI を入れて `az login` を実行してください。\n\n**トラブルシューティング:** `az account show` でサインインを確認してください。SQL Server サービスが起動し、TCP/IP が有効であることを確認してください。SQL 認証は `sqlcmd -S <server> -d <database> -U <user> -P <password>` で試せます。"
+    },
+    "postgresql": {
+      "user": "PostgreSQL のユーザー名",
+      "password": "パスワードがない場合は空のままにします",
+      "host": "PostgreSQL のホスト",
+      "port": "PostgreSQL のポート",
+      "database": "データベース名（空にするとすべてのデータベースを閲覧できます）",
+      "authInstructions": "**例:** ユーザー: `postgres` · ホスト: `localhost` · ポート: `5432` · データベース: `mydb`\n\n**ローカル設定:** PostgreSQL が起動していることを確認してください。`brew services list`（macOS）または `systemctl status postgresql`（Linux）。パスワードがなければ空のままにします。\n\n**リモート設定:** ホスト、ポート、ユーザー名、パスワードはデータベース管理者から入手してください。使いたいテーブルへの SELECT 権限がユーザーに必要です。\n\n**範囲:** *database* を空にするとサーバー上のすべてのデータベースを閲覧できます。入力すると、そのデータベースのスキーマ／テーブルに直接進めます。\n\n**トラブルシューティング:** `psql -U <user> -h <host> -p <port> -d <database>` で確認してください"
+    },
+    "mongodb": {
+      "host": "サーバーアドレス",
+      "port": "サーバーのポート",
+      "username": "認証がなければ空のままにします",
+      "password": "認証がなければ空のままにします",
+      "database": "データベース名",
+      "collection": "空にするとすべてのコレクションを一覧します",
+      "authSource": "認証データベース（既定は対象データベース）",
+      "authInstructions": "**例:** ホスト: `localhost` · ポート: `27017` · データベース: `mydb` · コレクション: `users`\n\n**ローカル設定:** MongoDB が起動していることを確認してください。認証が無効ならユーザー名とパスワードは空のままにします。\n\n**リモート設定:** ホスト、ポート、ユーザー名、パスワードはデータベース管理者から入手してください。\n\n**トラブルシューティング:** `mongosh --host <host> --port <port>` で確認してください"
+    },
+    "cosmosdb": {
+      "endpoint": "Cosmos DB アカウントのエンドポイント URL",
+      "key": "アカウントキーまたはエミュレーターキー",
+      "database": "データベース名",
+      "container": "空にするとすべてのコンテナーを一覧します",
+      "authInstructions": "**例:** エンドポイント: `https://myaccount.documents.azure.com:443/` · データベース: `mydb`\n\n**Azure の設定:** Azure ポータルの Cosmos DB アカウントの *キー* でエンドポイントとキーを確認できます。\n\n**ローカルエミュレーター:** エンドポイントは `https://localhost:8081`、キーは公開されているエミュレーターキーを使います。\n\n**トラブルシューティング:** アカウントのファイアウォールがご利用の IP を許可していること、または許可されたネットワークから接続していることを確認してください。"
+    },
+    "bigquery": {
+      "project_id": "Google Cloud のプロジェクト ID",
+      "dataset_id": "データセット ID（空ですべて。複数はカンマ区切り）",
+      "credentials_path": "サービスアカウント JSON ファイルのパス（任意）",
+      "location": "BigQuery のロケーション（既定: US）",
+      "authInstructions": "**例:** project_id: `my-gcp-project` · dataset_id: `analytics` · credentials_path: `/path/to/key.json` · location: `US`\n\n**方法 1: Application Default Credentials（推奨）**\n[Google Cloud SDK](https://cloud.google.com/sdk/docs/install) をインストールし、`gcloud auth application-default login` を実行してください。`credentials_path` は空のままにします。\n\n**方法 2: サービスアカウントのキーファイル**\nGoogle Cloud Console でサービスアカウントを作り、JSON キーをダウンロードして、そのフルパスを `credentials_path` に入力してください。アカウントに **BigQuery Data Viewer** と **BigQuery Job User** ロールを付与します。\n\n**方法 3: 環境変数**\n`GOOGLE_APPLICATION_CREDENTIALS` にサービスアカウント JSON のパスを設定します。`credentials_path` は空のままにします。"
+    },
+    "athena": {
+      "aws_profile": "~/.aws/credentials の AWS プロファイル名（設定するとアクセスキーとシークレットは不要です）",
+      "aws_access_key_id": "AWS アクセスキー ID（aws_profile を使う場合は不要）",
+      "aws_secret_access_key": "AWS シークレットアクセスキー（aws_profile を使う場合は不要）",
+      "aws_session_token": "AWS セッショントークン（一時資格情報では必須）",
+      "region_name": "AWS リージョン名",
+      "workgroup": "Athena ワークグループ名（出力先はワークグループ設定から取得します）",
+      "output_location": "クエリ結果の S3 出力先（例: s3://bucket/path/）。空ならワークグループ設定を使います。",
+      "database": "クエリに使う既定のデータベース／カタログ",
+      "query_timeout": "クエリ実行のタイムアウト（秒）（既定: 300 = 5 分）",
+      "authInstructions": "**例（プロファイル）:** aws_profile: `default` · region_name: `us-east-1` · workgroup: `primary` · database: `my_database`\n\n**例（キー）:** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1`\n\n**方法 1: AWS プロファイル（推奨）**\n`aws_profile` に `~/.aws/credentials` のプロファイル名を設定します。`aws configure --profile <name>` で用意できます。アクセスキーとシークレットは不要です。\n\n**方法 2: 明示的な資格情報**\n`aws_access_key_id` と `aws_secret_access_key` を直接入力します。一時資格情報では `aws_session_token` も追加してください。\n\n**必要な IAM 権限:** `athena:StartQueryExecution`、`athena:GetQueryExecution`、`athena:GetQueryResults`、`athena:GetWorkGroup`、`athena:ListDatabases`、`athena:ListTableMetadata`。加えて、データ／結果バケットへの S3 と Glue の権限が必要です。"
+    },
+    "kusto": {
+      "kusto_cluster": "例: https://mycluster.region.kusto.windows.net",
+      "kusto_database": "データベース名（必須）",
+      "client_id": "サービスプリンシパル専用",
+      "client_secret": "サービスプリンシパル専用",
+      "tenant_id": "サービスプリンシパル専用",
+      "authInstructions": "**方法 1: Entra ID サインイン（推奨）:** ご自身でサインインし、既存の Kusto 権限を使います。サーバーに `KUSTO_OAUTH_CLIENT_ID` があるときにこの方法が表示されます。\n\n**方法 2: Azure の既定 ID:** Azure CLI のログイン（`az login`）、マネージド ID、VS Code の資格情報、または環境資格情報を使います。\n\n**方法 3: サービスプリンシパル:** クラスターにアクセスできるサービスプリンシパルの `client_id`、`client_secret`、`tenant_id` を入力します。\n\nどの ID も、選んだ Kusto データベースへのデータプレーンアクセスがすでに必要です。"
+    },
+    "databricks": {
+      "server_hostname": "例: adb-1234567890.11.azuredatabricks.net",
+      "http_path": "SQL ウェアハウスの HTTP パス。例: /sql/1.0/warehouses/abc123",
+      "catalog": "Unity Catalog 名（空にするとすべてのカタログを閲覧できます）",
+      "schema": "スキーマ名（空にするとカタログ内のすべてのスキーマを閲覧できます）",
+      "access_token": "Databricks の個人用アクセストークン（dapi...）",
+      "authInstructions": "**入手場所:** Databricks ワークスペースで **SQL → SQL Warehouses**（左サイドバー）を開き、ウェアハウスをクリックして **Connection details** タブを開きます。**Server hostname** と **HTTP path** をそこからコピーしてください。\n\n**アクセストークン:** 右上のアバター → **Settings → Developer → Access tokens → Generate new token**。`dapi` で始まり、一度だけ表示されます。\n\n**権限:** トークンのユーザーには、読みたい Unity Catalog オブジェクトへの `USE CATALOG` / `USE SCHEMA` と `SELECT` が必要です。\n\n**範囲:** *catalog* と *schema* を空にするとアクセスできるものをすべて閲覧できます。指定すると、そのカタログ／スキーマに直接進めます。例: 組み込みの `samples` カタログ → `nyctaxi` → `trips`。\n\n**アカウントがない場合:** Databricks Free Edition はサーバーレスで無料、`samples` カタログ付きです。クラスターやウェアハウスの準備は不要です。"
+    },
+    "superset": {
+      "url": "Superset のベース URL（例: https://bi.company.com）",
+      "username": "Superset のユーザー名（SSO を使う場合は任意）",
+      "password": "Superset のパスワード（SSO を使う場合は任意）",
+      "authInstructions": "**例:** url: `https://bi.company.com` · username: `admin` · password: `***`\n\n**設定:** Superset インスタンスのベース URL と、少なくとも **Gamma** ロール（データセットの読み取り）を持つユーザーの資格情報を入力してください。\n\n**SSO:** Superset が SSO を使う場合は、パスワード認証ではなく SSO ブリッジの流れを使います（`PLG_SUPERSET_SSO_LOGIN_URL` で設定）。"
+    },
+    "azure_blob": {
+      "account_name": "Azure ストレージアカウント名",
+      "container_name": "Azure Blob コンテナー名",
+      "connection_string": "Azure ストレージの接続文字列（account_name と資格情報の代わり）",
+      "credential_chain": "Azure 資格情報プロバイダーの優先順（cli;managed_identity;env）",
+      "account_key": "Azure ストレージアカウントキー",
+      "sas_token": "Azure SAS トークン",
+      "endpoint": "Azure エンドポイントの上書き",
+      "authInstructions": "**例（接続文字列）:** connection_string: `DefaultEndpointsProtocol=https;AccountName=...` · container_name: `mydata`\n\n**例（アカウントキー）:** account_name: `mystorageacct` · container_name: `mydata` · account_key: `abc123...`\n\n**方法 1: 接続文字列（いちばん簡単）**\nAzure ポータル → ストレージアカウント → アクセスキーから取得します。`connection_string` に入力し、`account_name` は省略できます。\n\n**方法 2: アカウントキー**\nAzure ポータル → ストレージアカウント → アクセスキー。`account_name` と `account_key` を使います。\n\n**方法 3: SAS トークン（限定アクセスに推奨）**\nAzure ポータル → ストレージアカウント → 共有アクセス署名で生成します。`account_name` と `sas_token` を使います。有効期限と権限を絞れます。\n\n**方法 4: Azure CLI / マネージド ID（いちばん安全）**\n`account_name` と `container_name` だけを指定します。`az login` またはマネージド ID が必要です。\n\n**対応形式:** CSV、Parquet、JSON、JSONL"
+    },
+    "s3": {
+      "aws_access_key_id": "AWS アクセスキー ID",
+      "aws_secret_access_key": "AWS シークレットアクセスキー",
+      "aws_session_token": "AWS セッショントークン（一時資格情報では必須）",
+      "region_name": "AWS リージョン名",
+      "bucket": "S3 バケット名",
+      "authInstructions": "**例:** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1` · bucket: `my-data-bucket`\n\n**資格情報の入手:** AWS コンソール → IAM → ユーザー → セキュリティ認証情報 → アクセスキーを作成 → 「AWS の外部で実行するアプリケーション」を選びます。\n\n**必要な権限:** バケットへの `s3:GetObject` と `s3:ListBucket`。\n\n**対応形式:** CSV、Parquet、JSON、JSONL"
+    },
+    "local_folder": {
+      "root_dir": "閲覧するローカルディレクトリの絶対パス",
+      "recursive": "サブディレクトリのファイルも含める",
+      "file_pattern": "ファイルを絞り込むグロブ（例: '*.csv'）",
+      "authInstructions": "`root_dir` にデータファイルのあるローカルディレクトリを指定してください。\n\n**対応形式:** CSV、TSV、Parquet、JSON、JSONL、Excel（.xlsx/.xls）\n\n**ファイルを選ぶ** をクリックしてフォルダーを選ぶか、ディレクトリパスを貼り付けてください。"
+    },
+    "_common": {
+      "table_filter": "キーワードでテーブルを絞り込む（例: 'sales'）"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<policyDefinitions revision="1.0" schemaVersion="1.0">
+  <policyNamespaces>
+    <target prefix="datly" namespace="Datly.Policies" />
+  </policyNamespaces>
+  <resources minRequiredRevision="1.0" />
+  <policies>
+    <policy name="ForceOffline" class="Machine" displayName="$(string.ForceOffline)" explainText="$(string.ForceOffline_Help)" key="Software\Policies\Datly" valueName="ForceOffline">
+      <parentCategory ref="Datly" />
+      <supportedOn ref="windows:SUPPORTED_Windows7" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+  </policies>
+</policyDefinitions>

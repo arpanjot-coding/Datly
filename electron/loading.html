@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+  <title>Datly</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: #d5dbd2; color: #1c231d; font-family: "Segoe UI", system-ui, sans-serif; user-select: none;
+    }
+    .binary-grid { display: flex; flex-direction: column; gap: 2px; margin-bottom: 24px; }
+    .binary-row { display: flex; justify-content: center; gap: 3px; }
+    .binary-cell {
+      display: flex; width: 14px; height: 20px; align-items: center; justify-content: center;
+      color: #bdbdbd; font-size: 12px; font-weight: 500; opacity: 0.25;
+      transition: opacity 0.2s ease, color 0.2s ease;
+    }
+    .binary-cell.on { color: #1976d2; opacity: 0.9; }
+    .title {
+      font-size: 12px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase;
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .title { animation: none; } }
+  </style>
+</head>
+<body>
+  <div class="binary-grid" aria-hidden="true">
+    <div class="binary-row"><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell on">1</span><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell">0</span><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell on">1</span><span class="binary-cell">0</span></div>
+    <div class="binary-row"><span class="binary-cell">0</span><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell">0</span><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell on">1</span><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell on">1</span></div>
+    <div class="binary-row"><span class="binary-cell on">1</span><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell">0</span><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell on">1</span><span class="binary-cell on">1</span><span class="binary-cell">0</span><span class="binary-cell">0</span></div>
+  </div>
+  <div class="title">Loading Datly...</div>
+  <script>
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const cells = document.querySelectorAll(".binary-cell");
+      window.setInterval(() => {
+        cells.forEach((cell) => {
+          if (Math.random() < 0.3) {
+            const isOn = cell.classList.toggle("on");
+            cell.textContent = isOn ? "1" : "0";
+          }
+        });
+      }, 120);
+    }
+  </script>
+</body>
+</html>

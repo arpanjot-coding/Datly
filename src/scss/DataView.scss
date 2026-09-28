@@ -1,0 +1,120 @@
+/* or write CSS selectors to make customisations beyond what the parameters support */
+
+.table-container {
+    height: 100%;
+    position: relative;
+    //background-color: #fff;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    overflow: hidden;
+    will-change: transform;
+}
+
+.table-header-container {
+    display: flex;
+    height: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    background-color: #fafafa;
+}
+
+.table-header-icon {
+    padding: 0 6px 0 0;
+    margin-top: 4px;
+    display: inline-block;
+    font-size: 18px;
+    color: #717171;
+}
+
+.table-container-small {
+
+    .derived-column-header {
+        background-color: rgba(255, 215, 0, 0.1);
+    }
+
+    .highlighted-column-header {
+        background-color:rgba(88, 24, 69, 0.05);
+    }
+
+    .data-view-header-label {
+        font-size: 10px;
+    }
+}
+
+.table-box {
+    height: 100%;
+    margin: 0px;
+    background: white;
+}
+
+.table-footer-container {
+
+    .table-search-input {
+        font-size: small;
+
+        input.MuiOutlinedInput-input.MuiInputBase-input {
+            height: 1.2em;
+            font-size: small;
+        }
+    }
+
+    .table-footer-number {
+        font-size: small;
+        line-height: 1.5;
+        color: rgba(0, 0, 0, 0.54);
+    }
+}
+
+span.bold {
+    font-weight: 700;
+}
+
+.data-view-header-cell.MuiTableCell-root {
+    flex: 1 1 auto;
+    overflow: clip;
+    //border-bottom: none;
+    border-bottom-width: 2px;
+
+    &:last-child {
+        .data-view-header-container {
+            margin-right: 0px;
+        }
+    }
+
+    &.original {
+        .data-view-header-container {
+            border-bottom: 2px solid var(--df-focus-border);
+        }
+    }
+
+    &.derived {
+        .data-view-header-container {
+            background-color: #fffef1;
+            border-bottom: 2px solid #ffd700;
+        }
+    }
+
+    &.custom {
+        .data-view-header-container {
+            background-color: #fff9f8;
+            border-bottom: 2px solid #ffb395;
+        }
+    }
+
+    .data-view-header-container {
+        display: flex;
+        flex-direction: row;
+        margin: 0 2px 0 0;
+        padding: 4px 4px;
+    }
+}
+
+.data-view-header-cell.row-id-header-cell.MuiTableCell-root {
+    flex: 0 0 56px;
+}

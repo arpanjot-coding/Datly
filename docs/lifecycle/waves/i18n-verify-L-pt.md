@@ -1,0 +1,40 @@
+# Independent verify: L-pt
+
+Slice: `L-pt` in `docs/lifecycle/work-packages/F-i18n-W.md`  
+Verifier did not write the original `pt` tree. Static read of `src/i18n/locales/pt/*.json` against English meaning SSOT `src/i18n/locales/en/*.json`. Tests not executed.
+
+Eleven keys failed the first pass (broken `nseu`/`dsua` after an `o seu`/`a sua` replace, workspace clipped to `espaço`, `grande demaiss` typo, leftover English `encoding`, grammar `acessar à`). Those keys were rewritten in `pt` only, then re-checked. English was not edited.
+
+| Id | Verdict | vs plan | Evidence | Fix if fail |
+|----|---------|---------|----------|-------------|
+| A1 | Pass | String-leaf key set equals `en` for each of the 10 filenames. Vega locale arrays are not counted as string leaves. | Same 10 JSON names. File line counts match file-for-file: `common` 1036, `chart` 233, `encoding` 83, `messages` 90, `upload` 180, `model` 83, `dataLoading` 113, `loader` 116, `navigation` 17, `errors` 37. Structural `"key":` counts match where counted: `encoding` 81, `messages` 84, `upload` 169, `model` 82, `dataLoading` 106, `loader` 99, `navigation` 15, `errors` 29. Parent keys sit on the same lines. `chart.vegaLocale` `periods` / `days` / `shortDays` / `months` / `shortMonths` are arrays in both (not string leaves). Format strings `dateTime` / `date` / `time` are present. Portuguese day and month names are filled (Domingo, Janeiro; official d3-time-format pt-BR). | n/a |
+| A2 | Pass | Register você throughout UI copy (not tu). Accents present (ã ç é á õ). One `pt` tree, not a pt-BR vs pt-PT split. Meaning matches the English job, not English word order. | Addressed copy uses você / sua / seu / -e subjunctive: `onboarding.languageTitle` Escolha seu idioma, `chartRec.couldYouClarify` Pode esclarecer?, `chatDialog.you` Você, `messages.confirmDelete` Tem certeza de que quer excluir?, `db.askAgentPrompt` Guie-me. No tu / teu / tua as informal address. Accents on sessão, você, Configurações, não, extração, ã ç é á õ. One tree (Brazilian-leaning arquivo / exclusão / conosco / usuário; occasional Definições / Anular). First pass mangled `no seu` / `da sua` into `nseu` / `dsua`; rewritten. | n/a |
+| A3 | Pass | Placeholders `{{name}}` / `{{count}}` / i18next plural suffixes / HTML tags such as `<refreshAction>` and `<strong>` match `en`. | Sampled tokens match by name: `{{count}}`, `{{name}}`, `{{table}}`, `{{message}}`, `{{count, number}}`, `{{sampleSize}}` / `{{totalSize}}`, `{{live}}`, `{{connector}}` / `{{tables}}` / `{{large}}`. Plural suffixes present on both: `textTurnEarlier_other`, `tablesAvailableToAgent_other`, `earlierTurns_other`, `columnCount_one` / `_other`, `dataLoading` `loadedCount_plural`, `previewColumns_plural`, `previewShowingRows_plural`, `failedSteps_plural`, `partialFailure_plural`. `appBar.errorOccurred` keeps `<refreshAction>…</refreshAction>`. `workspace.deleteConfirm` keeps `<strong>{{name}}</strong>` and `{{id}}`. Loader CLI spans keep `<user>` `<host>` `<port>` `<database>` `<name>` `<server>`. | n/a |
+| A4 | Pass | No leftover English stubs shipped as the translation. Allow Datly, GitHub, Chartifact, Python, Azure, Vega-Lite, BETWEEN, CONTAINS, Spec, Discord, DuckDB, ECharts, Chart.js, LiteLLM. | P0 strings are Portuguese, not pasted English. `appBar.session` Sessão. `chart.templateNames.auto` Auto and `app.info` Info are shared short forms. Connector tokens `BETWEEN` / `CONTAINS` kept. `chart.gallery.spec` Spec kept. Brands Datly, GitHub, Chartifact, Python, Azure, Vega-Lite, Discord, DuckDB, ECharts, Chart.js, LiteLLM stay. `loader.mssql.encrypt` / `trust_server_certificate` keep `(yes/no)` because `mssql_data_loader.py` writes those literals into the ODBC string. First pass shipped `nseu` / `dsua` / `grande demaiss` and leftover `encoding`; rewritten. `upload.contentExceedsSizeLimit` already uses aba Banco de dados (not a DATABASE shout). | n/a |
+| A5 | Pass | P0 chrome is native: navigation, onboarding.languageTitle, onboarding.languageIntro, onboarding.continue, primary CTAs, errors, empty states. | `navigation.*`: Início, Dados, Visualização, Relatório, Conversa, Sobre. `onboarding.languageTitle` Escolha seu idioma. `languageIntro` O Datly usará este idioma em todo lugar. Altere mais tarde em Configurações. `continue` Continuar. CTAs: Salvar, Cancelar, Fechar, Excluir, Continuar, Carregar, Conectar, Entrar. `errors.*` native (Autenticação necessária, A sessão expirou. Entre novamente., Acesso negado). Empty: `dataThread.emptySessionTitle` Ainda não há dados aqui, `emptySession` Peça ao agente abaixo…, `chart.emptyStateTitle` / `emptyStateSubtitle`, `session.noSavedSessions`, `sidebar.noSessions` / `emptyTree` / `emptyWorkspace`, `logs.empty`, `preview.noTablesToPreview`, `messages.noMessages` / `noData`. | n/a |
+| A6 | Pass | Product name stays Datly. Glossary-stable product nouns: session, workspace, chart, encoding, model, agent. | Datly appears in the same nine leaves as `en` (`app.name`, `app.loadingProduct`, `landing.modelTip`, `refresh.installLocallyForUpload`, `db.confirmDeleteTableLoaded`, `auth.loginTitle`, `onboarding.languageIntro`, `upload.installLocallyTooltip`, `loader.mssql.authInstructions`). session is sessão. chart is gráfico. encoding is codificação. model is modelo. agent is agente. workspace is espaço de trabalho on the main tree. First pass clipped `dataLoading.loadPlan.addToCurrent` to espaço; rewritten. `loader.databricks.authInstructions` espaço Databricks is the Databricks product workspace, not Datly workspace. Gallery leftover `encoding` rewritten to codificação. | n/a |
+| A7 | Pass | No em dashes. Watch length on toolbar and buttons. | No `—` in `src/i18n/locales/pt/*.json`. EN em dashes were recast as colons, periods, or dropped (`chart.emptyStateSubtitle`, `errors.authExpired`, `dataLoading.stopped` is `parado`). Short controls stay short: `session.resetButton` Redefinir, `db.asc` / `desc` Asc / Desc, `encoding.ascShort` ↑ asc, `chart.addChart` Adicionar gráfico, `onboarding.continue` Continuar. Rewritten load-plan CTA is longer than EN but keeps the workspace noun. | n/a |
+
+## Rewritten keys (first pass Fail, then re-check Pass)
+
+| Key | First-pass problem | After rewrite |
+|-----|--------------------|---------------|
+| `upload.localFolderDesc` | Broken `nseu` (`no seu` after an `o seu` replace). | Percorrer arquivos no seu computador |
+| `upload.localFolderHint` | Same `nseu`. | Selecione uma pasta no seu computador… |
+| `about.dataHandlingText` | Same `nseu` on Python path. | …executa Python no seu computador… |
+| `report.clipboardNotSupported` | Same `nseu`. | …não é suportada no seu navegador… |
+| `report.clipboardRequiresSecureContext` | Grammar: `acessar à API`. | …não consegue acessar a API da área de transferência… |
+| `dataThread.startingRun` | Same `nseu`. | Trabalhando no seu pedido… |
+| `sidebar.largeTableChatPrompt` | Typo `grande demaiss`. `{{connector}}` `{{tables}}` `{{large}}` kept. | …São grandes demais para importar por completo… |
+| `dataLoading.loadPlan.addToCurrent` | Glossary: workspace became espaço. | Adicionar ao espaço de trabalho atual |
+| `loader.cosmosdb.authInstructions` | `*Keys* dsua conta`. | …em *Chaves* da sua conta Cosmos DB. |
+| `loader.databricks.authInstructions` | `Clique nseu avatar`. Databricks espaço kept (product workspace). | Clique no seu avatar… |
+| `chart.gallery.sectionDescriptions.echartsBackend` | Leftover English encoding; rest of tree uses codificação. | …saída baseada em codificação do VL |
+
+## Slice outcome
+
+All seven listed checks Pass after the eleven key rewrites. L-pt goal (native Portuguese P0 chrome, você, accents, placeholders intact, Datly kept, one `pt` tree) is met in source.
+
+Not a fail here: `appBar.app` App, `sidebar.offline` Offline, `landing.demos` Demos, `chart.log` log, and `dataLoading.cols` cols are shared short forms with `en`. `config.language` exists in both trees.
+
+Not exercised in this verify: live `changeLanguage('pt')`, CTA clip at 960×640, or i18next interpolation at runtime.

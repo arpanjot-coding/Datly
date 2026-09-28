@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-labelledby="title">
+  <title id="title">Datly</title>
+  <rect width="32" height="32" rx="8" fill="#1f6b4a"/>
+  <path fill="none" stroke="#f3f5f0" stroke-width="2.4" stroke-linecap="round" d="M7.5 23.5h17"/>
+  <path fill="none" stroke="#f3f5f0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M9 20.2l5-6.4 4.2 3.1L23.2 8.6"/>
+  <circle cx="23.2" cy="8.6" r="1.85" fill="#f3f5f0"/>
+</svg>

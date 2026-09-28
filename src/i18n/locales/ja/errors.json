@@ -1,0 +1,38 @@
+{
+  "errors": {
+    "authRequired": "認証が必要です",
+    "authExpired": "セッションの期限が切れました。もう一度サインインしてください",
+    "accessDenied": "アクセスが拒否されました",
+
+    "invalidRequest": "リクエストが正しくありません",
+    "tableNotFound": "テーブルが見つかりません",
+    "fileParseError": "アップロードしたファイルを解析できませんでした",
+    "fileTooLarge": "ファイルが大きすぎます",
+    "validationError": "入力内容に誤りがあります",
+
+    "llmAuthFailed": "認証に失敗しました。API キーを確認してください",
+    "llmRateLimit": "利用上限に達しました。しばらく待ってからもう一度お試しください",
+    "llmContextTooLong": "入力が長すぎます。データ量またはプロンプトを短くしてください",
+    "llmModelNotFound": "モデルが見つかりません。モデル名を確認してください",
+    "llmTimeout": "リクエストがタイムアウトしました。接続を確認してもう一度お試しください",
+    "llmServiceError": "モデルサービスがエラーを返しました。しばらくしてからもう一度お試しください",
+    "llmContentFiltered": "このリクエストはコンテンツ安全フィルターによってブロックされました",
+    "llmUnknownError": "モデルへのリクエストに失敗しました",
+
+    "connectorAuthFailed": "データソースの認証に失敗しました",
+    "dbConnectionFailed": "データソースに接続できませんでした",
+    "dbQueryError": "データベースのクエリでエラーが発生しました",
+    "dataLoadError": "データを読み込めませんでした",
+    "connectorError": "データコネクタでエラーが発生しました",
+
+    "codeExecutionError": "コードの実行中にエラーが発生しました",
+    "agentError": "エージェントでエラーが発生しました",
+
+    "catalogSyncTimeout": "カタログの同期がタイムアウトしました。もう一度お試しください",
+    "catalogNotFound": "コネクタが見つからないか、接続されていません",
+
+    "internalError": "予期しないエラーが発生しました",
+    "serviceUnavailable": "サービスを一時的にご利用いただけません",
+    "storageFull": "ワークスペースの保存領域がいっぱいです。ディスクの空き容量を確保してもう一度お試しください。"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "errors": {
+    "authRequired": "Cần đăng nhập",
+    "authExpired": "Session đã hết hạn. Hãy đăng nhập lại",
+    "accessDenied": "Không có quyền truy cập",
+
+    "invalidRequest": "Yêu cầu không hợp lệ",
+    "tableNotFound": "Không tìm thấy bảng",
+    "fileParseError": "Không đọc được tệp vừa tải lên",
+    "fileTooLarge": "Tệp quá lớn",
+    "validationError": "Dữ liệu không hợp lệ",
+
+    "llmAuthFailed": "Xác thực thất bại. Hãy kiểm tra API key",
+    "llmRateLimit": "Đã hết lượt gọi. Đợi một lát rồi thử lại",
+    "llmContextTooLong": "Dữ liệu quá dài. Hãy giảm kích thước dữ liệu hoặc rút ngắn câu lệnh",
+    "llmModelNotFound": "Không tìm thấy model. Hãy kiểm tra tên model",
+    "llmTimeout": "Hết thời gian chờ. Kiểm tra kết nối rồi thử lại",
+    "llmServiceError": "Dịch vụ model báo lỗi. Hãy thử lại sau",
+    "llmContentFiltered": "Yêu cầu bị bộ lọc an toàn nội dung chặn",
+    "llmUnknownError": "Gọi model thất bại",
+
+    "connectorAuthFailed": "Xác thực nguồn dữ liệu thất bại",
+    "dbConnectionFailed": "Không kết nối được nguồn dữ liệu",
+    "dbQueryError": "Lỗi truy vấn cơ sở dữ liệu",
+    "dataLoadError": "Không tải được dữ liệu",
+    "connectorError": "Lỗi connector dữ liệu",
+
+    "codeExecutionError": "Có lỗi khi chạy mã",
+    "agentError": "Agent gặp lỗi",
+
+    "catalogSyncTimeout": "Đồng bộ catalog hết thời gian. Hãy thử lại",
+    "catalogNotFound": "Không tìm thấy connector hoặc chưa kết nối",
+
+    "internalError": "Đã xảy ra lỗi ngoài dự kiến",
+    "serviceUnavailable": "Dịch vụ tạm thời không khả dụng",
+    "storageFull": "Bộ nhớ workspace đã đầy. Hãy giải phóng dung lượng rồi thử lại."
+  }
+}

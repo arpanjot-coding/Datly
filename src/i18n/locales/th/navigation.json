@@ -1,0 +1,18 @@
+{
+  "navigation": {
+    "startExploration": "เริ่มสำรวจ",
+    "installLocally": "ติดตั้งในเครื่อง",
+    "tryOnlineDemo": "ลองเดโมออนไลน์",
+    "video": "วิดีโอ",
+    "github": "GitHub",
+    "contactUs": "ติดต่อเรา",
+    "termsOfUse": "ข้อกำหนดการใช้งาน",
+    "about": "เกี่ยวกับ",
+    "home": "หน้าแรก",
+    "data": "ข้อมูล",
+    "visualization": "ภาพข้อมูล",
+    "report": "รายงาน",
+    "chat": "แชท",
+    "agentRules": "กฎของเอเจนต์"
+  }
+}

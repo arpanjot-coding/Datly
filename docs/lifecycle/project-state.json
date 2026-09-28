@@ -1,0 +1,2633 @@
+{
+  "version": 1,
+  "project": "Datly",
+  "updated": "2026-08-23T08:47:54.973Z",
+  "lifecycle": {
+    "mode": "build",
+    "currentStage": "S9",
+    "stageStatus": "in_progress",
+    "platform": "web",
+    "stack": [
+      "typescript",
+      "react",
+      "python"
+    ],
+    "approvals": {
+      "understanding": "CONFIRMED",
+      "plan": "APPROVED"
+    },
+    "activePlan": "docs/lifecycle/work-packages/F-scraper-W.md",
+    "activeTestRun": null,
+    "stages": {
+      "S0": {
+        "status": "done",
+        "notes": ""
+      },
+      "S1": {
+        "status": "done",
+        "notes": ""
+      },
+      "S1.5": {
+        "status": "done",
+        "notes": "data IDE research COMPLETE; Kind R IDs pending user pick"
+      },
+      "S2": {
+        "status": "done",
+        "notes": ""
+      },
+      "S3": {
+        "status": "done",
+        "notes": ""
+      },
+      "S4": {
+        "status": "done",
+        "notes": ""
+      },
+      "S5": {
+        "status": "done",
+        "notes": ""
+      },
+      "S6": {
+        "status": "done",
+        "notes": ""
+      },
+      "S7": {
+        "status": "done",
+        "notes": ""
+      },
+      "S8": {
+        "status": "in_progress",
+        "notes": ""
+      },
+      "S9": {
+        "status": "in_progress",
+        "notes": "local MVP S9: login distill play no-share"
+      },
+      "S10": {
+        "status": "not_started",
+        "notes": ""
+      },
+      "S11": {
+        "status": "not_started",
+        "notes": ""
+      }
+    },
+    "blockers": [],
+    "nextAction": "F-auth / continue implementation (not_started)",
+    "campaignEvidence": {
+      "workPackagePath": "docs/lifecycle/work-packages/campaign-W.md",
+      "houseLawFill": {
+        "ui-craft": {
+          "chunk": "C-vis",
+          "na": false,
+          "why": ""
+        },
+        "section-grain": {
+          "chunk": "C-map",
+          "na": false,
+          "why": ""
+        },
+        "phone-chrome": {
+          "chunk": "n/a:no android/ios in ship",
+          "na": true,
+          "why": "no android/ios in ship"
+        },
+        "web-layout": {
+          "chunk": "C-vis",
+          "na": false,
+          "why": ""
+        },
+        "desktop-chrome": {
+          "chunk": "C-vis",
+          "na": false,
+          "why": ""
+        },
+        "first-run": {
+          "chunk": "C-wf",
+          "na": false,
+          "why": ""
+        },
+        "value-slide": {
+          "chunk": "n/a:no value-slide art",
+          "na": true,
+          "why": "no value-slide art"
+        },
+        "app-polish": {
+          "chunk": "C-theme-surfaces",
+          "na": false,
+          "why": ""
+        },
+        "notifications": {
+          "chunk": "n/a:no reminders",
+          "na": true,
+          "why": "no reminders"
+        },
+        "i18n": {
+          "chunk": "C-wf",
+          "na": false,
+          "why": ""
+        },
+        "hardware-back": {
+          "chunk": "n/a:no android hardware back",
+          "na": true,
+          "why": "no android hardware back"
+        },
+        "store-review": {
+          "chunk": "n/a:no in-app rating",
+          "na": true,
+          "why": "no in-app rating"
+        },
+        "shareability": {
+          "chunk": "n/a:no OS share artifact",
+          "na": true,
+          "why": "no OS share artifact"
+        }
+      },
+      "shipsNotifications": false,
+      "writesOutput": false,
+      "siblingFamily": false
+    }
+  },
+  "features": [
+    {
+      "id": "F-workspace",
+      "name": "Workspace history and sharing",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-ws-sessions",
+          "C-ws-sidebar",
+          "C-local-mvp"
+        ],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "shape",
+        "workPackagePath": "docs/lifecycle/work-packages/F-workspace-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-hist-landing",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "C-hist-landing",
+            "na": false,
+            "why": ""
+          },
+          "phone-chrome": {
+            "chunk": "n/a:no mobile",
+            "na": true,
+            "why": "no mobile"
+          },
+          "web-layout": {
+            "chunk": "C-hist-landing",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-hist-landing",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "n/a:LanguageScreen unchanged",
+            "na": true,
+            "why": "LanguageScreen unchanged"
+          },
+          "value-slide": {
+            "chunk": "n/a:none this run",
+            "na": true,
+            "why": "none this run"
+          },
+          "app-polish": {
+            "chunk": "n/a:not this package",
+            "na": true,
+            "why": "not this package"
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "i18n": {
+            "chunk": "C-hist-landing",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no android",
+            "na": true,
+            "why": "no android"
+          }
+        },
+        "planCheck": "pass"
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-analyst",
+      "name": "Analyst agent chat",
+      "priority": "P0",
+      "scope": "in",
+      "source": "code",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": false,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": ""
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-connectors",
+      "name": "Data connectors and load",
+      "priority": "P0",
+      "scope": "in",
+      "source": "code",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": false,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": ""
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-charts",
+      "name": "Interactive charts",
+      "priority": "P0",
+      "scope": "in",
+      "source": "code",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": false,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": ""
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-reports",
+      "name": "Reports",
+      "priority": "P1",
+      "scope": "in",
+      "source": "code",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": false,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": ""
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-desktop",
+      "name": "Desktop shell",
+      "priority": "P1",
+      "scope": "in",
+      "source": "code",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": false,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": ""
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-data-ide",
+      "name": "Professional data IDE",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-grid-clipboard"
+        ],
+        "active": "C-grid-menu",
+        "pending": [
+          "C-grid-profile",
+          "C-steps-model",
+          "C-steps-rail",
+          "C-steps-reshape",
+          "C-steps-undo",
+          "C-steps-rerun",
+          "C-desk-panes",
+          "C-desk-keys",
+          "C-desk-session",
+          "C-desk-os",
+          "C-rep-insert",
+          "C-rep-pack",
+          "C-rep-stale",
+          "C-cln-cluster",
+          "C-cln-sample-apply",
+          "C-desk-document",
+          "C-rep-showme",
+          "C-rep-legend"
+        ]
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "workPackagePath": "docs/lifecycle/work-packages/F-data-ide-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-grid-menu",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "C-steps-rail",
+            "na": false,
+            "why": ""
+          },
+          "phone-chrome": {
+            "chunk": "n/a:no new phone chrome",
+            "na": true,
+            "why": "no new phone chrome"
+          },
+          "web-layout": {
+            "chunk": "C-desk-panes",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-desk-os",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "C-desk-session",
+            "na": false,
+            "why": ""
+          },
+          "value-slide": {
+            "chunk": "n/a:no value slides",
+            "na": true,
+            "why": "no value slides"
+          },
+          "app-polish": {
+            "chunk": "C-desk-os",
+            "na": false,
+            "why": ""
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "i18n": {
+            "chunk": "C-grid-clipboard",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no new mobile screen",
+            "na": true,
+            "why": "no new mobile screen"
+          }
+        },
+        "writesOutput": true,
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "shape"
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-i18n-picker",
+      "name": "Language picker and i18n plumbing",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "live",
+        "contracts": "honest",
+        "backend": "live",
+        "wire": "live",
+        "data": "none",
+        "tests": "panel",
+        "testCases": "executed",
+        "archFit": "fit",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-i18n-plumbing",
+          "C-picker-gate",
+          "C-picker-screen",
+          "C-picker-settings",
+          "C-picker-desktop-keys",
+          "C-test-spec"
+        ],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "W10 S9 catalog P0 pass. P1 V-narrow-outline-clip V-tall-cta-gap deferred. Persist-before-Continue closed (critic P1-P8 Pass). tsc red pre-existing. Do not mark-done.",
+        "workPackagePath": "docs/lifecycle/work-packages/F-i18n-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-picker-screen",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "n/a:overlay and Settings row not a Home or nav tile",
+            "na": true,
+            "why": "overlay and Settings row not a Home or nav tile"
+          },
+          "phone-chrome": {
+            "chunk": "n/a:web and desktop only",
+            "na": true,
+            "why": "web and desktop only"
+          },
+          "web-layout": {
+            "chunk": "C-picker-screen",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-picker-desktop-keys",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "C-picker-gate",
+            "na": false,
+            "why": ""
+          },
+          "value-slide": {
+            "chunk": "n/a:language overlay only then existing model wall",
+            "na": true,
+            "why": "language overlay only then existing model wall"
+          },
+          "app-polish": {
+            "chunk": "n/a:About icons splash Legal out of scope",
+            "na": true,
+            "why": "About icons splash Legal out of scope"
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "i18n": {
+            "chunk": "C-i18n-plumbing",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no Android or iOS this turn",
+            "na": true,
+            "why": "no Android or iOS this turn"
+          }
+        },
+        "wireframe": "locked",
+        "designReview": "pass",
+        "integrationVerdict": "shape",
+        "planCheck": "pass",
+        "panelPaths": [
+          "docs/test-runs/i18n-locales-2026-08-19/shots"
+        ],
+        "p0CaseIds": [
+          "TC-picker-01",
+          "TC-picker-02",
+          "TC-picker-03",
+          "TC-picker-04",
+          "TC-picker-05",
+          "TC-picker-06",
+          "TC-picker-07",
+          "TC-picker-08",
+          "TC-picker-09",
+          "TC-picker-10"
+        ],
+        "tcStatus": {
+          "TC-picker-01": "pass",
+          "TC-picker-02": "pass",
+          "TC-picker-03": "pass",
+          "TC-picker-04": "pass",
+          "TC-picker-05": "pass",
+          "TC-picker-06": "pass",
+          "TC-picker-07": "pass",
+          "TC-picker-08": "pass",
+          "TC-picker-09": "pass",
+          "TC-picker-10": "pass"
+        },
+        "qualityRuns": [
+          {
+            "name": "vitest",
+            "command": "npx vitest run tests/frontend/unit/app/i18nLocales.test.ts",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-19T20:14:07.978Z",
+            "note": "six-locale key parity"
+          },
+          {
+            "name": "typecheck",
+            "command": "npx tsc --noEmit --pretty false",
+            "exitCode": 1,
+            "ok": false,
+            "at": "2026-08-19T20:14:08.079Z",
+            "note": "pre-existing App.tsx TS1117 plus dfSlice/utils"
+          }
+        ]
+      },
+      "rollup": "in_progress"
+    },
+    {
+      "id": "F-locales",
+      "name": "Native translations for listed locales",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "ui",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "live",
+        "contracts": "honest",
+        "backend": "live",
+        "wire": "live",
+        "data": "real",
+        "tests": "smoke",
+        "testCases": "none",
+        "archFit": "fit",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "L-zh",
+          "L-de",
+          "L-ko",
+          "L-ja",
+          "L-fr",
+          "L-pt",
+          "L-es",
+          "L-ru",
+          "L-tr",
+          "L-it",
+          "L-ar",
+          "L-ro",
+          "L-vi",
+          "L-el",
+          "L-fil",
+          "L-hi",
+          "L-nl",
+          "L-th",
+          "L-pl",
+          "C-i18n-locale-tests",
+          "C-i18n-locale-tests-20",
+          "L-fr-keys",
+          "L-de-keys",
+          "L-ja-keys",
+          "L-ko-keys",
+          "C-i18n-ar-rtl-s9"
+        ],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "L-fr-keys L-de-keys L-ja-keys L-ko-keys polish Pass. vitest 22/22. RTL S9 leftover Accepted (dir=rtl). Do not mark-done.",
+        "workPackagePath": "docs/lifecycle/work-packages/F-i18n-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "n/a:locale files not new chrome",
+            "na": true,
+            "why": "locale files not new chrome"
+          },
+          "section-grain": {
+            "chunk": "n/a:no new place",
+            "na": true,
+            "why": "no new place"
+          },
+          "phone-chrome": {
+            "chunk": "n/a:web and desktop only",
+            "na": true,
+            "why": "web and desktop only"
+          },
+          "web-layout": {
+            "chunk": "n/a:no layout change",
+            "na": true,
+            "why": "no layout change"
+          },
+          "desktop-chrome": {
+            "chunk": "n/a:no chrome change",
+            "na": true,
+            "why": "no chrome change"
+          },
+          "first-run": {
+            "chunk": "n/a:owned by F-i18n-picker",
+            "na": true,
+            "why": "owned by F-i18n-picker"
+          },
+          "value-slide": {
+            "chunk": "n/a:not this job",
+            "na": true,
+            "why": "not this job"
+          },
+          "app-polish": {
+            "chunk": "n/a:not this job",
+            "na": true,
+            "why": "not this job"
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "i18n": {
+            "chunk": "L-zh",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no Android or iOS this turn",
+            "na": true,
+            "why": "no Android or iOS this turn"
+          }
+        },
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "shape",
+        "planCheck": "pass",
+        "qualityRuns": [
+          {
+            "name": "vitest",
+            "command": "npx vitest run tests/frontend/unit/app/i18nLocales.test.ts",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-19T23:26:30.838Z",
+            "note": "20-way after L-fr-keys L-de-keys L-ja-keys L-ko-keys sidebar.connected/offline"
+          }
+        ],
+        "panelPaths": [
+          "docs/test-runs/i18n-locales-2026-08-19/shots/desktop-language-ar-rtl.png",
+          "docs/test-runs/i18n-locales-2026-08-19/shots/web-language-ar-rtl.png",
+          "docs/lifecycle/waves/i18n-s9-ar-rtl.md"
+        ]
+      },
+      "rollup": "in_progress"
+    },
+    {
+      "id": "F-cicada-ui",
+      "name": "Cicada chrome and chart restyle",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-cicada-tokens",
+          "C-cicada-recipes",
+          "C-cicada-island",
+          "C-cicada-charts",
+          "C-cicada-sidebar",
+          "C-cicada-composer"
+        ],
+        "active": null,
+        "pending": [
+          "C-cicada-cards",
+          "C-cicada-type",
+          "C-cicada-settings",
+          "C-cicada-qa"
+        ]
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "workPackagePath": "docs/lifecycle/work-packages/F-cicada-ui-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-cicada-island",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "n/a:restyle existing places no new grain",
+            "na": true,
+            "why": "restyle existing places no new grain"
+          },
+          "phone-chrome": {
+            "chunk": "n/a:android ios not in ship set",
+            "na": true,
+            "why": "android ios not in ship set"
+          },
+          "web-layout": {
+            "chunk": "C-cicada-qa",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-cicada-island",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "n/a:LanguageScreen stays first-run order unchanged",
+            "na": true,
+            "why": "LanguageScreen stays first-run order unchanged"
+          },
+          "value-slide": {
+            "chunk": "n/a:no value slides",
+            "na": true,
+            "why": "no value slides"
+          },
+          "app-polish": {
+            "chunk": "n/a:icons legal not this job",
+            "na": true,
+            "why": "icons legal not this job"
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "i18n": {
+            "chunk": "C-cicada-settings",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no android",
+            "na": true,
+            "why": "no android"
+          }
+        },
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "shape",
+        "qualityRuns": [
+          {
+            "name": "statemigrations",
+            "command": "npx vitest run tests/frontend/unit/app/stateMigrations.test.ts",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-19T20:50:26.605Z"
+          },
+          {
+            "name": "layout-tests",
+            "command": "npx vitest run tests/frontend/unit/app/layout.test.ts tests/frontend/unit/app/LayoutProvider.test.tsx",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-19T21:43:40.888Z"
+          },
+          {
+            "name": "chart-theme-tests",
+            "command": "npx vitest run tests/frontend/unit/app/chartTheme.test.ts tests/frontend/unit/app/chartCache.test.ts",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-19T21:54:30.724Z"
+          }
+        ]
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-clean-grid",
+      "name": "Grid clean verbs and real results grid",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": "A",
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "partial",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "real",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-grid-clipboard"
+        ],
+        "active": "C-grid-menu",
+        "pending": [
+          "C-grid-profile",
+          "C-cln-cluster"
+        ]
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "workPackagePath": "docs/lifecycle/work-packages/F-data-ide-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-grid-menu",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "C-steps-rail",
+            "na": false,
+            "why": ""
+          },
+          "phone-chrome": {
+            "chunk": "n/a:no new phone chrome",
+            "na": true,
+            "why": "no new phone chrome"
+          },
+          "web-layout": {
+            "chunk": "C-desk-panes",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-desk-os",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "C-desk-session",
+            "na": false,
+            "why": ""
+          },
+          "value-slide": {
+            "chunk": "n/a:no value slides",
+            "na": true,
+            "why": "no value slides"
+          },
+          "app-polish": {
+            "chunk": "C-desk-os",
+            "na": false,
+            "why": ""
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "i18n": {
+            "chunk": "C-grid-clipboard",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no new mobile screen",
+            "na": true,
+            "why": "no new mobile screen"
+          }
+        },
+        "writesOutput": true,
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "shape"
+      },
+      "rollup": "frontend_only"
+    },
+    {
+      "id": "F-clean-steps",
+      "name": "Applied steps join pivot undo",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": "A",
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": ""
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-ide-desktop",
+      "name": "Workbench chrome and desktop OS",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": "B",
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": ""
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-report-pack",
+      "name": "Report insert export stale badge",
+      "priority": "P1",
+      "scope": "in",
+      "source": "user",
+      "phase": "C",
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": ""
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-header-chrome",
+      "name": "Landing header chrome",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "ui",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "partial",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-chrome-pills",
+          "C-chrome-messages",
+          "C-chrome-overflow"
+        ],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "workPackagePath": "docs/lifecycle/work-packages/F-header-chrome-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-chrome-messages",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "n/a:no new Home grain",
+            "na": true,
+            "why": "no new Home grain"
+          },
+          "phone-chrome": {
+            "chunk": "n/a:android/ios not this ship set",
+            "na": true,
+            "why": "android/ios not this ship set"
+          },
+          "web-layout": {
+            "chunk": "C-chrome-pills",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-chrome-messages",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "n/a:LanguageScreen gate unchanged",
+            "na": true,
+            "why": "LanguageScreen gate unchanged"
+          },
+          "value-slide": {
+            "chunk": "n/a:no value slides",
+            "na": true,
+            "why": "no value slides"
+          },
+          "app-polish": {
+            "chunk": "C-chrome-pills",
+            "na": false,
+            "why": ""
+          },
+          "notifications": {
+            "chunk": "n/a:system-messages panel is not reminders",
+            "na": true,
+            "why": "system-messages panel is not reminders"
+          },
+          "i18n": {
+            "chunk": "C-chrome-pills",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no android",
+            "na": true,
+            "why": "no android"
+          }
+        },
+        "wireframe": "skipped",
+        "designReview": "skipped",
+        "integrationVerdict": "shape",
+        "planCheck": "pass",
+        "qualityRuns": [
+          {
+            "name": "lint",
+            "command": "yarn lint",
+            "exitCode": 1,
+            "ok": false,
+            "at": "2026-08-19T23:10:15.065Z"
+          },
+          {
+            "name": "typecheck",
+            "command": "npx tsc --noEmit",
+            "exitCode": 2,
+            "ok": false,
+            "at": "2026-08-19T23:27:04.767Z"
+          }
+        ]
+      },
+      "rollup": "frontend_only"
+    },
+    {
+      "id": "F-loader-anim",
+      "name": "Page loading animation",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "ui",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "partial",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-loader-pulse"
+        ],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "workPackagePath": "docs/lifecycle/work-packages/F-header-chrome-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-loader-pulse",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "n/a:no new Home grain",
+            "na": true,
+            "why": "no new Home grain"
+          },
+          "phone-chrome": {
+            "chunk": "n/a:android/ios not this ship set",
+            "na": true,
+            "why": "android/ios not this ship set"
+          },
+          "web-layout": {
+            "chunk": "C-loader-pulse",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-loader-pulse",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "n/a:LanguageScreen gate unchanged",
+            "na": true,
+            "why": "LanguageScreen gate unchanged"
+          },
+          "value-slide": {
+            "chunk": "n/a:no value slides",
+            "na": true,
+            "why": "no value slides"
+          },
+          "app-polish": {
+            "chunk": "n/a:icons/legal not this job",
+            "na": true,
+            "why": "icons/legal not this job"
+          },
+          "notifications": {
+            "chunk": "n/a:loader is not reminders",
+            "na": true,
+            "why": "loader is not reminders"
+          },
+          "i18n": {
+            "chunk": "C-loader-pulse",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no android",
+            "na": true,
+            "why": "no android"
+          }
+        },
+        "wireframe": "skipped",
+        "designReview": "skipped",
+        "integrationVerdict": "fit",
+        "planCheck": "pass",
+        "qualityRuns": [
+          {
+            "name": "typecheck",
+            "command": "npx tsc --noEmit",
+            "exitCode": 2,
+            "ok": false,
+            "at": "2026-08-19T23:22:31.237Z",
+            "note": "tree-wide FAIL; AnvilLoader.tsx not in tsc list"
+          }
+        ]
+      },
+      "rollup": "frontend_only"
+    },
+    {
+      "id": "F-model-card",
+      "name": "Models dialog layout",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "ui",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": ""
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-auth",
+      "name": "Signup login logout",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-auth-screens",
+          "C-auth-gate",
+          "C-local-mvp",
+          "C-local-mvp-v"
+        ],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "fit",
+        "workPackagePath": "docs/lifecycle/work-packages/F-saas-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-auth-screens",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "C-auth-screens",
+            "na": false,
+            "why": ""
+          },
+          "phone-chrome": {
+            "chunk": "n/a:no mobile",
+            "na": true,
+            "why": "no mobile"
+          },
+          "web-layout": {
+            "chunk": "C-auth-screens",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-auth-screens",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "C-auth-gate",
+            "na": false,
+            "why": ""
+          },
+          "value-slide": {
+            "chunk": "n/a:none this run",
+            "na": true,
+            "why": "none this run"
+          },
+          "app-polish": {
+            "chunk": "n/a:not this package",
+            "na": true,
+            "why": "not this package"
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "i18n": {
+            "chunk": "C-auth-screens",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no android",
+            "na": true,
+            "why": "no android"
+          }
+        }
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-billing",
+      "name": "Web billing and usage portal",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-bill-shell",
+          "C-bill-usage"
+        ],
+        "active": null,
+        "pending": [
+          "C-bill-admin",
+          "C-bill-stripe"
+        ]
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "fit",
+        "workPackagePath": "docs/lifecycle/work-packages/F-billing-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-bill-shell",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "C-bill-shell",
+            "na": false,
+            "why": ""
+          },
+          "phone-chrome": {
+            "chunk": "n/a:web portal",
+            "na": true,
+            "why": "web portal"
+          },
+          "web-layout": {
+            "chunk": "C-bill-scaffold",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "n/a:not Electron",
+            "na": true,
+            "why": "not Electron"
+          },
+          "first-run": {
+            "chunk": "n/a:analysis app",
+            "na": true,
+            "why": "analysis app"
+          },
+          "value-slide": {
+            "chunk": "n/a:none",
+            "na": true,
+            "why": "none"
+          },
+          "app-polish": {
+            "chunk": "n/a:not this repo",
+            "na": true,
+            "why": "not this repo"
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "i18n": {
+            "chunk": "C-bill-shell",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no android",
+            "na": true,
+            "why": "no android"
+          }
+        }
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-data-acl",
+      "name": "Data read write control",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "fit"
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-sql",
+      "name": "SQL analysis on workspace data",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-sql-drawer"
+        ],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "fit"
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-sql-guard",
+      "name": "SQL sanity guard",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "api",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-sql-guard"
+        ],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "fit"
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-context-graph",
+      "name": "Long context graph mapping",
+      "priority": "P1",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "api",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "fit"
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-workflow-db",
+      "name": "Chat workflows run on database",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "none",
+        "data": "none",
+        "tests": "none",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-wf-distill-cta",
+          "C-wf-local-replay",
+          "C-wf-distill-cta-v",
+          "C-wf-local-replay-v"
+        ],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "workPackagePath": "docs/lifecycle/work-packages/F-workflow-db-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-wf-replay-target",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "n/a:no new Home grain",
+            "na": true,
+            "why": "Knowledge tab stays"
+          },
+          "phone-chrome": {
+            "chunk": "n/a:no mobile",
+            "na": true,
+            "why": "no mobile"
+          },
+          "web-layout": {
+            "chunk": "C-wf-replay-target",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-wf-replay-target",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "n/a:not this job",
+            "na": true,
+            "why": "not this job"
+          },
+          "value-slide": {
+            "chunk": "n/a:none",
+            "na": true,
+            "why": "none"
+          },
+          "app-polish": {
+            "chunk": "n/a:not this job",
+            "na": true,
+            "why": "not this job"
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "i18n": {
+            "chunk": "C-wf-replay-prompt",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no android",
+            "na": true,
+            "why": "no android"
+          }
+        },
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "shape",
+        "planCheck": "pass"
+      },
+      "rollup": "not_started"
+    },
+    {
+      "id": "F-scraper",
+      "name": "Scraper ingest into Datly",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "partial",
+        "contracts": "none",
+        "backend": "partial",
+        "wire": "partial",
+        "data": "none",
+        "tests": "smoke",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-scrape-ssrf-fetch",
+          "C-scrape-loader",
+          "C-scrape-html-tables",
+          "C-scrape-ui-type",
+          "C-scrape-url-tab",
+          "C-scrape-agent-bind",
+          "C-scrape-refresh"
+        ],
+        "active": null,
+        "pending": []
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "workPackagePath": "docs/lifecycle/work-packages/F-scraper-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "phone-chrome": {
+            "chunk": "n/a:no android/ios phone chrome",
+            "na": true,
+            "why": "no android/ios phone chrome"
+          },
+          "web-layout": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "n/a:no first-run change",
+            "na": true,
+            "why": "no first-run change"
+          },
+          "value-slide": {
+            "chunk": "n/a:no value-slide art",
+            "na": true,
+            "why": "no value-slide art"
+          },
+          "app-polish": {
+            "chunk": "n/a:no icon or legal work",
+            "na": true,
+            "why": "no icon or legal work"
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "store-review": {
+            "chunk": "n/a:no rating ask",
+            "na": true,
+            "why": "no rating ask"
+          },
+          "shareability": {
+            "chunk": "n/a:no OS share artifact",
+            "na": true,
+            "why": "no OS share artifact"
+          },
+          "i18n": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no android hardware back",
+            "na": true,
+            "why": "no android hardware back"
+          }
+        },
+        "shipsNotifications": false,
+        "writesOutput": false,
+        "siblingFamily": true,
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "shape",
+        "qualityRuns": [
+          {
+            "name": "pytest-web-ssrf",
+            "command": "python -m pytest tests/backend/data_loader/test_web_ssrf.py -q",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T06:48:27.587Z"
+          },
+          {
+            "name": "pytest-web-loader",
+            "command": ".venv/Scripts/python.exe -m pytest tests/backend/data_loader/test_web_loader.py tests/backend/data_loader/test_web_ssrf.py -q",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T06:58:28.110Z"
+          },
+          {
+            "name": "pytest-web-html-tables",
+            "command": ".venv/Scripts/python.exe -m pytest tests/backend/data_loader/test_web_loader.py tests/backend/data_loader/test_web_ssrf.py -q",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T07:19:59.843Z"
+          },
+          {
+            "name": "yarn-connector-type-web",
+            "command": "corepack yarn test tests/frontend/unit/app/connectorTypeWeb.test.ts tests/frontend/unit/app/i18nLocales.test.ts",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T07:26:09.808Z"
+          },
+          {
+            "name": "yarn-url-tab-web-bind",
+            "command": "corepack yarn test tests/frontend/unit/app/urlTabWebBind.test.ts tests/frontend/unit/app/i18nLocales.test.ts",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T07:33:30.408Z"
+          },
+          {
+            "name": "yarn-agent-web-bind",
+            "command": "corepack yarn test tests/frontend/unit/app/agentWebBind.test.ts tests/frontend/unit/app/urlTabWebBind.test.ts",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T07:42:51.153Z"
+          },
+          {
+            "name": "pytest-agent-bind",
+            "command": "pytest tests/backend/agents/test_data_loading_skill.py tests/backend/agents/test_data_loading_discovery_tools.py",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T07:42:51.294Z"
+          },
+          {
+            "name": "yarn-refresh-hydrate",
+            "command": "corepack yarn test tests/frontend/unit/app/hydratePipelineClean.test.ts tests/frontend/unit/app/refreshHydrate.test.ts",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T08:23:39.258Z"
+          },
+          {
+            "name": "pytest-refresh-source-info",
+            "command": "pytest tests/backend/data/test_warehouse_scrape_contract.py",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T08:23:39.535Z"
+          }
+        ]
+      },
+      "rollup": "partial_wire"
+    },
+    {
+      "id": "F-pipeline",
+      "name": "Transform pipeline for scraped tables",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "stub",
+        "contracts": "none",
+        "backend": "none",
+        "wire": "partial",
+        "data": "none",
+        "tests": "smoke",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-pipe-hydrate"
+        ],
+        "active": null,
+        "pending": [
+          "C-pipe-suggest-types",
+          "C-pipe-safe-verbs",
+          "C-pipe-exec-tests",
+          "C-pipe-kebab-types",
+          "C-pipe-i18n-issues"
+        ]
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "workPackagePath": "docs/lifecycle/work-packages/F-scraper-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "phone-chrome": {
+            "chunk": "n/a:no android/ios phone chrome",
+            "na": true,
+            "why": "no android/ios phone chrome"
+          },
+          "web-layout": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "n/a:no first-run change",
+            "na": true,
+            "why": "no first-run change"
+          },
+          "value-slide": {
+            "chunk": "n/a:no value-slide art",
+            "na": true,
+            "why": "no value-slide art"
+          },
+          "app-polish": {
+            "chunk": "n/a:no icon or legal work",
+            "na": true,
+            "why": "no icon or legal work"
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "store-review": {
+            "chunk": "n/a:no rating ask",
+            "na": true,
+            "why": "no rating ask"
+          },
+          "shareability": {
+            "chunk": "n/a:no OS share artifact",
+            "na": true,
+            "why": "no OS share artifact"
+          },
+          "i18n": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no android hardware back",
+            "na": true,
+            "why": "no android hardware back"
+          }
+        },
+        "shipsNotifications": false,
+        "writesOutput": false,
+        "siblingFamily": true,
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "shape",
+        "qualityRuns": [
+          {
+            "name": "yarn-hydrate-pipeline-clean",
+            "command": "corepack yarn test tests/frontend/unit/app/hydratePipelineClean.test.ts",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T07:15:01.875Z"
+          }
+        ]
+      },
+      "rollup": "in_progress"
+    },
+    {
+      "id": "F-warehouse",
+      "name": "Warehouse structured scrape results",
+      "priority": "P0",
+      "scope": "in",
+      "source": "user",
+      "phase": null,
+      "surface": "full",
+      "sensitive": false,
+      "dependsOn": [],
+      "inRun": true,
+      "impl": {
+        "ui": "none",
+        "contracts": "listed",
+        "backend": "partial",
+        "wire": "partial",
+        "data": "none",
+        "tests": "smoke",
+        "testCases": "none",
+        "archFit": "unknown",
+        "security": "na"
+      },
+      "deferred": null,
+      "markedDoneAt": null,
+      "chunks": {
+        "done": [
+          "C-wh-ingest-contract",
+          "C-wh-source-info",
+          "C-wh-session-reopen",
+          "C-wh-refresh-provenance"
+        ],
+        "active": "C-wh-gzip-bind",
+        "pending": [
+          "C-wh-gzip-bind"
+        ]
+      },
+      "links": {
+        "requirementIds": [],
+        "contractIds": [],
+        "routes": [],
+        "files": []
+      },
+      "evidence": {
+        "lastPanel": null,
+        "lastCommit": null,
+        "notes": "",
+        "workPackagePath": "docs/lifecycle/work-packages/F-scraper-W.md",
+        "houseLawFill": {
+          "ui-craft": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "section-grain": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "phone-chrome": {
+            "chunk": "n/a:no android/ios phone chrome",
+            "na": true,
+            "why": "no android/ios phone chrome"
+          },
+          "web-layout": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "desktop-chrome": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "first-run": {
+            "chunk": "n/a:no first-run change",
+            "na": true,
+            "why": "no first-run change"
+          },
+          "value-slide": {
+            "chunk": "n/a:no value-slide art",
+            "na": true,
+            "why": "no value-slide art"
+          },
+          "app-polish": {
+            "chunk": "n/a:no icon or legal work",
+            "na": true,
+            "why": "no icon or legal work"
+          },
+          "notifications": {
+            "chunk": "n/a:no reminders",
+            "na": true,
+            "why": "no reminders"
+          },
+          "store-review": {
+            "chunk": "n/a:no rating ask",
+            "na": true,
+            "why": "no rating ask"
+          },
+          "shareability": {
+            "chunk": "n/a:no OS share artifact",
+            "na": true,
+            "why": "no OS share artifact"
+          },
+          "i18n": {
+            "chunk": "C-scrape-ui-type",
+            "na": false,
+            "why": ""
+          },
+          "hardware-back": {
+            "chunk": "n/a:no android hardware back",
+            "na": true,
+            "why": "no android hardware back"
+          }
+        },
+        "shipsNotifications": false,
+        "writesOutput": false,
+        "siblingFamily": true,
+        "wireframe": "skipped",
+        "designReview": "pass",
+        "integrationVerdict": "shape",
+        "qualityRuns": [
+          {
+            "name": "pytest-warehouse-scrape-contract",
+            "command": ".venv/Scripts/python.exe -m pytest tests/backend/data/test_warehouse_scrape_contract.py tests/backend/data/test_source_metadata.py -q",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T07:03:48.640Z"
+          },
+          {
+            "name": "pytest-source-info",
+            "command": "pytest tests/backend/data/test_warehouse_scrape_contract.py tests/backend/data/test_source_metadata.py",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T07:49:10.859Z"
+          },
+          {
+            "name": "yarn-session-reopen",
+            "command": "corepack yarn test tests/frontend/unit/app/tableToInputTable.test.ts tests/frontend/unit/app/useAutoSave.test.tsx tests/frontend/unit/app/workspaceService.test.ts",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T08:36:22.474Z"
+          },
+          {
+            "name": "pytest-session-zip",
+            "command": "pytest tests/backend/routes/test_session_export_import.py tests/backend/data/test_warehouse_scrape_contract.py",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T08:36:22.644Z"
+          },
+          {
+            "name": "yarn-refresh-provenance",
+            "command": "corepack yarn test tests/frontend/unit/app/refreshProvenance.test.ts tests/frontend/unit/app/refreshHydrate.test.ts tests/frontend/unit/app/tableToInputTable.test.ts tests/frontend/unit/app/hydratePipelineClean.test.ts tests/frontend/unit/app/i18nLocales.test.ts",
+            "exitCode": 0,
+            "ok": true,
+            "at": "2026-08-23T08:47:54.449Z"
+          }
+        ]
+      },
+      "rollup": "in_progress"
+    }
+  ],
+  "targets": {
+    "web": {
+      "inScope": true,
+      "proof": "untested"
+    },
+    "desktop": {
+      "inScope": true,
+      "proof": "untested"
+    },
+    "android": {
+      "inScope": false,
+      "proof": "n/a"
+    },
+    "ios": {
+      "inScope": false,
+      "proof": "n/a"
+    },
+    "extension": {
+      "inScope": false,
+      "proof": "n/a"
+    }
+  },
+  "appPolish": {
+    "icons": "missing",
+    "splash": "missing",
+    "onboarding": "missing"
+  },
+  "uxFoundation": {
+    "workflowDoc": "",
+    "navDocumented": false,
+    "visualSystem": "missing",
+    "inspirationDoc": "",
+    "easeNotes": ""
+  },
+  "capabilities": {
+    "notifications": {
+      "shipped": false,
+      "proof": "n/a",
+      "paths": []
+    },
+    "writesFiles": {
+      "shipped": true,
+      "proof": "untested",
+      "paths": []
+    },
+    "firstRun": {
+      "shipped": true,
+      "proof": "untested",
+      "paths": [
+        "src/views/onboarding/LanguageScreen.tsx",
+        "src/app/App.tsx"
+      ]
+    },
+    "hardwareBack": {
+      "shipped": false,
+      "proof": "n/a",
+      "paths": []
+    },
+    "fab": {
+      "shipped": false,
+      "proof": "n/a",
+      "paths": []
+    },
+    "storeReview": {
+      "shipped": false,
+      "proof": "n/a",
+      "paths": []
+    },
+    "shareability": {
+      "shipped": false,
+      "proof": "n/a",
+      "paths": []
+    }
+  },
+  "projectMap": {
+    "status": "current",
+    "kind": "brownfield",
+    "productKind": "consumer-ui",
+    "diagnosedStage": "S8",
+    "path": "docs/lifecycle/project-map.md",
+    "scannedAt": "2026-08-19T16:35:08.907Z",
+    "notes": "2026-08-19 first contact; desktop packaging live; Data Formulator ship name"
+  },
+  "meta": {
+    "schemaVersion": 1,
+    "codeGraphPath": "docs/lifecycle/code-graph/graph.json",
+    "lastGraphSync": null
+  }
+}

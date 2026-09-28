@@ -1,0 +1,18 @@
+{
+  "navigation": {
+    "startExploration": "Bắt đầu khám phá",
+    "installLocally": "Cài trên máy",
+    "tryOnlineDemo": "Thử bản demo",
+    "video": "Video",
+    "github": "GitHub",
+    "contactUs": "Liên hệ",
+    "termsOfUse": "Điều khoản sử dụng",
+    "about": "Giới thiệu",
+    "home": "Trang chủ",
+    "data": "Dữ liệu",
+    "visualization": "Trực quan",
+    "report": "Báo cáo",
+    "chat": "Chat",
+    "agentRules": "Quy tắc agent"
+  }
+}

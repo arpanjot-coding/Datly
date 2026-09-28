@@ -1,0 +1,15 @@
+---
+description: Machine-wide Datly policy always wins
+globs: py-src/data_formulator/config/**/*.py
+alwaysApply: false
+---
+
+# Managed Policy
+
+`DATA_FORMULATOR_POLICY` or the platform default policy file overrides CLI
+and UI settings. A missing optional file is fine. A present or explicit
+file that cannot be parsed is a hard failure.
+
+- `force_offline` must block LLM calls before any network attempt.
+- Do not fail open on malformed JSON.
+- Surface locked settings through `/api/app-config` `POLICY`.

@@ -1,0 +1,48 @@
+{
+  "health": {
+    "title": "Data health",
+    "scanning": "Scanning table quality…",
+    "loadFailed": "Could not load data health profile",
+    "retry": "Retry",
+    "rescan": "Rescan",
+    "score": "Score {{score}}",
+    "noIssues": "No quality issues detected",
+    "issueCount": "{{count}} quality issue(s) found",
+    "schemaDrift": "Schema changed since the last profile",
+    "showFixes": "Suggested fixes",
+    "hideFixes": "Hide fixes"
+  },
+  "clean": {
+    "title": "Suggested clean steps",
+    "noSuggestions": "No clean steps suggested for this table",
+    "apply": "Apply",
+    "applySafe": "Apply safe fixes",
+    "safe": "Safe"
+  },
+  "runs": {
+    "title": "Auto pipeline runs",
+    "refresh": "Refresh runs",
+    "empty": "No pipeline runs yet"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "empty": "Pin charts from your session to build a dashboard",
+    "pinCharts": "Pin current charts",
+    "addSchedule": "Add schedule",
+    "defaultName": "My dashboard",
+    "chartPlaceholder": "Chart preview",
+    "schedules": "Schedules",
+    "scheduleTitle": "Schedule auto run",
+    "cron": "Cron expression",
+    "cronHint": "Example: 0 8 * * * runs daily at 08:00",
+    "cancel": "Cancel",
+    "saveSchedule": "Save schedule",
+    "dailyRun": "Daily auto run"
+  },
+  "grid": {
+    "cleanColumn": "Clean column",
+    "trim": "Trim whitespace",
+    "fillNulls": "Fill nulls",
+    "dedupe": "Remove duplicates"
+  }
+}

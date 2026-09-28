@@ -1,0 +1,21 @@
+---
+description: Enforce step-by-step implementation with tests and i18n after each step
+globs:
+alwaysApply: true
+---
+
+# Incremental Development Cadence
+
+Multi-step tasks MUST be implemented **one step at a time**. After each logical unit (function, endpoint, component), complete all cross-cutting concerns before moving on.
+
+## After Each Step
+
+1. **Add tests** — write/update tests for the just-implemented code, run and confirm green
+2. **Add i18n keys** — if user-visible text was introduced, add `en` + `zh` keys immediately
+3. **Update conventions** — if a new cross-cutting convention was introduced, update the matching `.cursor/rules` or `.cursor/skills` file
+
+## Banned Patterns
+
+- ❌ Implementing 3+ functions/endpoints before writing any tests
+- ❌ Sweeping all i18n keys in a final pass after all code is done
+- ❌ Mentioning "tests and i18n still needed" only in the final response

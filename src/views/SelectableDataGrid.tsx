@@ -1,0 +1,1018 @@
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import { shadow, transition } from '../app/tokens';
+import { TableVirtuoso } from 'react-virtuoso';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import { Box } from '@mui/system';
+
+import { useTheme } from '@mui/material/styles';
+import { alpha, Paper, Tooltip, CircularProgress, Fade } from "@mui/material";
+
+import { Type } from '../data/types';
+import { getIconFromType } from './ViewUtils';
+
+import { IconButton, TableSortLabel, Typography } from '@mui/material';
+
+import _ from 'lodash';
+import * as d3 from 'd3-dsv';
+import { FieldSource, FieldItem } from '../components/ComponentType';
+
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { TableIcon } from '../icons';
+import CasinoIcon from '@mui/icons-material/Casino';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import { getUrls, fetchWithIdentity } from '../app/utils';
+import { apiRequest, assertDownloadResponseOk } from '../app/apiClient';
+import { useDrag } from 'react-dnd';
+import { useDispatch, useSelector } from 'react-redux';
+import { DataFormulatorState, dfActions, dfSelectors } from '../app/dfSlice';
+import { applyCleanVerb } from '../app/cleanVerbs';
+import type { AppDispatch } from '../app/store';
+import { ColumnFilter, ColumnFilterPopover } from './ColumnFilterPopover';
+import { iconVar, textVar } from '../app/layout';
+import {
+    GridClipboardHost,
+    GridRange,
+    bringHostToTop,
+    installGridClipboardListeners,
+    normalizeRange,
+    pushGridClipboardHost,
+    selectionToTsv,
+    tableFromClipboard,
+} from './gridClipboard';
+
+export interface ColumnDef {
+    id: string;
+    label: string;
+    dataType: Type;
+    description?: string;
+    minWidth?: number;
+    width?: number;
+    align?: 'right';
+    format?: (value: number) => string | JSX.Element;
+    source: FieldSource;
+}
+
+interface SelectableDataGridProps {
+    tableId: string;
+    tableName: string;
+    rows: any[];
+    rowCount: number;
+    virtual: boolean;
+    columnDefs: ColumnDef[];
+    // Controlled quick-search text (owned by the focused-table canvas). Filters
+    // the loaded rows client-side across all data columns.
+    searchText?: string;
+    // Hide the in-grid footer widget (row count / random / download). The
+    // focused-table canvas surfaces these actions in its bottom toolbar.
+    hideFooter?: boolean;
+    // Bumping this number triggers a "random rows" refetch (virtual tables).
+    randomizeToken?: number;
+    // Bumping this number restores the natural (#rowId head) order after a
+    // random sample (virtual tables).
+    resetOrderToken?: number;
+    // Report virtual-pagination state up so an external toolbar can render the
+    // loaded/total count and enable the random-rows action.
+    onStateReport?: (s: { loadedCount: number; rowCount: number; virtual: boolean; canRandomize: boolean; isRandom: boolean }) => void;
+}
+
+
+function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
+    if (b[orderBy] < a[orderBy]) {
+        return -1;
+    }
+    if (b[orderBy] > a[orderBy]) {
+        return 1;
+    }
+    return 0;
+}
+
+function getComparator<Key extends keyof any>(
+    order: "asc" | "desc",
+    orderBy: Key,
+): (
+    a: { [key in Key]: number | string },
+    b: { [key in Key]: number | string },
+) => number {
+    return order === 'desc'
+        ? (a, b) => descendingComparator(a, b, orderBy)
+        : (a, b) => -descendingComparator(a, b, orderBy);
+}
+
+// Get color for field source hover highlight
+function getColorForFieldSource(source: string | undefined, theme: any): string {
+    if (!source) {
+        return theme.palette.primary.main; // Default to primary for original fields
+    }
+    
+    switch (source) {
+        case "custom":
+            return theme.palette.custom.main; // Orange for custom fields
+        case "original":
+        default:
+            return theme.palette.primary.main; // Blue for original fields
+    }
+}
+
+// Draggable header component
+interface DraggableHeaderProps {
+    columnDef: ColumnDef;
+    orderBy: string | undefined;
+    order: 'asc' | 'desc';
+    onSortAsc: () => void;
+    onSortDesc: () => void;
+    onClearSort: () => void;
+    onOpenFilter: (anchor: HTMLElement) => void;
+    hasFilter: boolean;
+    tableId: string;
+}
+
+const DraggableHeader: React.FC<DraggableHeaderProps> = ({ 
+    columnDef, orderBy, order, onSortAsc, onSortDesc, onClearSort,
+    onOpenFilter, hasFilter, tableId
+}) => {
+    const { t } = useTranslation();
+    const filterButtonRef = React.useRef<HTMLButtonElement | null>(null);
+    const kebabButtonRef = React.useRef<HTMLButtonElement | null>(null);
+    const isSorted = orderBy === columnDef.id;
+    const cycleSort = () => {
+        if (!isSorted) { onSortAsc(); return; }
+        if (order === 'asc') { onSortDesc(); return; }
+        onClearSort();
+    };
+    const theme = useTheme();
+    const conceptShelfItems = useSelector((state: DataFormulatorState) => state.conceptShelfItems);
+    const semanticType = useSelector(
+        (state: DataFormulatorState) =>
+            state.tableSemantics.find(info => info.tableId === tableId)?.fields[columnDef.id]?.semanticType,
+    );
+    
+    // Find the corresponding FieldItem for this column
+    // Try to find by name first, then by constructing the ID for original fields
+    const field = conceptShelfItems.find(f => f.name === columnDef.id) || 
+                  conceptShelfItems.find(f => f.id === `original--${tableId}--${columnDef.id}`);
+    
+    // Only make draggable if we have a field
+    // react-dnd has a drag threshold, so clicks will still work for sorting
+    const [{ isDragging }, dragSource, dragPreview] = useDrag(() => ({
+        type: "concept-card",
+        item: field ? { 
+            type: 'concept-card', 
+            fieldID: field.id, 
+            source: "conceptShelf" 
+        } : undefined,
+        canDrag: !!field,
+        collect: (monitor) => ({
+            isDragging: monitor.isDragging(),
+            handlerId: monitor.getHandlerId(),
+        }),
+    }), [field]);
+
+    let backgroundColor: string;
+    let borderBottomColor = theme.palette.primary.main;
+    if (columnDef.source == "custom") {
+        backgroundColor = theme.palette.custom.bgcolor || alpha(theme.palette.custom.main, 0.1);
+        borderBottomColor = theme.palette.custom.main;
+    } else {
+        backgroundColor = theme.palette.primary.bgcolor || alpha(theme.palette.primary.main, 0.1);
+        borderBottomColor = theme.palette.primary.main;
+    }
+
+    const opacity = isDragging ? 0.3 : 1;
+    const cursorStyle = field ? (isDragging ? "grabbing" : "grab") : "default";
+    
+    // Enhanced background color on hover for draggable headers - based on field source (derived/original)
+    const hoverBackgroundColor = field 
+        ? alpha(getColorForFieldSource(field.source, theme), 0.1)
+        : backgroundColor;
+
+    return (
+        <Box 
+            className="data-view-header-container" 
+            ref={dragPreview}
+            sx={{ 
+                backgroundColor: backgroundColor, 
+                borderBottomColor, 
+                borderBottomWidth: '2px', 
+                borderBottomStyle: 'solid',
+                opacity,
+                display: 'flex',
+                alignItems: 'center',
+                position: 'relative',
+                transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
+                // Ensure cursor applies to TableSortLabel and its children, but not IconButton
+                '& .data-view-header-title, & .data-view-header-title *': {
+                    cursor: cursorStyle,
+                },
+                ...(field && {
+                    '&:hover': {
+                        backgroundColor: hoverBackgroundColor,
+                        boxShadow: shadow.md,
+                    },
+                }),
+            }}
+        >
+            {/* Main content area - draggable for concepts, using original TableSortLabel structure */}
+            <TableSortLabel
+                ref={field ? dragSource : undefined}
+                className="data-view-header-title"
+                sx={{ 
+                    display: "flex", 
+                    flexDirection: "row", 
+                    flex: 1,
+                    width: 'calc(100% - 24px)',
+                    cursor: cursorStyle, // Inherit cursor from parent
+                    '& .MuiTableSortLabel-icon': {
+                        display: 'none',
+                    },
+                }}
+                active={isSorted}
+                direction={isSorted ? order : 'asc'}
+                onClick={(e) => {
+                    // Prevent sort when dragging
+                    if (!isDragging) {
+                        e.stopPropagation();
+                        cycleSort();
+                    }
+                }}
+            >
+                <span role="img" style={{ fontSize: "inherit", padding: "2px", display: "inline-flex", alignItems: "center" }}>
+                    {getIconFromType(columnDef.dataType)}
+                </span>
+                <Tooltip 
+                    title={(semanticType || columnDef.description) ? (
+                        <Box>
+                            {semanticType && (
+                                <Typography sx={{ fontSize: textVar.xs }}>
+                                    <b>{columnDef.label}</b>: <i>{semanticType}</i>
+                                </Typography>
+                            )}
+                            {columnDef.description && (
+                                <Typography sx={{ fontSize: textVar.xs, color: 'grey.300', mt: semanticType ? 0.25 : 0 }}>
+                                    {columnDef.description}
+                                </Typography>
+                            )}
+                        </Box>
+                    ) : ''}
+                    arrow
+                    placement="top"
+                >
+                    <Typography sx={{fontSize: textVar.sm, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                        {columnDef.label}
+                    </Typography>
+                </Tooltip>
+                {isSorted && (
+                    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', ml: 0.25, color: theme.palette.primary.main }}>
+                        {order === 'asc'
+                            ? <ArrowUpwardIcon sx={{ fontSize: iconVar.sm }} />
+                            : <ArrowDownwardIcon sx={{ fontSize: iconVar.sm }} />}
+                    </Box>
+                )}
+            </TableSortLabel>
+            {/* Inline filter status hint \u2014 only rendered when a filter is active on this column.
+                Clicking reopens the filter popover. */}
+            {hasFilter && (
+                <Tooltip title={<Typography sx={{fontSize: textVar.xxs}}>{t('dataGrid.columnMenu.filterActive')}</Typography>}>
+                    <IconButton
+                        ref={filterButtonRef}
+                        size="small"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenFilter(e.currentTarget);
+                        }}
+                        sx={{
+                            padding: '2px',
+                            marginLeft: '2px',
+                            color: theme.palette.primary.main,
+                            '&:hover': {
+                                backgroundColor: alpha(theme.palette.action.hover, 0.2),
+                            },
+                        }}
+                    >
+                        <FilterAltIcon sx={{ fontSize: iconVar.sm }} />
+                    </IconButton>
+                </Tooltip>
+            )}
+            {/* Column kebab — single entry point that opens the unified
+                sort + filter popover (design-doc 31 §4.2). */}
+            <Tooltip title={<Typography sx={{fontSize: textVar.xxs}}>{t('dataGrid.columnMenu.openMenu')}</Typography>}>
+                <IconButton
+                    ref={kebabButtonRef}
+                    size="small"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenFilter(e.currentTarget);
+                    }}
+                    sx={{
+                        padding: '2px',
+                        marginLeft: '1px',
+                        marginRight: '2px',
+                        color: alpha(theme.palette.text.primary, 0.55),
+                        '&:hover': {
+                            color: theme.palette.text.primary,
+                            backgroundColor: alpha(theme.palette.action.hover, 0.2),
+                        },
+                    }}
+                >
+                    <MoreVertIcon sx={{ fontSize: iconVar.md }} />
+                </IconButton>
+            </Tooltip>
+        </Box>
+    );
+};
+
+// Stable TableVirtuoso sub-components — defined once outside the render cycle
+// so react-virtuoso never sees new component references on re-render.
+const VirtuosoScroller = React.forwardRef<HTMLDivElement>((props, ref) => (
+    <TableContainer {...props} ref={ref} />
+));
+const VirtuosoTableHead = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>((props, ref) => (
+    <TableHead {...props} ref={ref} className='table-header-container' style={{ ...props.style, display: 'table-header-group' }} />
+));
+const VirtuosoTableRow = (props: any) => {
+    const index = props['data-index'];
+    return <TableRow {...props} style={{...props.style, backgroundColor: index % 2 == 0 ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.02)"}}/>
+};
+const VirtuosoTableBody = React.forwardRef<HTMLTableSectionElement>((props, ref) => (
+    <TableBody {...props} ref={ref} />
+));
+
+const PAGE_SIZE = 500;
+
+export const SelectableDataGrid: React.FC<SelectableDataGridProps> = React.memo(({ 
+    tableId, rows, tableName, columnDefs, rowCount, virtual, searchText, hideFooter, randomizeToken, resetOrderToken, onStateReport }) => {
+
+    const { t } = useTranslation();
+    const dispatch = useDispatch<AppDispatch>();
+    const [orderBy, setOrderBy] = React.useState<string | undefined>(undefined);
+    const [order, setOrder] = React.useState<'asc' | 'desc'>('asc');
+
+    // Column filter state — keyed by column id. Presence of an entry means
+    // the column has an active filter (design-doc 31). Server-side pushdown
+    // is handled by fetchVirtualData; non-virtual tables ignore filters in v1.
+    const [columnFilters, setColumnFilters] = React.useState<Record<string, ColumnFilter>>({});
+    const [filterPopover, setFilterPopover] = React.useState<{ columnId: string; anchor: HTMLElement } | null>(null);
+
+    const runCleanVerb = React.useCallback((verb: 'trim' | 'fill' | 'dedupe', columnId?: string) => {
+        if (!virtual) return;
+        const params = verb === 'trim'
+            ? { column: columnId }
+            : verb === 'fill'
+                ? { column: columnId, value: '' }
+                : { column: columnId };
+        void dispatch(applyCleanVerb({ tableId, verb, params }));
+    }, [dispatch, tableId, virtual]);
+
+    // Lookup of per-column metadata (distinctCount/nullCount/levels/levelCounts/type)
+    // to drive the filter popover's variant selection synchronously.
+    const tableMetadata = useSelector(
+        (state: DataFormulatorState) => dfSelectors.getAllTables(state).find(t => t.id === tableId)?.metadata,
+    );
+
+    // Ref-based bridge to fetchVirtualData (declared further below); lets stable
+    // sort handlers call into the latest fetch function without re-creating themselves.
+    const fetchVirtualDataRef = React.useRef<((sortByColumnIds: string[], sortOrder: 'asc' | 'desc', offset?: number, append?: boolean, random?: boolean) => void) | null>(null);
+
+    const applySort = React.useCallback((newOrderBy: string | undefined, newOrder: 'asc' | 'desc') => {
+        setOrder(newOrder);
+        setOrderBy(newOrderBy);
+        setIsRandom(false);
+        if (virtual) {
+            fetchVirtualDataRef.current?.(newOrderBy ? [newOrderBy] : [], newOrder);
+        }
+    }, [virtual]);
+
+    let theme = useTheme();
+
+    const [rowsToDisplay, setRowsToDisplay] = React.useState<any[]>(rows);
+    // True while the grid is showing a random sample (virtual tables). Lets the
+    // external toolbar offer a "restore order" action alongside the dice.
+    const [isRandom, setIsRandom] = React.useState<boolean>(false);
+    const [isLoading, setIsLoading] = React.useState<boolean>(true);
+    const [isLoadingMore, setIsLoadingMore] = React.useState<boolean>(false);
+    const [isDownloading, setIsDownloading] = React.useState<boolean>(false);
+    const [hasMore, setHasMore] = React.useState<boolean>(virtual ? rows.length < rowCount : false);
+    // Filtered total reported by the server (reflects active search/filters for
+    // virtual tables). Falls back to the unfiltered prop count.
+    const [serverRowCount, setServerRowCount] = React.useState<number>(rowCount);
+    const fetchIdRef = React.useRef(0);
+    
+    React.useEffect(() => {
+        setIsLoading(false);
+    }, []);
+
+    React.useEffect(() => {
+        if (orderBy && !isLoading && !virtual) {
+            setRowsToDisplay(rows.slice().sort(getComparator(order, orderBy)));
+        } else if (!virtual) {
+            setRowsToDisplay(rows);
+        }
+        if (!virtual) {
+            setHasMore(false);
+        }
+    }, [rows, order, orderBy])
+
+    // Report virtual-pagination state up to an external toolbar (focused-table
+    // canvas) so it can render the loaded/total count and the random-rows dice.
+    React.useEffect(() => {
+        const effectiveCount = virtual ? serverRowCount : rowCount;
+        onStateReport?.({
+            loadedCount: rowsToDisplay.length,
+            rowCount: effectiveCount,
+            virtual,
+            canRandomize: virtual && effectiveCount > 10000,
+            isRandom: virtual && isRandom,
+        });
+    }, [rowsToDisplay.length, rowCount, serverRowCount, virtual, isRandom, onStateReport]);
+
+    // Bumping `randomizeToken` (from the external toolbar's dice) resets sort
+    // and refetches a fresh random sample (ORDER BY RANDOM() on the server,
+    // which also respects any active filters/search) for virtual tables.
+    const randomizeMountRef = React.useRef(true);
+    React.useEffect(() => {
+        if (randomizeMountRef.current) { randomizeMountRef.current = false; return; }
+        if (!virtual) return;
+        setOrderBy(undefined);
+        setOrder('asc');
+        setIsRandom(true);
+        fetchVirtualDataRef.current?.([], 'asc', 0, false, true);
+    }, [randomizeToken]);
+
+    // Bumping `resetOrderToken` (from the toolbar's "restore order" button)
+    // returns a randomized virtual table to its natural #rowId head order.
+    const resetOrderMountRef = React.useRef(true);
+    React.useEffect(() => {
+        if (resetOrderMountRef.current) { resetOrderMountRef.current = false; return; }
+        if (!virtual) return;
+        setOrderBy(undefined);
+        setOrder('asc');
+        setIsRandom(false);
+        fetchVirtualDataRef.current?.([], 'asc', 0, false, false);
+    }, [resetOrderToken]);
+
+    // Only the Table component depends on columnDefs (for colgroup); memoize it
+    // so react-virtuoso keeps a stable reference when columns haven't changed.
+    const columnIds = columnDefs.map(c => c.id).join(',');
+    const VirtuosoTable = React.useMemo(() => {
+        const Comp = ({ children, style, ...rest }: any) => (
+            <Table {...rest} style={style} sx={{ tableLayout: 'fixed', width: '100%' }}>
+                <colgroup>
+                    {columnDefs.map(col => (
+                        <col key={col.id} style={col.id === '#rowId' ? { width: 56 } : undefined} />
+                    ))}
+                </colgroup>
+                {children}
+            </Table>
+        );
+        return Comp;
+    }, [columnIds]);
+
+    const tableComponents = React.useMemo(() => ({
+        Scroller: VirtuosoScroller,
+        Table: VirtuosoTable,
+        TableHead: VirtuosoTableHead,
+        TableRow: VirtuosoTableRow,
+        TableBody: VirtuosoTableBody,
+    }), [VirtuosoTable]);
+
+    const handleDownload = async (format: 'csv' | 'tsv') => {
+        if (isDownloading) return;
+        const delimiter = format === 'tsv' ? '\t' : ',';
+        const ext = format === 'tsv' ? 'tsv' : 'csv';
+        const mime = format === 'tsv' ? 'text/tab-separated-values' : 'text/csv';
+
+        setIsDownloading(true);
+        try {
+            if (virtual) {
+                const response = await fetchWithIdentity(getUrls().EXPORT_TABLE_CSV, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ table_name: tableId, delimiter }),
+                });
+                await assertDownloadResponseOk(response, 'Export failed');
+                const blob = await response.blob();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `${tableName}.${ext}`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            } else {
+                const csvContent = d3.dsvFormat(delimiter).format(rows);
+                const blob = new Blob([csvContent], { type: mime });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `${tableName}.${ext}`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            }
+        } catch (error) {
+            console.error('Error downloading table:', error);
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    // Hold the live filters in a ref so fetchVirtualData stays stable yet
+    // always reads the latest set when called from sort/scroll handlers.
+    const filtersRef = React.useRef<ColumnFilter[]>([]);
+    React.useEffect(() => {
+        filtersRef.current = Object.values(columnFilters);
+    }, [columnFilters]);
+
+    // Committed global search term (server-side pushdown for virtual tables).
+    // Held in a ref so fetchVirtualData stays stable across sort/scroll while
+    // still carrying the latest search into every request.
+    const searchRef = React.useRef<string>('');
+    React.useEffect(() => {
+        searchRef.current = (searchText || '').trim();
+    }, [searchText]);
+
+    const fetchVirtualData = React.useCallback((
+        sortByColumnIds: string[],
+        sortOrder: 'asc' | 'desc',
+        offset: number = 0,
+        append: boolean = false,
+        random: boolean = false,
+    ) => {
+        if (!append) {
+            setIsLoading(true);
+        } else {
+            setIsLoadingMore(true);
+        }
+
+        const currentFetchId = ++fetchIdRef.current;
+
+        const activeFilters = filtersRef.current;
+        const message: Record<string, any> = {
+            table: tableId,
+            size: PAGE_SIZE,
+            offset,
+            method: random
+                ? 'random'
+                : (sortByColumnIds.length > 0
+                    ? (sortOrder === 'asc' ? 'head' : 'bottom')
+                    : 'head'),
+            order_by_fields: sortByColumnIds.length > 0 ? sortByColumnIds : ['#rowId'],
+            ...(activeFilters.length > 0 ? { filters: activeFilters } : {}),
+            ...(searchRef.current ? { search: searchRef.current } : {}),
+        };
+
+        apiRequest<any>(getUrls().SAMPLE_TABLE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(message),
+        })
+        .then(({ data }) => {
+            if (fetchIdRef.current !== currentFetchId) return;
+            const newRows = data.rows || [];
+            const totalCount = data.total_row_count ?? rowCount;
+
+            if (append) {
+                setRowsToDisplay(prev => [...prev, ...newRows]);
+            } else {
+                setRowsToDisplay(newRows);
+            }
+            setServerRowCount(totalCount);
+            setHasMore(!random && offset + newRows.length < totalCount);
+            setIsLoading(false);
+            setIsLoadingMore(false);
+        })
+        .catch(error => {
+            if (fetchIdRef.current !== currentFetchId) return;
+            console.error('Error fetching sorted table data:', error);
+            setIsLoading(false);
+            setIsLoadingMore(false);
+        });
+    }, [tableId, rowCount]);
+
+    // Keep the ref in sync so stable handlers (e.g. applySort) can call the latest version.
+    React.useEffect(() => {
+        fetchVirtualDataRef.current = fetchVirtualData;
+    }, [fetchVirtualData]);
+
+    // Refetch from offset 0 whenever filters change (virtual tables only).
+    // Skip the initial mount; the first load happens via the existing
+    // virtual-data effect.
+    const didMountFiltersRef = React.useRef(false);
+    React.useEffect(() => {
+        if (!virtual) return;
+        if (!didMountFiltersRef.current) {
+            didMountFiltersRef.current = true;
+            return;
+        }
+        setIsRandom(false);
+        fetchVirtualData(orderBy ? [orderBy] : [], order, 0, false);
+         
+    }, [columnFilters]);
+
+    // Refetch from offset 0 whenever the committed search term changes
+    // (virtual tables only). Non-virtual tables filter client-side below.
+    const didMountSearchRef = React.useRef(false);
+    React.useEffect(() => {
+        if (!virtual) return;
+        if (!didMountSearchRef.current) {
+            didMountSearchRef.current = true;
+            return;
+        }
+        searchRef.current = (searchText || '').trim();
+        setIsRandom(false);
+        fetchVirtualData(orderBy ? [orderBy] : [], order, 0, false);
+         
+    }, [searchText]);
+
+    const handleEndReached = React.useCallback(() => {
+        if (!virtual || !hasMore || isLoadingMore || isLoading) return;
+        fetchVirtualData(
+            orderBy ? [orderBy] : [],
+            order,
+            rowsToDisplay.length,
+            true,
+        );
+    }, [virtual, hasMore, isLoadingMore, isLoading, fetchVirtualData, orderBy, order, rowsToDisplay.length]);
+
+    // Virtual tables are already filtered server-side (search pushdown), so we
+    // render their rows as-is. Non-virtual tables (fully loaded) filter
+    // client-side over the committed search term — case-insensitive substring.
+    const trimmedSearch = (searchText || '').trim().toLowerCase();
+    const visibleRows = (!virtual && trimmedSearch)
+        ? rowsToDisplay.filter(row =>
+            columnDefs.some(c => c.id !== '#rowId' && String(row[c.id] ?? '').toLowerCase().includes(trimmedSearch)))
+        : rowsToDisplay;
+
+    const existingTableIds = useSelector((state: DataFormulatorState) =>
+        dfSelectors.getAllTables(state).map(tbl => tbl.id),
+    );
+    const [range, setRange] = React.useState<GridRange | null>(null);
+    const rangeRef = React.useRef<GridRange | null>(null);
+    rangeRef.current = range;
+    const dragRef = React.useRef(false);
+    const visibleRowsRef = React.useRef(visibleRows);
+    visibleRowsRef.current = visibleRows;
+    const columnDefsRef = React.useRef(columnDefs);
+    columnDefsRef.current = columnDefs;
+    const existingTableIdsRef = React.useRef(existingTableIds);
+    existingTableIdsRef.current = existingTableIds;
+    const virtualRef = React.useRef(virtual);
+    virtualRef.current = virtual;
+    const hasMoreRef = React.useRef(hasMore);
+    hasMoreRef.current = hasMore;
+    const hostProxyRef = React.useRef<GridClipboardHost | null>(null);
+
+    const firstDataCol = React.useMemo(
+        () => {
+            const idx = columnDefs.findIndex(c => c.id !== '#rowId');
+            return idx < 0 ? 0 : idx;
+        },
+        [columnIds],
+    );
+
+    const notify = React.useCallback((type: 'success' | 'info' | 'error' | 'warning', value: string) => {
+        dispatch(dfActions.addMessages({
+            timestamp: Date.now(),
+            component: 'data grid',
+            type,
+            value,
+        }));
+    }, [dispatch]);
+
+    const getSelectionTsv = React.useCallback((): string | null => {
+        const sel = rangeRef.current;
+        const cols = columnDefsRef.current;
+        const data = visibleRowsRef.current;
+        if (!sel || !data.length || !cols.length) return null;
+        const tsv = selectionToTsv(data, cols.map(c => c.id), sel);
+        return tsv || null;
+    }, []);
+
+    const applyPaste = React.useCallback((plain: string, html: string) => {
+        const result = tableFromClipboard(plain, html, existingTableIdsRef.current);
+        if ('error' in result) {
+            notify('warning', result.error === 'empty'
+                ? t('dataGrid.clipboardPasteEmpty')
+                : t('dataGrid.clipboardPasteFailed'));
+            return;
+        }
+        dispatch(dfActions.addTableToStore(result.table));
+        notify('success', t('dataGrid.clipboardPasted', { name: result.table.id }));
+    }, [dispatch, notify, t]);
+
+    const selectAllLoaded = React.useCallback(() => {
+        const data = visibleRowsRef.current;
+        const cols = columnDefsRef.current;
+        if (!data.length || !cols.length) return;
+        setRange({
+            r0: 0,
+            c0: firstDataCol,
+            r1: data.length - 1,
+            c1: cols.length - 1,
+        });
+    }, [firstDataCol]);
+
+    React.useEffect(() => {
+        const host: GridClipboardHost = {
+            getTsv: () => {
+                const tsv = getSelectionTsv();
+                if (!tsv) {
+                    notify('info', t('dataGrid.clipboardCopyEmpty'));
+                    return null;
+                }
+                notify('success', virtualRef.current && hasMoreRef.current
+                    ? t('dataGrid.clipboardCopyBounded')
+                    : t('dataGrid.clipboardCopied'));
+                return tsv;
+            },
+            paste: applyPaste,
+            selectAll: selectAllLoaded,
+        };
+        hostProxyRef.current = host;
+        const pop = pushGridClipboardHost(host);
+        const uninstall = installGridClipboardListeners();
+        return () => {
+            pop();
+            uninstall();
+            if (hostProxyRef.current === host) hostProxyRef.current = null;
+        };
+    }, [applyPaste, getSelectionTsv, notify, selectAllLoaded, t]);
+
+    React.useEffect(() => {
+        const up = () => { dragRef.current = false; };
+        window.addEventListener('mouseup', up);
+        return () => window.removeEventListener('mouseup', up);
+    }, []);
+
+    const onCellMouseDown = React.useCallback((e: React.MouseEvent, rowIndex: number, colIndex: number) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (hostProxyRef.current) bringHostToTop(hostProxyRef.current);
+        const col = columnDefsRef.current[colIndex];
+        const lastCol = columnDefsRef.current.length - 1;
+        const prev = rangeRef.current;
+        if (col?.id === '#rowId') {
+            const next: GridRange = e.shiftKey && prev
+                ? { ...prev, r1: rowIndex, c0: firstDataCol, c1: lastCol }
+                : { r0: rowIndex, c0: firstDataCol, r1: rowIndex, c1: lastCol };
+            setRange(next);
+        } else if (e.shiftKey && prev) {
+            setRange({ ...prev, r1: rowIndex, c1: colIndex });
+        } else {
+            setRange({ r0: rowIndex, c0: colIndex, r1: rowIndex, c1: colIndex });
+        }
+        dragRef.current = true;
+    }, [firstDataCol]);
+
+    const onCellMouseEnter = React.useCallback((rowIndex: number, colIndex: number) => {
+        if (!dragRef.current) return;
+        const prev = rangeRef.current;
+        if (!prev) return;
+        const col = columnDefsRef.current[colIndex];
+        if (col?.id === '#rowId') {
+            setRange({ ...prev, r1: rowIndex, c1: columnDefsRef.current.length - 1 });
+        } else {
+            setRange({ ...prev, r1: rowIndex, c1: colIndex });
+        }
+    }, []);
+
+    const selNorm = range ? normalizeRange(range) : null;
+
+    return (
+        <Box className="table-container table-container-small"
+            tabIndex={0}
+            onMouseDown={() => { if (hostProxyRef.current) bringHostToTop(hostProxyRef.current); }}
+            sx={{
+                width: '100%',
+                height: '100%',
+                position: 'relative',
+                outline: 'none',
+                "& .MuiTableCell-root": {
+                    fontSize: textVar.sm, maxWidth: "120px", py: '2px', cursor: "cell",
+                    overflow: "clip", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    userSelect: 'none',
+                }
+            }}>
+            {/* Loading Overlay */}
+            {isLoading && (
+                <Box sx={{ 
+                    position: 'absolute', 
+                    top: 0, 
+                    left: 0, 
+                    right: 0,
+                    zIndex: 10, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    padding: '8px',
+                    height: '100%',
+                    borderTopLeftRadius: '4px',
+                    borderTopRightRadius: '4px'
+                }}>
+                    <CircularProgress size={24} sx={{ mr: 1, color: 'lightgray' }} />
+                    <Typography variant="body2" color="text.secondary">{t('dataGrid.loading')}</Typography>
+                </Box>
+            )}
+            <Fade in={!isLoading} timeout={{appear: 300, enter: 300, exit: 2000}}>
+                <Box sx={{ flex: '1 1', display: 'flex', flexDirection: 'column' }}>
+                    <TableVirtuoso
+                            style={{ flex: '1 1', paddingBottom: 32 }}
+                            data={visibleRows}
+                            components={tableComponents}
+                            endReached={handleEndReached}
+                            overscan={200}
+                            fixedHeaderContent={() => {
+                        return (
+                            <TableRow key='header-fixed' style={{ paddingRight: 0, marginRight: '17px', height: '24px'}}>
+                                {columnDefs.map((columnDef, index) => {
+                                    return (
+                                        <TableCell
+                                            className='data-view-header-cell'
+                                            key={columnDef.id}
+                                            align={columnDef.align}
+                                            sx={{
+                                                p: columnDef.id === '#rowId' ? '0 2px' : 0,
+                                                minWidth: columnDef.minWidth,
+                                                width: columnDef.width,
+                                            }}
+                                        >
+                                            {columnDef.id === '#rowId' ? (
+                                                <Box
+                                                    className="data-view-header-container"
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        borderBottomWidth: '2px',
+                                                        borderBottomStyle: 'solid',
+                                                        borderBottomColor: 'rgba(0,0,0,0.2)',
+                                                        padding: '4px 4px',
+                                                        margin: '0 2px 0 0',
+                                                    }}
+                                                >
+                                                    <Typography
+                                                        sx={{
+                                                            fontSize: textVar.sm,
+                                                            color: 'text.secondary',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
+                                                        {columnDef.label}
+                                                    </Typography>
+                                                </Box>
+                                            ) : (
+                                                <DraggableHeader
+                                                    columnDef={columnDef}
+                                                    orderBy={orderBy}
+                                                    order={order}
+                                                    tableId={tableId}
+                                                    hasFilter={Boolean(columnFilters[columnDef.id])}
+                                                    onSortAsc={() => applySort(columnDef.id, 'asc')}
+                                                    onSortDesc={() => applySort(columnDef.id, 'desc')}
+                                                    onClearSort={() => applySort(undefined, 'asc')}
+                                                    onOpenFilter={(anchor) => setFilterPopover({ columnId: columnDef.id, anchor })}
+                                                />
+                                            )}
+                                        </TableCell>
+                                    );
+                                })}
+                            </TableRow>
+                        )
+                    }}
+                    itemContent={(rowIndex, data) => {
+                        return (
+                            <>
+                                {columnDefs.map((column, colIndex) => {
+                                    const selected = !!selNorm
+                                        && rowIndex >= selNorm.r0 && rowIndex <= selNorm.r1
+                                        && colIndex >= selNorm.c0 && colIndex <= selNorm.c1;
+                                    const backgroundColor = selected
+                                        ? alpha(theme.palette.primary.main, 0.18)
+                                        : "rgba(255,255,255,0.05)";
+
+                                    return (
+                                        <TableCell
+                                            key={`col-${colIndex}-row-${rowIndex}`}
+                                            sx={{backgroundColor}}
+                                            align={column.align || 'left'}
+                                            onMouseDown={(e) => onCellMouseDown(e, rowIndex, colIndex)}
+                                            onMouseEnter={() => onCellMouseEnter(rowIndex, colIndex)}
+                                        >
+                                            {column.format
+                                                ? column.format(data[column.id])
+                                                : (data[column.id] != null && typeof data[column.id] === 'object'
+                                                    ? String(data[column.id])
+                                                    : data[column.id])}
+                                        </TableCell>
+                                    )
+                                })}
+                            </>
+                        )
+                    }}
+                />
+                </Box>
+            </Fade>
+            {/* Loading-more indicator at the bottom of the scroll area */}
+            {isLoadingMore && (
+                <Box sx={{
+                    position: 'absolute', bottom: 32, left: 0, right: 0, zIndex: 6,
+                    display: 'flex', justifyContent: 'center', py: 0.5,
+                }}>
+                    <CircularProgress size={16} sx={{ color: 'text.secondary' }} />
+                </Box>
+            )}
+            {!hideFooter && <Paper variant="outlined"
+                sx={{ display: 'flex', flexDirection: 'row', position: 'absolute', bottom: 4, right: 20, zIndex: 5 }}>
+                <Box sx={{display: 'flex', alignItems: 'center', mx: 1}}>
+                    <Typography sx={{display: 'flex', alignItems: 'center', fontSize: textVar.sm}}>
+                        {virtual && <TableIcon sx={{width: 14, height: 14, mr: 1}}/> }
+                        {virtual && rowsToDisplay.length < serverRowCount
+                            ? t('dataGrid.loadedOfTotal', { loaded: rowsToDisplay.length, total: serverRowCount })
+                            : t('dataGrid.rowCount', { count: virtual ? serverRowCount : rowCount })}
+                    </Typography>
+                    {virtual && serverRowCount > 10000 && (
+                        <Tooltip title={t('dataGrid.viewRandomRows')}>
+                            <IconButton 
+                                size="small" 
+                                color="primary" 
+                                sx={{marginRight: 1}}
+                                onClick={() => {
+                                    setOrderBy(undefined);
+                                    setOrder('asc');
+                                    fetchVirtualData([], 'asc');
+                                }}
+                            >
+                                <CasinoIcon sx={{
+                                    fontSize: textVar.xxl, 
+                                    '&:hover': {
+                                        transform: 'rotate(180deg)'
+                                    }
+                                }} />
+                            </IconButton>
+                        </Tooltip>
+                    )}
+                    <Tooltip title={isDownloading ? t('dataGrid.downloading') : t('dataGrid.downloadAsCsv')}>
+                        <span>
+                            <IconButton 
+                                size="small" 
+                                color="primary" 
+                                aria-label={t('dataGrid.downloadAsCsv')}
+                                disabled={isDownloading}
+                                onClick={() => handleDownload('csv')}
+                            >
+                                {isDownloading 
+                                    ? <CircularProgress size={16} sx={{ color: 'inherit' }} />
+                                    : <FileDownloadIcon sx={{ fontSize: iconVar.lg }} />
+                                }
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                </Box>
+            </Paper>}
+            {/* Column filter popover — variant chosen synchronously from metadata
+                (design-doc 31). Server-side pushdown via fetchVirtualData. */}
+            {filterPopover && (() => {
+                const meta = tableMetadata?.[filterPopover.columnId];
+                const colDef = columnDefs.find(c => c.id === filterPopover.columnId);
+                return (
+                    <ColumnFilterPopover
+                        anchor={filterPopover.anchor}
+                        open={true}
+                        onClose={() => setFilterPopover(null)}
+                        columnId={filterPopover.columnId}
+                        columnLabel={colDef?.label || filterPopover.columnId}
+                        dataType={colDef?.dataType}
+                        distinctCount={meta?.distinctCount}
+                        nullCount={meta?.nullCount}
+                        levels={meta?.levels}
+                        levelCounts={meta?.levelCounts}
+                        currentFilter={columnFilters[filterPopover.columnId]}
+                        onApply={(f) => {
+                            setColumnFilters(prev => {
+                                const next = { ...prev };
+                                if (f) next[filterPopover.columnId] = f;
+                                else delete next[filterPopover.columnId];
+                                return next;
+                            });
+                        }}
+                        rowCount={rowCount}
+                        isSorted={orderBy === filterPopover.columnId}
+                        sortOrder={order}
+                        onSortAsc={() => applySort(filterPopover.columnId, 'asc')}
+                        onSortDesc={() => applySort(filterPopover.columnId, 'desc')}
+                        onClearSort={() => applySort(undefined, 'asc')}
+                        onCleanTrim={virtual ? () => runCleanVerb('trim', filterPopover.columnId) : undefined}
+                        onCleanFillNulls={virtual ? () => runCleanVerb('fill', filterPopover.columnId) : undefined}
+                        onCleanDedupe={virtual ? () => runCleanVerb('dedupe', filterPopover.columnId) : undefined}
+                    />
+                );
+            })()}
+        </Box >
+    );
+});

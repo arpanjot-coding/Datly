@@ -1,0 +1,116 @@
+{
+  "loader": {
+    "mysql": {
+      "user": "MySQL-gebruikersnaam",
+      "password": "leeg laten als er geen wachtwoord is",
+      "host": "serveradres",
+      "port": "serverpoort",
+      "database": "Databasenaam (leeg laten om alle databases te doorzoeken)",
+      "authInstructions": "**Voorbeeld:** gebruiker: `root` · host: `localhost` · poort: `3306` · database: `mydb`\n\n**Lokale instelling:** Zorg dat MySQL draait: `brew services list` (macOS) of `systemctl status mysql` (Linux). Laat het wachtwoord leeg als er geen is ingesteld.\n\n**Externe instelling:** Vraag host, poort, gebruikersnaam en wachtwoord aan uw databasebeheerder. De server moet externe verbindingen toestaan en uw IP moet op de toelatingslijst staan.\n\n**Bereik:** Laat *database* leeg om alle databases op de server te doorzoeken, of vul het in om meteen naar de tabellen in die database te gaan.\n\n**Problemen oplossen:** Test met `mysql -u <user> -p -h <host> -P <port> <database>`"
+    },
+    "mssql": {
+      "server": "SQL Server-hostadres of instantienaam",
+      "database": "Databasenaam (leeg laten om alle databases te doorzoeken)",
+      "user": "Gebruikersnaam (leeg laten voor Entra ID / Windows-aanmelding)",
+      "password": "Wachtwoord (leeg laten voor Entra ID / Windows-aanmelding)",
+      "port": "SQL Server-poort (standaard: 1433)",
+      "encrypt": "Versleuteling inschakelen (yes/no)",
+      "trust_server_certificate": "Servercertificaat vertrouwen (yes/no)",
+      "connection_timeout": "Verbindingstijdslimiet in seconden",
+      "authInstructions": "**Microsoft Entra ID (aanbevolen):** Voer één keer `az login` uit in uw terminal en start daarna Datly. Kies *Microsoft Entra ID*, vul alleen `server` en (optioneel) `database` in, en laat gebruikersnaam en wachtwoord leeg. Uw Azure CLI-aanmeldgegevens worden automatisch gebruikt. Managed Identity, VS Code en omgevingsaanmeldgegevens werken ook via `DefaultAzureCredential`.\n\n> Uw Entra-identiteit moet toegang tot de database hebben. Een beheerder voert bijvoorbeeld `CREATE USER [you@contoso.com] FROM EXTERNAL PROVIDER;` uit en kent de benodigde rollen toe.\n\n**Voorbeeld (Entra ID):** server: `myserver.database.windows.net` · database: `mydb` (gebruikersnaam/wachtwoord leeg)\n\n**SQL Server-authenticatie:** Kies *SQL Server-authenticatie* en vul gebruikersnaam en wachtwoord in.\n\n**Voorbeeld (SQL-aanmelding):** server: `localhost` · database: `mydb` · gebruiker: `sa` · wachtwoord: `MyP@ss` · poort: `1433`\n\n**Windows-authenticatie (alleen Windows):** Kies *Windows-authenticatie* en laat gebruikersnaam en wachtwoord leeg.\n\n**Stuurprogramma:** Het Microsoft SQL Server-stuurprogramma zit in Datly; een aparte ODBC-installatie is niet nodig. Voor Entra ID installeert u Azure CLI en voert u `az login` uit.\n\n**Problemen oplossen:** Controleer of u bent aangemeld met `az account show`. De SQL Server-dienst moet draaien en TCP/IP moet zijn ingeschakeld. Test SQL-aanmelding met `sqlcmd -S <server> -d <database> -U <user> -P <password>`."
+    },
+    "postgresql": {
+      "user": "PostgreSQL-gebruikersnaam",
+      "password": "leeg laten als er geen wachtwoord is",
+      "host": "PostgreSQL-host",
+      "port": "PostgreSQL-poort",
+      "database": "Databasenaam (leeg laten om alle databases te doorzoeken)",
+      "authInstructions": "**Voorbeeld:** gebruiker: `postgres` · host: `localhost` · poort: `5432` · database: `mydb`\n\n**Lokale instelling:** Zorg dat PostgreSQL draait: `brew services list` (macOS) of `systemctl status postgresql` (Linux). Laat het wachtwoord leeg als er geen is ingesteld.\n\n**Externe instelling:** Vraag host, poort, gebruikersnaam en wachtwoord aan uw databasebeheerder. De gebruiker moet SELECT-rechten hebben op de tabellen die u wilt gebruiken.\n\n**Bereik:** Laat *database* leeg om alle databases op de server te doorzoeken, of vul het in om meteen naar schema's en tabellen in die database te gaan.\n\n**Problemen oplossen:** Test met `psql -U <user> -h <host> -p <port> -d <database>`"
+    },
+    "mongodb": {
+      "host": "serveradres",
+      "port": "serverpoort",
+      "username": "leeg laten als er geen authenticatie is",
+      "password": "leeg laten als er geen authenticatie is",
+      "database": "databasenaam",
+      "collection": "leeg laten om alle collecties te tonen",
+      "authSource": "authenticatiedatabase (standaard de doeldatabase)",
+      "authInstructions": "**Voorbeeld:** host: `localhost` · poort: `27017` · database: `mydb` · collectie: `users`\n\n**Lokale instelling:** Zorg dat MongoDB draait. Laat gebruikersnaam en wachtwoord leeg als authenticatie niet is ingeschakeld.\n\n**Externe instelling:** Vraag host, poort, gebruikersnaam en wachtwoord aan uw databasebeheerder.\n\n**Problemen oplossen:** Test met `mongosh --host <host> --port <port>`"
+    },
+    "cosmosdb": {
+      "endpoint": "Eindpunt-URL van het Cosmos DB-account",
+      "key": "accountsleutel of emulatorsleutel",
+      "database": "databasenaam",
+      "container": "leeg laten om alle containers te tonen",
+      "authInstructions": "**Voorbeeld:** eindpunt: `https://myaccount.documents.azure.com:443/` · database: `mydb`\n\n**Azure-instelling:** Eindpunt en sleutel vindt u in het Azure-portaal onder *Sleutels* van uw Cosmos DB-account.\n\n**Lokale emulator:** Gebruik eindpunt `https://localhost:8081` met de bekende emulatorsleutel.\n\n**Problemen oplossen:** De accountfirewall moet uw IP toestaan, of u verbindt vanuit een toegestaan netwerk."
+    },
+    "bigquery": {
+      "project_id": "Google Cloud-project-ID",
+      "dataset_id": "Dataset-ID('s): leeg voor alle, of één of meer, gescheiden door komma's",
+      "credentials_path": "Pad naar het JSON-bestand van het serviceaccount (optioneel)",
+      "location": "BigQuery-locatie (standaard: US)",
+      "authInstructions": "**Voorbeeld:** project_id: `my-gcp-project` · dataset_id: `analytics` · credentials_path: `/path/to/key.json` · location: `US`\n\n**Optie 1. Application Default Credentials (aanbevolen):**\nInstalleer de [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) en voer `gcloud auth application-default login` uit. Laat `credentials_path` leeg.\n\n**Optie 2. Sleutelbestand van het serviceaccount:**\nMaak een serviceaccount in Google Cloud Console, download de JSON-sleutel en voer het volledige pad in bij `credentials_path`. Ken de rollen **BigQuery Data Viewer** en **BigQuery Job User** toe.\n\n**Optie 3. Omgevingsvariabele:**\nZet `GOOGLE_APPLICATION_CREDENTIALS` op het pad van het JSON-bestand van het serviceaccount. Laat `credentials_path` leeg."
+    },
+    "athena": {
+      "aws_profile": "AWS-profielnaam uit ~/.aws/credentials (als dit is ingevuld, zijn toegangssleutel en geheim niet nodig)",
+      "aws_access_key_id": "AWS-toegangssleutel-ID (niet nodig bij aws_profile)",
+      "aws_secret_access_key": "Geheime AWS-toegangssleutel (niet nodig bij aws_profile)",
+      "aws_session_token": "AWS-sessietoken (vereist bij tijdelijke aanmeldgegevens)",
+      "region_name": "AWS-regionaam",
+      "workgroup": "Naam van de Athena-werkgroep (de uitvoerlocatie komt uit de werkgroepconfiguratie)",
+      "output_location": "S3-uitvoerlocatie voor queryresultaten (bijv. s3://bucket/path/). Leeg: configuratie van de werkgroep.",
+      "database": "Standaarddatabase of catalogus voor query's",
+      "query_timeout": "Tijdslimiet van de query in seconden (standaard: 300 = 5 minuten)",
+      "authInstructions": "**Voorbeeld (profiel):** aws_profile: `default` · region_name: `us-east-1` · workgroup: `primary` · database: `my_database`\n\n**Voorbeeld (sleutels):** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1`\n\n**Optie 1. AWS-profiel (aanbevolen):**\nZet `aws_profile` op een profielnaam uit `~/.aws/credentials`. Instellen met `aws configure --profile <name>`. Geen toegangssleutel of geheim nodig.\n\n**Optie 2. Expliciete aanmeldgegevens:**\nVul `aws_access_key_id` en `aws_secret_access_key` rechtstreeks in. Voeg `aws_session_token` toe bij tijdelijke aanmeldgegevens.\n\n**Vereiste IAM-rechten:** `athena:StartQueryExecution`, `athena:GetQueryExecution`, `athena:GetQueryResults`, `athena:GetWorkGroup`, `athena:ListDatabases`, `athena:ListTableMetadata`, plus S3- en Glue-rechten op uw gegevens- en resultaatbuckets."
+    },
+    "kusto": {
+      "kusto_cluster": "bijv. https://mycluster.region.kusto.windows.net",
+      "kusto_database": "Databasenaam (vereist)",
+      "client_id": "Alleen service principal",
+      "client_secret": "Alleen service principal",
+      "tenant_id": "Alleen service principal",
+      "authInstructions": "**Optie 1. Aanmelden met Entra ID (aanbevolen):** Meld u aan als uzelf en gebruik uw bestaande Kusto-rechten. Deze optie verschijnt als de server `KUSTO_OAUTH_CLIENT_ID` heeft ingesteld.\n\n**Optie 2. Azure Default Identity:** Gebruik uw Azure CLI-aanmelding (`az login`), Managed Identity, VS Code-aanmeldgegevens of omgevingsaanmeldgegevens.\n\n**Optie 3. Service principal:** Geef `client_id`, `client_secret` en `tenant_id` op voor een service principal met clustertoegang.\n\nElke identiteit moet al dataplane-toegang hebben tot de gekozen Kusto-database."
+    },
+    "databricks": {
+      "server_hostname": "bijv. adb-1234567890.11.azuredatabricks.net",
+      "http_path": "HTTP-pad van het SQL-warehouse, bijv. /sql/1.0/warehouses/abc123",
+      "catalog": "Naam van Unity Catalog (leeg laten om alle catalogi te doorzoeken)",
+      "schema": "Schemanaam (leeg laten om alle schema's in de catalogus te doorzoeken)",
+      "access_token": "Persoonlijk Databricks-toegangstoken (dapi...)",
+      "authInstructions": "**Waar u deze waarden vindt:** Open in uw Databricks-werkruimte links **SQL → SQL Warehouses**, klik op uw warehouse en open het tabblad **Verbindingsgegevens**. Kopieer daar **Serverhostnaam** en **HTTP-pad**.\n\n**Toegangstoken:** Klik rechtsboven op uw avatar → **Instellingen → Ontwikkelaar → Toegangstokens → Nieuw token genereren**. Het begint met `dapi` en wordt slechts één keer getoond.\n\n**Rechten:** De gebruiker van het token heeft `USE CATALOG` / `USE SCHEMA` en `SELECT` nodig op de Unity Catalog-objecten die u wilt lezen.\n\n**Bereik:** Laat *catalog* en *schema* leeg om alles te doorzoeken waar u bij kunt, of vul ze in om meteen naar een bepaalde catalogus of een bepaald schema te gaan, bijvoorbeeld de ingebouwde catalogus `samples` → `nyctaxi` → `trips`.\n\n**Geen account?** Databricks Free Edition is serverloos, gratis en bevat de catalogus `samples`. Cluster of warehouse hoeft u niet in te stellen."
+    },
+    "superset": {
+      "url": "Superset-basis-URL (bijv. https://bi.bedrijf.com)",
+      "username": "Superset-gebruikersnaam (optioneel bij SSO)",
+      "password": "Superset-wachtwoord (optioneel bij SSO)",
+      "authInstructions": "**Voorbeeld:** url: `https://bi.bedrijf.com` · username: `admin` · password: `***`\n\n**Instelling:** Geef de basis-URL van uw Superset-instantie en de aanmeldgegevens van een gebruiker met minstens de rol **Gamma** (leestoegang tot datasets).\n\n**SSO:** Als uw Superset SSO gebruikt, gebruik dan de SSO-brug in plaats van wachtwoordaanmelding (instellen via `PLG_SUPERSET_SSO_LOGIN_URL`)."
+    },
+    "azure_blob": {
+      "account_name": "Naam van het Azure-opslagaccount",
+      "container_name": "Naam van de Azure-blobcontainer",
+      "connection_string": "Azure-opslagverbindingsreeks (alternatief voor account_name plus aanmeldgegevens)",
+      "credential_chain": "Geordende lijst van Azure-aanbieders van aanmeldgegevens (cli;managed_identity;env)",
+      "account_key": "Sleutel van het Azure-opslagaccount",
+      "sas_token": "Azure SAS-token",
+      "endpoint": "Azure-eindpunt overschrijven",
+      "authInstructions": "**Voorbeeld (verbindingsreeks):** connection_string: `DefaultEndpointsProtocol=https;AccountName=...` · container_name: `mydata`\n\n**Voorbeeld (accountsleutel):** account_name: `mystorageacct` · container_name: `mydata` · account_key: `abc123...`\n\n**Optie 1. Verbindingsreeks (eenvoudigst):**\nHaal die op in het Azure-portaal → Opslagaccount → Toegangssleutels. Vul in bij `connection_string`; `account_name` mag ontbreken.\n\n**Optie 2. Accountsleutel:**\nIn het Azure-portaal → Opslagaccount → Toegangssleutels. Gebruik `account_name` + `account_key`.\n\n**Optie 3. SAS-token (aanbevolen voor beperkte toegang):**\nGenereren in het Azure-portaal → Opslagaccount → Shared access signature. Gebruik `account_name` + `sas_token`. Kan tijdelijk en in rechten beperkt zijn.\n\n**Optie 4. Azure CLI / Managed Identity (veiligst):**\nGeef alleen `account_name` + `container_name` op. Vereist `az login` of Managed Identity.\n\n**Ondersteunde formaten:** CSV, Parquet, JSON, JSONL"
+    },
+    "s3": {
+      "aws_access_key_id": "AWS-toegangssleutel-ID",
+      "aws_secret_access_key": "Geheime AWS-toegangssleutel",
+      "aws_session_token": "AWS-sessietoken (vereist bij tijdelijke aanmeldgegevens)",
+      "region_name": "AWS-regionaam",
+      "bucket": "Naam van de S3-bucket",
+      "authInstructions": "**Voorbeeld:** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1` · bucket: `my-data-bucket`\n\n**Aanmeldgegevens ophalen:** AWS-console → IAM → Users → Beveiligingsgegevens → Toegangssleutel maken → kies \"Toepassing die buiten AWS draait\".\n\n**Vereiste rechten:** `s3:GetObject` en `s3:ListBucket` op uw bucket.\n\n**Ondersteunde formaten:** CSV, Parquet, JSON, JSONL"
+    },
+    "local_folder": {
+      "root_dir": "Absoluut pad naar de lokale map die u wilt doorzoeken",
+      "recursive": "Bestanden in submappen meenemen",
+      "file_pattern": "Globpatroon om bestanden te filteren (bijv. '*.csv')",
+      "authInstructions": "Zet `root_dir` op een lokale map met gegevensbestanden.\n\n**Ondersteunde formaten:** CSV, TSV, Parquet, JSON, JSONL, Excel (.xlsx/.xls)\n\nKlik op **Map selecteren** om een map te kiezen, of plak een mappad."
+    },
+    "_common": {
+      "table_filter": "Tabellen filteren op trefwoorden (bijv. 'omzet')"
+    }
+  }
+}

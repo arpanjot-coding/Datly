@@ -1,0 +1,38 @@
+{
+  "errors": {
+    "authRequired": "Aanmelding vereist",
+    "authExpired": "Sessie verlopen. Meld u opnieuw aan",
+    "accessDenied": "Toegang geweigerd",
+
+    "invalidRequest": "Ongeldige aanvraag",
+    "tableNotFound": "Tabel niet gevonden",
+    "fileParseError": "Het geüploade bestand kon niet worden gelezen",
+    "fileTooLarge": "Bestand te groot",
+    "validationError": "Validatiefout",
+
+    "llmAuthFailed": "Authenticatie mislukt. Controleer uw API-sleutel",
+    "llmRateLimit": "Limiet overschreden. Wacht even en probeer het opnieuw",
+    "llmContextTooLong": "Invoer te lang. Verklein de gegevens of de prompt",
+    "llmModelNotFound": "Model niet gevonden. Controleer de modelnaam",
+    "llmTimeout": "Aanvraag verlopen. Controleer de verbinding en probeer het opnieuw",
+    "llmServiceError": "De modeldienst gaf een fout. Probeer het later opnieuw",
+    "llmContentFiltered": "De aanvraag is geblokkeerd door het inhoudsfilter",
+    "llmUnknownError": "Modelaanvraag mislukt",
+
+    "connectorAuthFailed": "Aanmelden bij de gegevensbron mislukt",
+    "dbConnectionFailed": "Verbinding met de gegevensbron mislukt",
+    "dbQueryError": "Fout bij de databasequery",
+    "dataLoadError": "Gegevens konden niet worden geladen",
+    "connectorError": "Fout in de gegevensconnector",
+
+    "codeExecutionError": "Er is een fout opgetreden bij het uitvoeren van code",
+    "agentError": "De agent is op een fout gestuit",
+
+    "catalogSyncTimeout": "Catalogussynchronisatie verlopen. Probeer het opnieuw",
+    "catalogNotFound": "Connector niet gevonden of niet verbonden",
+
+    "internalError": "Er is een onverwachte fout opgetreden",
+    "serviceUnavailable": "Dienst tijdelijk niet beschikbaar",
+    "storageFull": "De opslag van de werkruimte is vol. Maak schijfruimte vrij en probeer het opnieuw."
+  }
+}

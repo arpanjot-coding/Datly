@@ -1,0 +1,80 @@
+# Python
+.venv/
+venv/
+Lib/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# Node
+node_modules/
+package-lock.json
+
+# Env and local data
+.env
+*env
+experiment_data/
+test-data-loader/
+tmp-docs/
+
+# Local / generated
+.DS_Store
+.vscode/settings.json
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+.vs/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.log
+
+# Project-specific local trees
+design-docs/
+deploy-scripts/
+scripts/
+
+# --- autonomous-developer: ephemeral / local (do not commit) ---
+node_modules/
+.env
+.env.*
+.project_id
+.github_repo
+
+# Build & deploy output
+.vercel/output/
+.output/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Agent / QA tooling
+.playwright-mcp/
+playwright-report/
+test-results/
+tmp/
+temp/
+
+# Screenshots & device QA (only under docs/test-runs; that tree is ignored)
+/screenshots/
+/qa-*.png
+docs/test-runs/
+
+# Execution plans (delete at plan end; ignore keeps tree clean)
+docs/plans/
+
+# Local probe dumps
+*.local.json
+
+# Packaged binaries (keep source; do not commit store artifacts)
+*.apk
+*.aab
+release-electron/

@@ -1,0 +1,151 @@
+@import '@fontsource/roboto-mono/400.css';
+@import '@fontsource/roboto-mono/500.css';
+
+/* Reference-density type scale. LayoutProvider overrides these per density;
+   they are seeded here so the scale is defined before React mounts. */
+:root {
+    --df-scale: 1;
+    --df-font: "Segoe UI", system-ui, sans-serif;
+    --df-font-mono: "Roboto Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    --df-focus-border: #1f6b4a;
+    --df-text-xxs: 10px;
+    --df-text-xs: 11px;
+    --df-text-sm: 12px;
+    --df-text-md: 13px;
+    --df-text-lg: 14px;
+    --df-text-xl: 16px;
+    --df-text-xxl: 18px;
+    --df-icon-xs: 12px;
+    --df-icon-sm: 14px;
+    --df-icon-md: 16px;
+    --df-icon-lg: 18px;
+    --df-icon-xl: 20px;
+    --df-button-height-sm: 28px;
+    --df-button-height-md: 32px;
+    --df-button-padding-sm: 10px;
+    --df-button-padding-md: 12px;
+    --df-button-icon-gap: 6px;
+    --df-island-inset: 8px;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #d5dbd2;
+    color: #1c231d;
+    font-family: var(--df-font);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+textarea,
+select {
+    font-family: inherit;
+}
+
+.df-titlebar {
+    -webkit-app-region: drag;
+    app-region: drag;
+}
+
+.df-titlebar button,
+.df-titlebar a,
+.df-titlebar input,
+.df-titlebar [role="button"],
+.df-titlebar [role="radio"],
+.df-titlebar [role="radiogroup"],
+.df-titlebar .MuiInputBase-root,
+.df-titlebar .MuiSelect-root {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+}
+
+.df-no-drag {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+}
+
+h1, h2, h3 {
+    text-wrap: balance;
+}
+
+p {
+    text-wrap: pretty;
+}
+
+#root {
+    height: 100%;
+    margin: 0;
+    overflow: auto;
+}
+
+/* Vega-embed tooltip: paper field, ink type (overrides vega-tooltip light default). */
+#vg-tooltip-element,
+#vg-tooltip-element.datly-theme,
+.vg-tooltip {
+    background: #f3f5f0;
+    background-color: #f3f5f0;
+    color: #1c231d;
+    border: 1px solid rgba(28, 35, 29, 0.10);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px -16px rgba(28, 35, 29, 0.28);
+    font-family: var(--df-font);
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 8px 10px;
+}
+
+#vg-tooltip-element td.key,
+#vg-tooltip-element.datly-theme td.key {
+    color: #5c665e;
+}
+
+/* Sharp window wipe animation */
+@keyframes windowWipe {
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    5% {
+        opacity: 1;
+    }
+    95% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.window-wipe {
+    position: relative;
+    overflow: hidden;
+}
+
+.window-wipe::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        transparent 30%, 
+        rgba(255, 255, 255, 0.3) 40%,
+        rgba(255, 255, 255, 1) 50%, 
+        rgba(255, 255, 255, 0.3) 60%,
+        transparent 70%, 
+        transparent 100%);
+    animation: windowWipe 2s ease-out infinite;
+    z-index: 1;
+    pointer-events: none;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+

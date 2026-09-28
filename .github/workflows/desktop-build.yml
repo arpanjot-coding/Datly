@@ -1,0 +1,146 @@
+name: desktop builds
+
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-desktop:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-latest
+            artifact: data-formulator-windows-x64
+          - name: macOS
+            os: macos-latest
+            artifact: data-formulator-macos
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.12'
+          enable-cache: true
+
+      - name: Install frontend dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build frontend
+        run: yarn build
+
+      - name: Install desktop dependencies
+        run: uv sync --extra desktop --frozen
+
+      - name: Test desktop startup output
+        run: uv run pytest tests/backend/test_startup_spinner.py -q
+
+      - name: Build desktop application
+        run: uv run pyinstaller --noconfirm --clean packaging/data_formulator_desktop.spec
+
+      - name: Self-test packaged application (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          DF_DESKTOP_SELF_TEST: '1'
+        run: |
+          & 'dist/Datly/Datly.exe' | Tee-Object -Variable output
+          if ($LASTEXITCODE -ne 0) { throw "self-test failed with exit code $LASTEXITCODE" }
+
+      - name: Self-test packaged application (macOS)
+        if: runner.os == 'macOS'
+        env:
+          DF_DESKTOP_SELF_TEST: '1'
+        run: |
+          './dist/Datly.app/Contents/MacOS/Datly'
+
+      - name: Archive Windows application
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          Compress-Archive -Path 'dist/Datly' -DestinationPath 'release/Datly-Windows-x64.zip'
+
+      - name: Archive macOS application
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          mkdir -p release
+          ditto -c -k --sequesterRsrc --keepParent \
+            'dist/Datly.app' \
+            'release/Datly-macOS.zip'
+
+      - name: Generate SBOM for packaged app
+        uses: anchore/sbom-action@v0
+        with:
+          path: dist
+          format: spdx-json
+          artifact-name: ${{ matrix.artifact }}-sbom.spdx.json
+
+      - name: Upload desktop artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: release/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  attach-to-release:
+    name: Attach desktop downloads to release
+    if: github.ref_type == 'tag'
+    needs: build-desktop
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download desktop artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: data-formulator-*
+          path: release
+          merge-multiple: true
+
+      - name: Download SBOMs
+        uses: actions/download-artifact@v8
+        with:
+          pattern: '*-sbom.spdx.json'
+          path: release
+          merge-multiple: true
+
+      - name: Write SHA-256 checksums
+        run: |
+          cd release
+          sha256sum *.zip | tee SHA256SUMS
+
+      - name: Attach archives to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.zip
+            release/SHA256SUMS
+            release/*.spdx.json
+          fail_on_unmatched_files: true
+          generate_release_notes: true

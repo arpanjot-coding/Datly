@@ -1,0 +1,38 @@
+{
+  "errors": {
+    "authRequired": "Autenticación necesaria",
+    "authExpired": "Sesión expirada. Vuelva a iniciar sesión.",
+    "accessDenied": "Acceso denegado",
+
+    "invalidRequest": "Solicitud no válida",
+    "tableNotFound": "Tabla no encontrada",
+    "fileParseError": "No se pudo analizar el archivo cargado",
+    "fileTooLarge": "El archivo es demasiado grande",
+    "validationError": "Error de validación",
+
+    "llmAuthFailed": "Error de autenticación. Compruebe su clave de API.",
+    "llmRateLimit": "Se superó el límite de solicitudes. Espere y vuelva a intentarlo.",
+    "llmContextTooLong": "La entrada es demasiado larga. Reduzca el volumen de datos o la longitud de la consigna.",
+    "llmModelNotFound": "Modelo no encontrado. Compruebe el nombre del modelo.",
+    "llmTimeout": "Se agotó el tiempo de espera. Compruebe la conexión y vuelva a intentarlo.",
+    "llmServiceError": "El servicio del modelo devolvió un error. Inténtelo de nuevo más tarde.",
+    "llmContentFiltered": "La solicitud fue bloqueada por el filtro de seguridad de contenido.",
+    "llmUnknownError": "La solicitud al modelo falló",
+
+    "connectorAuthFailed": "Error de autenticación en la fuente de datos",
+    "dbConnectionFailed": "No se pudo conectar a la fuente de datos",
+    "dbQueryError": "Error de consulta a la base de datos",
+    "dataLoadError": "No se pudieron cargar los datos",
+    "connectorError": "Error del conector de datos",
+
+    "codeExecutionError": "Se produjo un error al ejecutar el código",
+    "agentError": "El agente encontró un error",
+
+    "catalogSyncTimeout": "La sincronización del catálogo agotó el tiempo de espera. Inténtelo de nuevo.",
+    "catalogNotFound": "Conector no encontrado o no conectado",
+
+    "internalError": "Se produjo un error inesperado",
+    "serviceUnavailable": "Servicio temporalmente no disponible",
+    "storageFull": "El almacenamiento del espacio de trabajo está lleno. Libere espacio en disco e inténtelo de nuevo."
+  }
+}

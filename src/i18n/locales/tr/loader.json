@@ -1,0 +1,116 @@
+{
+  "loader": {
+    "mysql": {
+      "user": "MySQL kullanıcı adı",
+      "password": "parola yoksa boş bırakın",
+      "host": "sunucu adresi",
+      "port": "sunucu bağlantı noktası",
+      "database": "Veritabanı adı (tüm veritabanlarını gezmek için boş bırakın)",
+      "authInstructions": "**Örnek:** user: `root` · host: `localhost` · port: `3306` · database: `mydb`\n\n**Yerel kurulum:** MySQL'in çalıştığından emin olun: `brew services list` (macOS) veya `systemctl status mysql` (Linux). Parola yoksa alanı boş bırakın.\n\n**Uzak kurulum:** Sunucu adresi, bağlantı noktası, kullanıcı adı ve parolayı veritabanı yöneticinizden alın. Sunucunun uzak bağlantılara izin verdiğinden ve IP adresinizin izin listesinde olduğundan emin olun.\n\n**Kapsam:** Sunucudaki tüm veritabanlarını gezmek için *database* alanını boş bırakın. O veritabanındaki tablolara gitmek için doldurun.\n\n**Sorun giderme:** `mysql -u <user> -p -h <host> -P <port> <database>` ile deneyin"
+    },
+    "mssql": {
+      "server": "SQL Server ana bilgisayar adresi veya örnek adı",
+      "database": "Veritabanı adı (tüm veritabanlarını gezmek için boş bırakın)",
+      "user": "Kullanıcı adı (Entra ID / Windows kimliği için boş bırakın)",
+      "password": "Parola (Entra ID / Windows kimliği için boş bırakın)",
+      "port": "SQL Server bağlantı noktası (varsayılan: 1433)",
+      "encrypt": "Şifrelemeyi aç (yes/no)",
+      "trust_server_certificate": "Sunucu sertifikasına güven (yes/no)",
+      "connection_timeout": "Bağlantı zaman aşımı (saniye)",
+      "authInstructions": "**Microsoft Entra ID (önerilen):** Terminalde bir kez `az login` çalıştırın, sonra Datly'yi başlatın. *Microsoft Entra ID* seçin, yalnızca `server` ve (isteğe bağlı) `database` doldurun, kullanıcı adı ve parolayı boş bırakın. Azure CLI kimlik bilgileriniz otomatik kullanılır. Managed Identity, VS Code ve ortam kimlik bilgileri de `DefaultAzureCredential` ile çalışır.\n\n> Entra kimliğinizin veritabanına erişimi olmalıdır. Örneğin bir yönetici `CREATE USER [you@contoso.com] FROM EXTERNAL PROVIDER;` çalıştırıp gerekli rolleri verir.\n\n**Örnek (Entra ID):** server: `myserver.database.windows.net` · database: `mydb` (kullanıcı adı/parola boş)\n\n**SQL Server kimlik doğrulaması:** *SQL Server authentication* seçin ve kullanıcı adı ile parolayı girin.\n\n**Örnek (SQL kimliği):** server: `localhost` · database: `mydb` · user: `sa` · password: `MyP@ss` · port: `1433`\n\n**Windows kimlik doğrulaması (yalnızca Windows):** *Windows authentication* seçin, kullanıcı adı ve parolayı boş bırakın.\n\n**Sürücü:** Microsoft SQL Server sürücüsü Datly ile birlikte gelir; ayrı ODBC kurulumu gerekmez. Entra ID için Azure CLI kurun ve `az login` çalıştırın.\n\n**Sorun giderme:** `az account show` ile oturum açık mı bakın. SQL Server hizmetinin çalıştığından ve TCP/IP'nin açık olduğundan emin olun. SQL kimliğini `sqlcmd -S <server> -d <database> -U <user> -P <password>` ile deneyin."
+    },
+    "postgresql": {
+      "user": "PostgreSQL kullanıcı adı",
+      "password": "parola yoksa boş bırakın",
+      "host": "PostgreSQL sunucusu",
+      "port": "PostgreSQL bağlantı noktası",
+      "database": "Veritabanı adı (tüm veritabanlarını gezmek için boş bırakın)",
+      "authInstructions": "**Örnek:** user: `postgres` · host: `localhost` · port: `5432` · database: `mydb`\n\n**Yerel kurulum:** PostgreSQL'in çalıştığından emin olun: `brew services list` (macOS) veya `systemctl status postgresql` (Linux). Parola yoksa alanı boş bırakın.\n\n**Uzak kurulum:** Sunucu adresi, bağlantı noktası, kullanıcı adı ve parolayı veritabanı yöneticinizden alın. Kullanıcının erişmek istediğiniz tablolarda SELECT izni olmalıdır.\n\n**Kapsam:** Sunucudaki tüm veritabanlarını gezmek için *database* alanını boş bırakın. O veritabanındaki şema ve tablolara gitmek için doldurun.\n\n**Sorun giderme:** `psql -U <user> -h <host> -p <port> -d <database>` ile deneyin"
+    },
+    "mongodb": {
+      "host": "sunucu adresi",
+      "port": "sunucu bağlantı noktası",
+      "username": "kimlik doğrulama yoksa boş bırakın",
+      "password": "kimlik doğrulama yoksa boş bırakın",
+      "database": "veritabanı adı",
+      "collection": "tüm koleksiyonları listelemek için boş bırakın",
+      "authSource": "kimlik doğrulama veritabanı (varsayılan hedef veritabanı)",
+      "authInstructions": "**Örnek:** host: `localhost` · port: `27017` · database: `mydb` · collection: `users`\n\n**Yerel kurulum:** MongoDB'nin çalıştığından emin olun. Kimlik doğrulama kapalıysa kullanıcı adı ve parolayı boş bırakın.\n\n**Uzak kurulum:** Sunucu adresi, bağlantı noktası, kullanıcı adı ve parolayı veritabanı yöneticinizden alın.\n\n**Sorun giderme:** `mongosh --host <host> --port <port>` ile deneyin"
+    },
+    "cosmosdb": {
+      "endpoint": "Cosmos DB hesap uç noktası URL'si",
+      "key": "hesap anahtarı veya öykünücü anahtarı",
+      "database": "veritabanı adı",
+      "container": "tüm kapsayıcıları listelemek için boş bırakın",
+      "authInstructions": "**Örnek:** endpoint: `https://myaccount.documents.azure.com:443/` · database: `mydb`\n\n**Azure kurulumu:** Cosmos DB hesabınızın Azure Portal *Keys* bölümünden uç noktayı ve anahtarı alın.\n\n**Yerel öykünücü:** Uç nokta olarak `https://localhost:8081` ve bilinen öykünücü anahtarını kullanın.\n\n**Sorun giderme:** Hesap güvenlik duvarının IP adresinize izin verdiğinden emin olun veya izin verilen bir ağdan bağlanın."
+    },
+    "bigquery": {
+      "project_id": "Google Cloud proje kimliği",
+      "dataset_id": "Veri kümesi kimliği. Tümü için boş bırakın veya virgülle bir ya da birkaç tane yazın",
+      "credentials_path": "Hizmet hesabı JSON dosyasının yolu (isteğe bağlı)",
+      "location": "BigQuery konumu (varsayılan: US)",
+      "authInstructions": "**Örnek:** project_id: `my-gcp-project` · dataset_id: `analytics` · credentials_path: `/path/to/key.json` · location: `US`\n\n**Seçenek 1. Application Default Credentials (önerilen):**\n[Google Cloud SDK](https://cloud.google.com/sdk/docs/install) kurun, sonra `gcloud auth application-default login` çalıştırın. `credentials_path` alanını boş bırakın.\n\n**Seçenek 2. Hizmet hesabı anahtar dosyası:**\nGoogle Cloud Console'da bir hizmet hesabı oluşturun, JSON anahtarını indirin ve tam yolu `credentials_path` alanına yazın. Hesaba **BigQuery Data Viewer** ve **BigQuery Job User** rollerini verin.\n\n**Seçenek 3. Ortam değişkeni:**\n`GOOGLE_APPLICATION_CREDENTIALS` değişkenini hizmet hesabı JSON dosyanızın yoluna ayarlayın. `credentials_path` alanını boş bırakın."
+    },
+    "athena": {
+      "aws_profile": "~/.aws/credentials içindeki AWS profil adı (ayarlarsanız erişim anahtarı ve gizli anahtar gerekmez)",
+      "aws_access_key_id": "AWS erişim anahtarı kimliği (aws_profile kullanıyorsanız gerekmez)",
+      "aws_secret_access_key": "AWS gizli erişim anahtarı (aws_profile kullanıyorsanız gerekmez)",
+      "aws_session_token": "AWS oturum belirteci (geçici kimlik bilgileri için gerekli)",
+      "region_name": "AWS bölge adı",
+      "workgroup": "Athena çalışma grubu adı (çıktı konumu çalışma grubu yapılandırmasından alınır)",
+      "output_location": "Sorgu sonuçları için S3 çıktı konumu (ör. s3://bucket/path/). Boşsa çalışma grubu yapılandırması kullanılır.",
+      "database": "Sorgular için varsayılan veritabanı/katalog",
+      "query_timeout": "Sorgu çalışma zaman aşımı saniye cinsinden (varsayılan: 300 = 5 dakika)",
+      "authInstructions": "**Örnek (profil):** aws_profile: `default` · region_name: `us-east-1` · workgroup: `primary` · database: `my_database`\n\n**Örnek (anahtarlar):** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1`\n\n**Seçenek 1. AWS profili (önerilen):**\n`aws_profile` alanına `~/.aws/credentials` içindeki bir profil adını yazın. `aws configure --profile <name>` ile kurun. Erişim anahtarı veya gizli anahtar gerekmez.\n\n**Seçenek 2. Açık kimlik bilgileri:**\n`aws_access_key_id` ve `aws_secret_access_key` değerlerini doğrudan girin. Geçici kimlik bilgileri için `aws_session_token` ekleyin.\n\n**Gerekli IAM izinleri:** `athena:StartQueryExecution`, `athena:GetQueryExecution`, `athena:GetQueryResults`, `athena:GetWorkGroup`, `athena:ListDatabases`, `athena:ListTableMetadata` ve veri/sonuç kovalarınızda S3 ile Glue izinleri."
+    },
+    "kusto": {
+      "kusto_cluster": "ör. https://mycluster.region.kusto.windows.net",
+      "kusto_database": "Veritabanı adı (zorunlu)",
+      "client_id": "Yalnızca hizmet sorumlusu",
+      "client_secret": "Yalnızca hizmet sorumlusu",
+      "tenant_id": "Yalnızca hizmet sorumlusu",
+      "authInstructions": "**Seçenek 1. Entra ID ile oturum açın (önerilen):** Kendi hesabınızla oturum açın ve mevcut Kusto izinlerinizi kullanın. Bu seçenek sunucuda `KUSTO_OAUTH_CLIENT_ID` tanımlıysa görünür.\n\n**Seçenek 2. Azure Default Identity:** Azure CLI oturumunuzu (`az login`), Managed Identity, VS Code kimlik bilgilerini veya ortam kimlik bilgilerini kullanın.\n\n**Seçenek 3. Hizmet sorumlusu:** Küme erişimi olan bir hizmet sorumlusu için `client_id`, `client_secret` ve `tenant_id` girin.\n\nHer kimliğin seçilen Kusto veritabanında zaten veri düzlemi erişimi olmalıdır."
+    },
+    "databricks": {
+      "server_hostname": "ör. adb-1234567890.11.azuredatabricks.net",
+      "http_path": "SQL ambarı HTTP yolu, ör. /sql/1.0/warehouses/abc123",
+      "catalog": "Unity Catalog adı (tüm katalogları gezmek için boş bırakın)",
+      "schema": "Şema adı (katalogdaki tüm şemaları gezmek için boş bırakın)",
+      "access_token": "Databricks kişisel erişim belirteci (dapi...)",
+      "authInstructions": "**Bu değerleri nerede bulursunuz:** Databricks çalışma alanında soldan **SQL → SQL Warehouses** açın, ambarınıza tıklayın ve **Bağlantı ayrıntıları** sekmesini açın. Oradan **Sunucu ana bilgisayar adı** ve **HTTP yolu** kopyalayın.\n\n**Erişim belirteci:** Sağ üstteki profil resminize tıklayın, sonra **Ayarlar → Geliştirici → Erişim belirteçleri → Yeni belirteç oluştur**. `dapi` ile başlar ve yalnızca bir kez gösterilir.\n\n**İzinler:** Belirtecin kullanıcısının okumak istediğiniz Unity Catalog nesnelerinde `USE CATALOG` / `USE SCHEMA` ve `SELECT` izni olmalıdır.\n\n**Kapsam:** Erişebildiğiniz her şeyi gezmek için *catalog* ve *schema* alanlarını boş bırakın. Belirli bir katalog veya şemaya gitmek için doldurun. Örneğin yerleşik `samples` kataloğu → `nyctaxi` → `trips`.\n\n**Hesabınız yok mu?** Databricks Free Edition sunucusuz ve ücretsizdir, `samples` kataloğunu içerir. Küme veya ambar kurmanız gerekmez."
+    },
+    "superset": {
+      "url": "Superset taban URL'si (ör. https://bi.şirket.com)",
+      "username": "Superset kullanıcı adı (SSO kullanıyorsanız isteğe bağlı)",
+      "password": "Superset parolası (SSO kullanıyorsanız isteğe bağlı)",
+      "authInstructions": "**Örnek:** url: `https://bi.şirket.com` · username: `admin` · password: `***`\n\n**Kurulum:** Superset örneğinizin taban URL'sini ve en az **Gamma** rolüne sahip (veri kümelerini okuyabilen) bir kullanıcının kimlik bilgilerini girin.\n\n**SSO:** Superset SSO kullanıyorsa parola yerine SSO köprü akışını kullanın (`PLG_SUPERSET_SSO_LOGIN_URL` ile yapılandırın)."
+    },
+    "azure_blob": {
+      "account_name": "Azure depolama hesabı adı",
+      "container_name": "Azure blob kapsayıcı adı",
+      "connection_string": "Azure depolama bağlantı dizesi (account_name + kimlik bilgilerine alternatif)",
+      "credential_chain": "Sıralı Azure kimlik bilgisi sağlayıcıları (cli;managed_identity;env)",
+      "account_key": "Azure depolama hesap anahtarı",
+      "sas_token": "Azure SAS belirteci",
+      "endpoint": "Azure uç noktası geçersiz kılma",
+      "authInstructions": "**Örnek (bağlantı dizesi):** connection_string: `DefaultEndpointsProtocol=https;AccountName=...` · container_name: `mydata`\n\n**Örnek (hesap anahtarı):** account_name: `mystorageacct` · container_name: `mydata` · account_key: `abc123...`\n\n**Seçenek 1. Bağlantı dizesi (en yalın):**\nAzure Portal → Storage Account → Access keys bölümünden alın. `connection_string` alanına yazın; `account_name` atlanabilir.\n\n**Seçenek 2. Hesap anahtarı:**\nAzure Portal → Storage Account → Access keys. `account_name` + `account_key` kullanın.\n\n**Seçenek 3. SAS belirteci (sınırlı erişim için önerilir):**\nAzure Portal → Storage Account → Shared access signature ile oluşturun. `account_name` + `sas_token` kullanın. Süre ve izinle sınırlanabilir.\n\n**Seçenek 4. Azure CLI / Managed Identity (en güvenli):**\nYalnızca `account_name` + `container_name` girin. `az login` veya Managed Identity gerekir.\n\n**Desteklenen biçimler:** CSV, Parquet, JSON, JSONL"
+    },
+    "s3": {
+      "aws_access_key_id": "AWS erişim anahtarı kimliği",
+      "aws_secret_access_key": "AWS gizli erişim anahtarı",
+      "aws_session_token": "AWS oturum belirteci (geçici kimlik bilgileri için gerekli)",
+      "region_name": "AWS bölge adı",
+      "bucket": "S3 kova adı",
+      "authInstructions": "**Örnek:** aws_access_key_id: `AKIA...` · aws_secret_access_key: `wJalr...` · region_name: `us-east-1` · bucket: `my-data-bucket`\n\n**Kimlik bilgilerini alma:** AWS Console → IAM → Users → Security credentials → Create access key → \"Application running outside AWS\" seçin.\n\n**Gerekli izinler:** Kovada `s3:GetObject` ve `s3:ListBucket`.\n\n**Desteklenen biçimler:** CSV, Parquet, JSON, JSONL"
+    },
+    "local_folder": {
+      "root_dir": "Gezilecek yerel dizinin mutlak yolu",
+      "recursive": "Alt dizinlerdeki dosyaları dahil et",
+      "file_pattern": "Dosyaları süzmek için glob deseni (ör. '*.csv')",
+      "authInstructions": "`root_dir` alanını veri dosyaları içeren yerel bir dizine yöneltin.\n\n**Desteklenen biçimler:** CSV, TSV, Parquet, JSON, JSONL, Excel (.xlsx/.xls)\n\nKlasör seçici için **Göz at** düğmesine tıklayın veya bir dizin yolu yapıştırın."
+    },
+    "_common": {
+      "table_filter": "Tabloyu anahtar sözcüklerle süzün (ör. 'sales')"
+    }
+  }
+}

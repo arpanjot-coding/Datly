@@ -1,0 +1,38 @@
+{
+  "errors": {
+    "authRequired": "Wymagane logowanie",
+    "authExpired": "Sesja wygasła. Zaloguj się ponownie",
+    "accessDenied": "Brak dostępu",
+
+    "invalidRequest": "Nieprawidłowe żądanie",
+    "tableNotFound": "Nie znaleziono tabeli",
+    "fileParseError": "Nie udało się odczytać przesłanego pliku",
+    "fileTooLarge": "Plik jest za duży",
+    "validationError": "Błąd walidacji",
+
+    "llmAuthFailed": "Uwierzytelnianie nie powiodło się. Sprawdź klucz API",
+    "llmRateLimit": "Przekroczono limit zapytań. Poczekaj i spróbuj ponownie",
+    "llmContextTooLong": "Dane wejściowe są za długie. Zmniejsz rozmiar danych lub treść polecenia",
+    "llmModelNotFound": "Nie znaleziono modelu. Sprawdź jego nazwę",
+    "llmTimeout": "Przekroczono limit czasu. Sprawdź połączenie i spróbuj ponownie",
+    "llmServiceError": "Usługa modelu zwróciła błąd. Spróbuj ponownie później",
+    "llmContentFiltered": "Żądanie zostało zablokowane przez filtr bezpieczeństwa treści",
+    "llmUnknownError": "Żądanie do modelu nie powiodło się",
+
+    "connectorAuthFailed": "Uwierzytelnianie źródła danych nie powiodło się",
+    "dbConnectionFailed": "Nie udało się połączyć ze źródłem danych",
+    "dbQueryError": "Błąd zapytania do bazy danych",
+    "dataLoadError": "Nie udało się wczytać danych",
+    "connectorError": "Błąd łącznika danych",
+
+    "codeExecutionError": "Wystąpił błąd podczas wykonywania kodu",
+    "agentError": "Agent napotkał błąd",
+
+    "catalogSyncTimeout": "Przekroczono limit czasu synchronizacji katalogu. Spróbuj ponownie",
+    "catalogNotFound": "Łącznik nie został znaleziony albo nie jest połączony",
+
+    "internalError": "Wystąpił nieoczekiwany błąd",
+    "serviceUnavailable": "Usługa jest tymczasowo niedostępna",
+    "storageFull": "Magazyn przestrzeni roboczej jest pełny. Zwolnij miejsce na dysku i spróbuj ponownie."
+  }
+}

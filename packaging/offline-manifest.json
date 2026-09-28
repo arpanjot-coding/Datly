@@ -1,0 +1,6 @@
+{
+  "name": "datly-offline-bundle",
+  "sidecar": "packaging/sidecar",
+  "policy": "packaging/policy.sample.json",
+  "notes": "Copy the PyInstaller sidecar into packaging/sidecar before electron-builder. Air-gapped installs must not require pip, uv, or a network model endpoint."
+}

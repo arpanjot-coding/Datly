@@ -1,0 +1,18 @@
+{
+  "navigation": {
+    "startExploration": "Keşfe başlayın",
+    "installLocally": "Yerel kurulum",
+    "tryOnlineDemo": "Çevrimiçi demoyu deneyin",
+    "video": "Video",
+    "github": "GitHub",
+    "contactUs": "Bize ulaşın",
+    "termsOfUse": "Kullanım koşulları",
+    "about": "Hakkında",
+    "home": "Ana sayfa",
+    "data": "Veri",
+    "visualization": "Görselleştirme",
+    "report": "Rapor",
+    "chat": "Sohbet",
+    "agentRules": "Ajan kuralları"
+  }
+}

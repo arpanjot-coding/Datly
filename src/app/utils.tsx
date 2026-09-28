@@ -1,0 +1,710 @@
+import _, {  } from "lodash";
+import { useEffect, useRef } from "react";
+import ts from "typescript";
+import { Channel, Chart, EncodingItem, EncodingMap, FieldItem, FieldSemanticsInfo, Trigger } from "../components/ComponentType";
+import { DictTable } from "../components/ComponentType";
+import { Type, TestType } from "../data/types";
+import * as d3 from 'd3';
+
+import { assembleVegaLite, type ChartEncoding, type AssembleOptions, type ThemeSpec } from "flint-chart";
+import { DATLY_CHART_THEME } from './chartTheme';
+import { getLaunchToken } from './desktop';
+import { surface } from './tokens';
+
+export function getUrls() {
+    return {
+        APP_CONFIG: `/api/app-config`,
+
+        // these functions involves ai agents
+        LIST_GLOBAL_MODELS: `/api/agent/list-global-models`,
+        CHECK_AVAILABLE_MODELS: `/api/agent/check-available-models`,
+        TEST_MODEL: `/api/agent/test-model`,
+
+        SORT_DATA_URL: `/api/agent/sort-data`,
+        DATA_LOADING_CHAT_URL: `/api/agent/data-loading-chat`,
+        SCRATCH_UPLOAD_URL: `/api/agent/workspace/scratch/upload`,
+        SCRATCH_BASE_URL: `/api/agent/workspace/scratch`,
+        
+        CODE_EXPL_URL: `/api/agent/code-expl`,
+        SERVER_PROCESS_DATA_ON_LOAD: `/api/agent/process-data-on-load`,
+
+        ANALYST_STREAMING: `/api/agent/analyst-streaming`,
+
+        // these functions involves database
+        UPLOAD_DB_FILE: `/api/tables/upload-db-file`,
+        DOWNLOAD_DB_FILE: `/api/tables/download-db-file`,
+        RESET_DB_FILE: `/api/tables/reset-db-file`,
+
+        LIST_TABLES: `/api/tables/list-tables`,
+        TABLE_DATA: `/api/tables/get-table`,
+        CREATE_TABLE: `/api/tables/create-table`,
+        PARSE_FILE: `/api/tables/parse-file`,
+        DELETE_TABLE: `/api/tables/delete-table`,
+        GET_COLUMN_STATS: `/api/tables/analyze`,
+        SAMPLE_TABLE: `/api/tables/sample-table`,
+        SYNC_TABLE_DATA: `/api/tables/sync-table-data`,
+        EXPORT_TABLE_CSV: `/api/tables/export-table-csv`,
+
+        GET_RECOMMENDATION_QUESTIONS: `/api/agent/get-recommendation-questions`,
+
+        // Starter exploration questions (generated on data load)
+        DERIVE_STARTER_QUESTIONS: `/api/agent/derive-starter-questions`,
+
+        // Workspace display name (auto-naming)
+        WORKSPACE_NAME: `/api/agent/workspace-name`,
+
+        // NL-to-filter
+        NL_TO_FILTER: `/api/agent/nl-to-filter`,
+
+        // Chart style refinement (restyle agent)
+        CHART_RESTYLE: `/api/agent/chart-restyle`,
+
+        // Intent classifier — routes a chart prompt to restyle vs. data agent
+        CLASSIFY_CHART_INTENT: `/api/agent/classify-chart-intent`,
+
+        // Refresh data endpoint
+        REFRESH_DERIVED_DATA: `/api/agent/refresh-derived-data`,
+        COMPILE_CLEAN_STEP: `/api/agent/compile-clean-step`,
+
+        // Pipeline (full-auto orchestration)
+        PIPELINE_RUN: `/api/pipeline/run`,
+        PIPELINE_RUNS: `/api/pipeline/runs`,
+        PIPELINE_PROFILE: `/api/pipeline/profile`,
+        PIPELINE_PROFILE_GET: `/api/pipeline/profile`,
+        PIPELINE_SUGGESTIONS: `/api/pipeline/suggestions`,
+        PIPELINE_TRIGGER_REFRESH: `/api/pipeline/trigger-refresh`,
+        PIPELINE_TABLE_BINDINGS: `/api/pipeline/table-bindings`,
+
+        // Dashboards & schedules
+        DASHBOARD_LIST: `/api/dashboard/list`,
+        DASHBOARD_SAVE: `/api/dashboard/save`,
+        DASHBOARD_SCHEDULES: `/api/dashboard/schedules`,
+
+        // Server logs (local mode only)
+        LOGS_INFO: `/api/logs/info`,
+        LOGS_TAIL: `/api/logs/tail`,
+        LOGS_DOWNLOAD: `/api/logs/download`,
+        MODEL_ENDPOINTS: `/api/model-endpoints`,
+
+        // Session management
+        SESSION_SAVE: `/api/sessions/save`,
+        SESSION_LIST: `/api/sessions/list`,
+        SESSION_LOAD: `/api/sessions/load`,
+        SESSION_DELETE: `/api/sessions/delete`,
+        SESSION_EXPORT: `/api/sessions/export`,
+        SESSION_IMPORT: `/api/sessions/import`,
+        SESSION_UPDATE_META: `/api/sessions/update-meta`,
+
+        // Workspace
+        OPEN_WORKSPACE: `/api/tables/open-workspace`,
+    };
+}
+
+/**
+ * Structured reference to a table in an external data source.
+ * - `id`:   opaque identifier the backend loader needs (e.g. numeric dataset_id for Superset,
+ *           "schema.table" for a SQL database).
+ * - `name`: human-readable label used for display and workspace file naming.
+ */
+export interface SourceTableRef {
+    id: string;
+    name: string;
+}
+
+/**
+ * Static API URLs for connector actions.
+ * All action routes accept `connector_id` in the JSON body.
+ */
+export const CONNECTOR_ACTION_URLS = {
+    DISCOVER_OPTIONS: '/api/data-loaders/discover-options',
+    CONNECT: '/api/connectors/connect',
+    DISCONNECT: '/api/connectors/disconnect',
+    GET_STATUS: '/api/connectors/get-status',
+    GET_CATALOG: '/api/connectors/get-catalog',
+    GET_CATALOG_TREE: '/api/connectors/get-catalog-tree',
+    GET_CATALOG_PROGRESS: '/api/connectors/get-catalog-progress',
+    SEARCH_CATALOG: '/api/connectors/search-catalog',
+    SYNC_CATALOG_METADATA: '/api/connectors/sync-catalog-metadata',
+    GET_CACHED_CATALOG_TREE: '/api/connectors/get-cached-catalog-tree',
+    IMPORT_DATA: '/api/connectors/import-data',
+    REFRESH_DATA: '/api/connectors/refresh-data',
+    PREVIEW_DATA: '/api/connectors/preview-data',
+    IMPORT_GROUP: '/api/connectors/import-group',
+    COLUMN_VALUES: '/api/connectors/column-values',
+} as const;
+
+/** Global connector management URLs. */
+export const CONNECTOR_URLS = {
+    DATA_LOADERS: '/api/data-loaders',
+    LIST: '/api/connectors',
+    CREATE: '/api/connectors',
+    UPDATE: (id: string) => `/api/connectors/${id}`,
+    DELETE: (id: string) => `/api/connectors/${id}`,
+} as const;
+
+/**
+ * Get the active workspace ID from the Redux store.
+ * Returns null if no workspace is active.
+ */
+async function getActiveWorkspaceId(): Promise<string | null> {
+    try {
+        const { store } = await import('./store');
+        const state = store.getState();
+        return state?.activeWorkspace?.id ?? null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Build a request with identity / auth / workspace headers, then execute a
+ * single `fetch`. This is the inner workhorse
+ * called by {@link fetchWithIdentity} (which wraps it with 401 retry).
+ */
+async function _doFetch(
+    url: string | URL,
+    options: RequestInit = {}
+): Promise<Response> {
+    const urlString = typeof url === 'string' ? url : url.toString();
+
+    if (urlString.startsWith('/api/')) {
+        const headers = new Headers(options.headers);
+
+        const workspaceId = await getActiveWorkspaceId();
+        if (workspaceId && !headers.has('X-Workspace-Id')) {
+            headers.set('X-Workspace-Id', workspaceId);
+        }
+
+        headers.set('Accept-Language', getAgentLanguage());
+
+        const launchToken = getLaunchToken();
+        if (launchToken) {
+            headers.set('X-Datly-Launch-Token', launchToken);
+        }
+
+        options = { ...options, headers };
+
+        console.log(
+            `[fetchWithIdentity] ${options.method || 'GET'} ${urlString} with headers:`,
+            Object.fromEntries(headers.entries()),
+        );
+
+    }
+
+    return fetch(url, options);
+}
+
+/**
+ * Enhanced fetch wrapper that automatically adds identity and auth headers
+ * for API requests.
+ *
+ * Security model:
+ * - `X-Datly-Launch-Token`: Electron launch token when the desktop shell is present
+ * - `X-Workspace-Id`: active workspace, unless the caller already set one
+ *
+ * Use this instead of native `fetch()` for all `/api/` calls.
+ */
+export async function fetchWithIdentity(
+    url: string | URL,
+    options: RequestInit = {}
+): Promise<Response> {
+    return _doFetch(url, options);
+}
+
+import i18n from '../i18n';
+
+/**
+ * Returns the current UI language code (e.g. "zh", "en") for use in agent API requests.
+ */
+export function getAgentLanguage(): string {
+    return i18n.language.split('-')[0];
+}
+
+/**
+ * Translate a backend message using an optional ``message_code`` / ``content_code``.
+ *
+ * The backend sends English text as the default value plus a code that maps
+ * to a key under ``messages.agent.*`` in the i18n locale files.  If no code
+ * is provided or no translation exists, the original English text is returned.
+ *
+ * @example
+ *   translateBackend(event.message, event.message_code, event.message_params)
+ *   translateBackend(result.content, result.content_code)
+ */
+export function translateBackend(
+    fallback: string,
+    code?: string,
+    params?: Record<string, unknown>,
+): string {
+    if (!code) return fallback;
+    const key = `messages.${code}`;
+    const translated = i18n.t(key, { ...params, defaultValue: fallback });
+    return translated;
+}
+
+/**
+ * Translate a list of backend option labels using parallel code arrays.
+ */
+export function translateBackendOptions(
+    options: string[],
+    codes?: string[],
+): string[] {
+    if (!codes || codes.length === 0) return options;
+    return options.map((opt, i) =>
+        codes[i] ? translateBackend(opt, codes[i]) : opt,
+    );
+}
+
+import * as vm from 'vm-browserify';
+
+export function usePrevious<T>(value: T): T | undefined {
+    const ref = useRef<T>();
+    useEffect(() => {
+        ref.current = value;
+    });
+    return ref.current;
+}
+
+/**
+ * Simple hash function (djb2 algorithm) for creating content fingerprints
+ * @param str - The string to hash
+ * @returns A hexadecimal hash string
+ */
+function djb2Hash(str: string): string {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) + hash) + str.charCodeAt(i);
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    return (hash >>> 0).toString(16); // Convert to unsigned and then to hex
+}
+
+/**
+ * Computes a content hash for table data to detect changes.
+ * Uses a sampling strategy for efficiency with large datasets:
+ * - Always includes column names and row count
+ * - Samples first 50, last 50, and 50 evenly distributed rows from the middle
+ * - This catches most data changes while remaining efficient
+ * 
+ * @param rows - The table rows to hash
+ * @param names - Optional column names (for additional fingerprinting)
+ * @returns A hash string representing the content
+ */
+export function computeContentHash(rows: any[], names?: string[]): string {
+    const parts: string[] = [];
+    
+    // Include column names if provided
+    if (names && names.length > 0) {
+        parts.push(`cols:${names.join(',')}`);
+    }
+    
+    // Include row count
+    const rowCount = rows.length;
+    parts.push(`count:${rowCount}`);
+    
+    if (rowCount === 0) {
+        return djb2Hash(parts.join('|'));
+    }
+    
+    // Get column names from first row if not provided
+    const columnNames = names || Object.keys(rows[0] || {});
+    parts.push(`fields:${columnNames.join(',')}`);
+    
+    // Sampling strategy for efficiency
+    const sampleSize = 50;
+    const samplesToInclude: number[] = [];
+    
+    // Always include first N rows
+    for (let i = 0; i < Math.min(sampleSize, rowCount); i++) {
+        samplesToInclude.push(i);
+    }
+    
+    // Include evenly distributed rows from the middle
+    if (rowCount > sampleSize * 2) {
+        const step = Math.floor((rowCount - sampleSize * 2) / sampleSize);
+        if (step > 0) {
+            for (let i = sampleSize; i < rowCount - sampleSize; i += step) {
+                if (samplesToInclude.length < sampleSize * 2) {
+                    samplesToInclude.push(i);
+                }
+            }
+        }
+    }
+    
+    // Always include last N rows
+    for (let i = Math.max(rowCount - sampleSize, sampleSize); i < rowCount; i++) {
+        if (!samplesToInclude.includes(i)) {
+            samplesToInclude.push(i);
+        }
+    }
+    
+    // Sort indices for consistent ordering
+    samplesToInclude.sort((a, b) => a - b);
+    
+    // Build content string from sampled rows
+    const rowStrings: string[] = [];
+    for (const idx of samplesToInclude) {
+        const row = rows[idx];
+        if (row) {
+            // Create a deterministic string representation of the row
+            const rowValues = columnNames.map(col => {
+                const val = row[col];
+                if (val === null) return 'null';
+                if (val === undefined) return 'undefined';
+                if (typeof val === 'object') return JSON.stringify(val);
+                return String(val);
+            });
+            rowStrings.push(`${idx}:${rowValues.join(',')}`);
+        }
+    }
+    
+    parts.push(`rows:${rowStrings.join(';')}`);
+    
+    return djb2Hash(parts.join('|'));
+}
+
+export function runCodeOnInputListsInVM(
+            code: string, 
+            inputTupleList: any[][], 
+            mode: "faster" | "safer") : [any[], any][] {
+    // inputList is a list of testInputs, each item can be an arg or a list of args (if the function takes more than one argument)
+    "use strict";
+    let ioPairs : [any[], any][] = inputTupleList.map(args => [args, undefined]);
+    if (mode == "safer") {
+        try {
+            // slightly safer?
+            if (code != "") {
+                let jsCode = ts.transpile(code);
+                //target = eval(jsCode)(s);
+                
+                //console.log(`let func = ${code}; func(arg)`)
+                let context = { inputTupleList : inputTupleList, outputs: inputTupleList.map(args => undefined) };
+                //console.log(`let func = ${jsCode}; let outputs = inputList.map(arg => func(arg));`);
+                vm.runInNewContext(`let func = ${jsCode}; outputs = inputTupleList.map(args => func(...args));`, context);
+                ioPairs = inputTupleList.map((args, i) => [args, context.outputs[i]]);
+                return ioPairs;
+            }
+        } catch(err) {
+            console.warn(err);
+        }
+    } else if (mode == "faster") {
+        try {
+            if (code != "") {
+                let jsCode = ts.transpile(code);
+                let func = eval(jsCode);
+                ioPairs = inputTupleList.map(args => {
+                    let target = undefined;
+                    try {
+                        // copy args to ensure correctness of mapping
+                        target = func(...structuredClone(args))
+                    } catch (err) {
+                        console.warn(`execution err ${err}`)
+                    }
+                    return [args, target]
+                });
+                return ioPairs;
+            }
+        } catch (err) {            
+            console.warn(err);
+        }
+    }
+
+    return ioPairs;
+}
+
+export function extractFieldsFromEncodingMap(encodingMap: EncodingMap, allFields: FieldItem[]) {
+    let aggregateFields: [string | undefined, string][] = []
+    let groupByFields: string[] = []
+    
+    for (const [channel, encoding] of Object.entries(encodingMap)) {
+        const field = encoding.fieldID ? _.find(allFields, (f) => f.id === encoding.fieldID) : undefined;
+        if (encoding.aggregate) {
+            aggregateFields.push([field?.name, encoding.aggregate]);
+        } else {
+            if (field) {
+                groupByFields.push(field.name);
+            }
+        }
+    }
+
+    return { aggregateFields, groupByFields };
+}
+
+
+
+export function prepVisTable(table: any[], allFields: FieldItem[], encodingMap: EncodingMap) {
+    let { aggregateFields, groupByFields } = extractFieldsFromEncodingMap(encodingMap, allFields);
+
+    let processedTable = [...table];
+
+    let result = processedTable;
+
+    if (aggregateFields.length > 0) {
+        // Step 2: Group by and aggregate
+        let grouped = [];
+        if (groupByFields.length > 0) {
+            grouped = d3.flatGroup(processedTable, ...groupByFields.map(field => (d: any) => d[field]));
+        } else {
+            grouped = [["_default", processedTable]];
+        }
+
+        result = grouped.map(row => {
+            // Last element is the array of grouped items, rest are group values
+
+            const groupValues = row.slice(0, -1);
+            const group = row[row.length - 1];
+            
+            return {
+                // Add group by fields
+                ...Object.fromEntries(groupByFields.map((field, i) => [field, groupValues[i]])),
+                // Add aggregations
+                ...(aggregateFields.some(([_, type]) => type === 'count') 
+                    ? { _count: group.length } 
+                    : {}),
+                ...Object.fromEntries(
+                    aggregateFields
+                        .filter(([fieldName, aggType]) => aggType !== 'count' && fieldName)
+                        .map(([fieldName, aggType]) => {
+                            const values = group.map((r: any) => r[fieldName!]);
+                            const suffix = `_${aggType}`;
+                            const aggFunc = {
+                                'sum': d3.sum,
+                                'max': d3.max,
+                                'min': d3.min,
+                                'mean': d3.mean,
+                                'median': d3.median,
+                                'average': d3.mean,
+                                'mode': d3.mode
+                            }[aggType] as (values: any[]) => number | undefined;
+                            return [fieldName + suffix, aggFunc ? aggFunc(values) : undefined];
+                        })
+                )
+            };
+        });
+    }
+
+    return result;
+}
+
+const TEMPORAL_SEMANTIC_TYPES = new Set([
+    'datetime', 'date', 'time', 'timestamp', 'year', 'quarter', 'month',
+    'week', 'day', 'hour', 'yearmonth', 'yearquarter', 'yearweek', 'decade', 'duration',
+]);
+
+const fieldLooksTemporal = (
+    fieldName: string | undefined,
+    encodingType: string | undefined,
+    tableMetadata?: {[key: string]: {type: Type, levels: any[], description?: string}},
+    fieldSemantics?: Record<string, FieldSemanticsInfo>,
+    rows?: any[],
+): boolean => {
+    if (!fieldName) return false;
+    if (encodingType === 'temporal') return true;
+    const metaType = tableMetadata?.[fieldName]?.type;
+    if (metaType === Type.Date || metaType === Type.DateTime || metaType === Type.Time) return true;
+    const semantic = fieldSemantics?.[fieldName]?.semanticType;
+    if (semantic && TEMPORAL_SEMANTIC_TYPES.has(semantic.toLowerCase())) return true;
+    if (!rows?.length) return false;
+    const sample = rows.map(r => r?.[fieldName]).filter(v => v != null && v !== '').slice(0, 20);
+    if (sample.length < 2) return false;
+    const hits = sample.filter(v => v instanceof Date || TestType.date(v) || TestType.datetime(v)).length;
+    return hits >= sample.length * 0.8;
+};
+
+/**
+ * True when each series has (almost) one reading per x value — a trend, not
+ * an event cloud that would zigzag if connected.
+ */
+const looksLikeTimeSeries = (
+    rows: any[] | undefined,
+    xField: string,
+    seriesField?: string,
+): boolean => {
+    if (!rows?.length) return true;
+    if (seriesField) {
+        const seen = new Set<string>();
+        let dupes = 0;
+        for (const row of rows) {
+            const key = `${row?.[xField]}|${row?.[seriesField]}`;
+            if (seen.has(key)) dupes++;
+            else seen.add(key);
+        }
+        return dupes < rows.length * 0.2;
+    }
+    const uniqueX = new Set(rows.map(row => row?.[xField])).size;
+    return uniqueX >= rows.length * 0.8;
+};
+
+/**
+ * Time series drawn as a scatter drop the connecting stroke — the chart reads
+ * as a cloud of dots instead of a trend. Assemble those as a line so the
+ * wires stay visible. Two-measure scatters and event clouds stay scatter.
+ */
+export const chartTypeForAssembly = (
+    chartType: string,
+    encodings: Record<string, ChartEncoding>,
+    tableMetadata?: {[key: string]: {type: Type, levels: any[], description?: string}},
+    fieldSemantics?: Record<string, FieldSemanticsInfo>,
+    rows?: any[],
+): string => {
+    if (chartType !== 'Scatter Plot') return chartType;
+    const x = encodings.x;
+    if (!x?.field) return chartType;
+    if (!fieldLooksTemporal(x.field, x.type, tableMetadata, fieldSemantics, rows)) {
+        return chartType;
+    }
+    const seriesField = encodings.color?.field || encodings.detail?.field;
+    if (!looksLikeTimeSeries(rows, x.field, seriesField)) return chartType;
+    return 'Line Chart';
+};
+
+export const assembleVegaChart = (
+    chartType: string, 
+    encodingMap: { [key in Channel]: EncodingItem; }, 
+    conceptShelfItems: FieldItem[], 
+    workingTable: any[],
+    tableMetadata: {[key: string]: {type: Type, levels: any[], description?: string}},
+    baseChartWidth: number = 100,
+    baseChartHeight: number = 80,
+    addTooltips: boolean = false,
+    chartProperties?: Record<string, any>,
+    scaleFactor: number = 1,
+    maxStretchFactor?: number,
+    assembleOptions?: AssembleOptions,
+    fieldSemantics?: Record<string, FieldSemanticsInfo>,
+    title?: string,
+    subtitle?: string,
+    themeId?: string,
+) => {
+
+    // Convert app-level EncodingMap (fieldID-based) to library-level encodings (field-name-based)
+    const encodings: Record<string, ChartEncoding> = {};
+    for (const [channel, encoding] of Object.entries(encodingMap)) {
+        const field = encoding.fieldID ? _.find(conceptShelfItems, (f) => f.id === encoding.fieldID) : undefined;
+        encodings[channel] = {
+            field: field?.name,
+            type: encoding.dtype,
+            aggregate: encoding.aggregate,
+            sortOrder: encoding.sortOrder,
+            sortBy: encoding.sortBy,
+            scheme: encoding.scheme,
+        };
+    }
+
+    const assembledChartType = chartTypeForAssembly(
+        chartType, encodings, tableMetadata, fieldSemantics, workingTable,
+    );
+
+    const semanticTypes: Record<string, string | any> = {};
+    for (const [fieldName, info] of Object.entries(fieldSemantics ?? {})) {
+        if (info.semanticType) {
+            const { displayName: _displayName, ...annotation } = info;
+            semanticTypes[fieldName] = Object.keys(annotation).length === 1
+                ? info.semanticType
+                : annotation;
+        }
+    }
+
+    const effectiveW = Math.round(baseChartWidth * scaleFactor);
+    const effectiveH = Math.round(baseChartHeight * scaleFactor);
+
+    // Flint 0.2.x sizing: `baseSize` is the target the chart aims for; `canvasSize`
+    // is the hard ceiling (= base × stretch). DF's `maxStretchFactor` is that
+    // multiplier; fall back to 1.5 so the ceiling is always set explicitly rather
+    // than relying on flint's default. (Radial charts — pie/rose/etc. — render at the
+    // target like any other type under flint 0.2.1, so no pie-specific damping.)
+    const stretch = maxStretchFactor ?? 1.5;
+
+    const fieldDisplayNames: Record<string, string> = {};
+    for (const [name, info] of Object.entries(fieldSemantics ?? {})) {
+        if (info.displayName) fieldDisplayNames[name] = info.displayName;
+    }
+
+    const spec = assembleVegaLite({
+        data: { values: workingTable },
+        semantic_types: semanticTypes,
+        chart_spec: {
+            chartType: assembledChartType,
+            encodings,
+            ...(title ? { title } : {}),
+            ...(subtitle ? { subtitle } : {}),
+            // DF's default chart width/height is the *target* size → flint `baseSize`.
+            // The hard ceiling is base × stretch (see `stretch` above), so charts render
+            // at the configured size and only grow under pressure up to that ceiling.
+            baseSize: { width: effectiveW, height: effectiveH },
+            canvasSize: {
+                width: Math.round(effectiveW * stretch),
+                height: Math.round(effectiveH * stretch),
+            },
+            chartProperties: chartProperties ? structuredClone(chartProperties) : undefined,
+        },
+        options: {
+            addTooltips,
+            ...(maxStretchFactor != null ? { maxStretch: maxStretchFactor } : {}),
+            ...assembleOptions,
+        },
+        theme_spec: themeId ?? (DATLY_CHART_THEME as unknown as ThemeSpec),
+        ...(Object.keys(fieldDisplayNames).length > 0 ? { field_display_names: fieldDisplayNames } : {}),
+    });
+
+    // Published flint-chart 0.4.1 ignores chart-level title/subtitle fields;
+    // live Flint consumes them above and owns fitting. Keep this fallback until
+    // the package release catches up with the live authoring contract.
+    if (title && !spec.title) {
+        spec.title = {
+            text: title,
+            ...(subtitle ? { subtitle } : {}),
+            anchor: 'middle',
+            fontWeight: 500,
+            fontSize: 13,
+            subtitleFontSize: 11,
+            color: surface.ink,
+            offset: 12,
+        };
+    }
+
+    return spec;
+}
+
+// resolveRecommendedChart & resolveChartFields remain in app layer (need generateFreshChart, Chart)
+export { resolveRecommendedChart, resolveChartFields } from './chartRecommendation';
+
+export let getTriggers = (leafTable: DictTable, tables: DictTable[]): Trigger[] => {
+    // Recursively find the complete trigger chain from the source to leafTable.
+    let triggers : Trigger[] = [];
+    let t = leafTable;
+    
+    while(true) {
+        // this is when we find an original table
+        if (t.derive == undefined) {
+            break;
+        }
+
+        let trigger = t.derive.trigger as Trigger;
+        triggers = [trigger, ...triggers];
+        let parentTable = tables.find(x => x.id == trigger.tableId);
+        if (parentTable) {
+            t = parentTable;
+        } else {
+            break;
+        }
+    }
+    
+    return triggers;
+}
+
+/**
+ * Returns a hash code from a string
+ * @param  {String} str The string to hash.
+ * @return {Number}    A 32bit integer
+ * @see http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
+ */
+export function hashCode(str: string) {
+    let hash = 0;
+    for (let i = 0, len = str.length; i < len; i++) {
+        let chr = str.charCodeAt(i);
+        hash = (hash << 5) - hash + chr;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+}

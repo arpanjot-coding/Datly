@@ -1,0 +1,18 @@
+{
+  "navigation": {
+    "startExploration": "Simulan ang paggalugad",
+    "installLocally": "I-install sa computer",
+    "tryOnlineDemo": "Subukan ang online demo",
+    "video": "Video",
+    "github": "GitHub",
+    "contactUs": "Makipag-ugnayan",
+    "termsOfUse": "Mga Tuntunin ng Paggamit",
+    "about": "Tungkol",
+    "home": "Simula",
+    "data": "Data",
+    "visualization": "Biswal",
+    "report": "Ulat",
+    "chat": "Chat",
+    "agentRules": "Mga panuntunan ng agent"
+  }
+}

@@ -1,0 +1,763 @@
+import { FC, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next';
+import { useSelector, useDispatch } from 'react-redux'
+import { DataFormulatorState, dfActions, dfSelectors } from '../app/dfSlice';
+import { LinearProgress, styled, TextField, Tooltip } from '@mui/material';
+
+import { useTheme } from '@mui/material/styles';
+import { alpha } from "@mui/material";
+
+import {
+    Chip,
+    Box,
+    Typography,
+    Button,
+    FormControl,
+    Select,
+    MenuItem,
+    Card,
+    IconButton,
+    FormLabel,
+    RadioGroup,
+    Radio,
+    FormControlLabel,
+    CardContent,
+    ClickAwayListener,
+    Popper,
+} from '@mui/material';
+
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
+
+import { useDrag, useDrop } from 'react-dnd'
+
+import React from 'react';
+
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import CategoryIcon from '@mui/icons-material/Category';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
+
+import { FieldItem, Channel, EncodingItem, AggrOp, Chart, EncodingDropResult } from "../components/ComponentType";
+
+import _ from 'lodash';
+
+import '../scss/EncodingShelf.scss';
+import AnimateHeight from 'react-animate-height';
+import { getIconFromDtype, getIconFromType } from './ViewUtils';
+import { getUrls, fetchWithIdentity } from '../app/utils';
+import { apiRequest } from '../app/apiClient';
+import { textVar } from '../app/layout';
+import { Type } from '../data/types';
+
+
+
+const channelKeyMap: Partial<Record<Channel, string>> = {
+    x: 'encoding.channelX',
+    y: 'encoding.channelY',
+    color: 'encoding.channelColor',
+    size: 'encoding.channelSize',
+    shape: 'encoding.channelShape',
+    opacity: 'encoding.channelOpacity',
+    column: 'encoding.channelColumn',
+    row: 'encoding.channelRow',
+    detail: 'encoding.channelDetail',
+    group: 'encoding.channelGroup',
+    radius: 'encoding.channelRadius',
+    strokeDash: 'encoding.channelStrokeDash',
+};
+
+const channelTipKeyMap: Partial<Record<Channel, string>> = {
+    x: 'encoding.channelX_tip',
+    y: 'encoding.channelY_tip',
+    color: 'encoding.channelColor_tip',
+    size: 'encoding.channelSize_tip',
+    shape: 'encoding.channelShape_tip',
+    opacity: 'encoding.channelOpacity_tip',
+    column: 'encoding.channelColumn_tip',
+    row: 'encoding.channelRow_tip',
+    detail: 'encoding.channelDetail_tip',
+    group: 'encoding.channelGroup_tip',
+    radius: 'encoding.channelRadius_tip',
+    strokeDash: 'encoding.channelStrokeDash_tip',
+};
+
+let getChannelDisplay = (channel: Channel, t: (key: string) => string) => {
+    const key = channelKeyMap[channel];
+    return key ? t(key) : channel;
+}
+
+let getChannelTip = (channel: Channel, t: (key: string) => string) => {
+    const key = channelTipKeyMap[channel];
+    return key ? t(key) : '';
+}
+
+export interface LittleConceptCardProps {
+    channel: Channel,
+    field: FieldItem,
+    encoding: EncodingItem,
+    handleUnbind: () => void,
+    tableMetadata: {[key: string]: {type: Type, semanticType: string, levels?: any[]}}
+}
+
+export const LittleConceptCard: FC<LittleConceptCardProps> = function LittleConceptCard({ channel, field, encoding, handleUnbind, tableMetadata }) {
+
+    const { t } = useTranslation();
+    let theme = useTheme();
+
+    const [{ isDragging }, drag] = useDrag(() => ({
+        type: "concept-card",
+        item: { type: "concept-card", channel: channel, fieldID: field.id, source: "encodingShelf", encoding: encoding },
+        collect: (monitor) => ({
+            isDragging: monitor.isDragging(),
+            handlerId: monitor.getHandlerId(),
+        })
+    }));
+
+    const opacity = isDragging ? 0.4 : 1;
+    const cursorStyle = isDragging ? "grabbing" : "grab";
+
+    let fieldClass = "encoding-active-item ";
+
+    let backgroundColor = alpha(theme.palette.primary.main, 0.05);
+
+    if (field.source == "original") {
+        backgroundColor = alpha(theme.palette.primary.main, 0.05);
+    } else if (field.source == "custom") {
+        backgroundColor = alpha(theme.palette.custom.main, 0.05);
+    }
+
+    const meta = tableMetadata[field.name];
+
+    return (
+        <Chip
+            ref={drag}
+            className={`${fieldClass}`}
+            color={'default'}
+            label={field.name}
+            size="small"
+            sx={{
+                backgroundColor,
+                opacity: opacity,
+                cursor: cursorStyle,
+                ".MuiChip-label":
+                    { /*width: "calc(100% - 36px)", maxWidth: "94px"*/ flexGrow: 1, flexShrink: 1, width: 0 }, ".MuiSvgIcon-root": { fontSize: "inherit" }
+            }}
+            variant="filled"
+            onClick={(event) => {}}
+            onDelete={handleUnbind}
+            icon={getIconFromType(meta?.type || Type.Auto)}
+        />
+    )
+}
+
+// The property of an encoding box
+export interface EncodingBoxProps {
+    channel: Channel;
+    chartId: string;
+    tableId: string;
+}
+
+// the encoding boxes, allows 
+export const EncodingBox: FC<EncodingBoxProps> = function EncodingBox({ channel, chartId, tableId }) {
+    const { t } = useTranslation();
+    let theme = useTheme();
+
+    // use tables for infer domains
+    const tables = useSelector(dfSelectors.getAllTables);
+    const tableSemantics = useSelector((state: DataFormulatorState) => state.tableSemantics);
+
+    let allCharts = useSelector(dfSelectors.getAllCharts);
+    let activeModel = useSelector(dfSelectors.getActiveModel);
+    
+    let chart = allCharts.find(c => c.id == chartId) as Chart;
+    let activeTable = tables.find(t => t.id == tableId);
+    
+    let encoding = chart.encodingMap[channel]; 
+
+    let handleSwapEncodingField = (channel1: Channel, channel2: Channel) => {
+        dispatch(dfActions.swapChartEncoding({chartId, channel1, channel2}))
+    }
+    
+    let handleResetEncoding = () => {
+        dispatch(dfActions.updateChartEncoding({chartId, channel, encoding: { }}));
+    }
+
+    // updating a property of the encoding
+    let updateEncProp = (prop: keyof EncodingItem, value: any) => {
+        dispatch(dfActions.updateChartEncodingProp({chartId, channel, prop: prop as string, value}));
+    }
+
+    const conceptShelfItems = useSelector((state: DataFormulatorState) => state.conceptShelfItems);
+
+    let field = conceptShelfItems.find((x: FieldItem) => x.id == encoding.fieldID);
+    let fieldMetadata = field?.name && activeTable?.metadata[field?.name] ? activeTable?.metadata[field?.name] : undefined;
+
+    let [autoSortResult, setAutoSortResult] = useState<any[] | undefined>(fieldMetadata?.levels);
+    let [autoSortInferRunning, setAutoSortInferRunning] = useState<boolean>(false);
+
+    const dispatch = useDispatch();
+
+    useEffect(() => { 
+        if (field?.name && activeTable?.metadata[field?.name]) {
+            let levels = activeTable?.metadata[field?.name].levels;
+            setAutoSortResult(levels);
+
+            if (!chart.chartType.includes("Area") && levels && levels.length > 0) {
+                // Only dispatch when sortBy actually needs updating. Otherwise this
+                // effect re-fires on every chart switch and the resulting no-op
+                // dispatch silently clears chart.activeVariantId in the reducer
+                // (because updateChartEncodingProp resets variants on any edit).
+                const nextSortBy = JSON.stringify(levels);
+                if (encoding.sortBy !== nextSortBy) {
+                    updateEncProp('sortBy', nextSortBy);
+                }
+            }
+        }
+    }, [encoding.fieldID, activeTable])
+
+    // make this a drop element for concepts
+    const [{ canDrop, isOver }, drop] = useDrop(() => ({
+        accept: ["concept-card", "operator-card"], // accepts only concept card items
+        drop: (item: any): EncodingDropResult => {
+            if (item.type === "concept-card") {
+                if (item.source === "conceptShelf") {
+                    handleResetEncoding();
+                    updateEncProp('fieldID', item.fieldID);
+                } else if (item.source === "encodingShelf") {
+                    handleSwapEncodingField(channel, item.channel);
+                } else {
+                    console.log("field error")
+                }
+            }
+
+            if (item.type === 'operator-card') {
+                dispatch(dfActions.updateChartEncodingProp({chartId, channel, prop: 'aggregate', value: item.operator as AggrOp}));
+            }
+
+            return { channel: channel }
+        },
+        collect: (monitor) => ({
+            isOver: monitor.isOver(),
+            canDrop: monitor.canDrop(),
+        }),
+    }), [chartId, encoding]); // add dependency
+
+    //useEffect(() => {resetConfigOptions()}, [encoding]);
+
+    // items that control the editor panel popover
+    const [editMode, setEditMode] = React.useState<boolean>(false);
+
+
+    const isActive = canDrop && isOver;
+    let backgroundColor = '';
+    if (isActive) {
+        backgroundColor = 'rgba(204, 239, 255, 0.5)';
+    } else if (canDrop) {
+        backgroundColor = 'rgba(255, 251, 204, 0.5)';
+    }
+
+    let fieldComponent = field === undefined ? "" : (
+        <LittleConceptCard channel={channel} key={`${channel}-${field.name}`} 
+            tableMetadata={Object.fromEntries(Object.entries(activeTable?.metadata || {}).map(([name, metadata]) => [
+                name,
+                {
+                    ...metadata,
+                    semanticType: tableSemantics.find(info => info.tableId === tableId)?.fields[name]?.semanticType || '',
+                },
+            ]))}
+            field={field} encoding={encoding} 
+            handleUnbind={() => {
+            handleResetEncoding();
+        }} />
+    )
+
+    // define anchor open
+    let channelDisplay = getChannelDisplay(channel, t);
+    let channelTip = getChannelTip(channel, t);
+
+    let radioLabel = (label: string | React.ReactNode, value: any, key: string, width: number = 80, disabled: boolean = false, tooltip: string = "") => {
+        let comp = <FormControlLabel sx={{ width: width, margin: 0 }} key={key}
+                    disabled={disabled}
+                    value={value} control={<Radio size="small" sx={{ padding: "4px" }} />} label={<Box sx={{display: 'flex', alignItems: 'center', gap: '4px'}}>
+                        {label}
+                </Box>} />
+        if (tooltip != "") {
+            comp = <Tooltip key={`${key}-tooltip`} title={tooltip} arrow slotProps={{
+                tooltip: {
+                    sx: { bgcolor: 'rgba(255, 255, 255, 0.95)', color: 'rgba(0,0,0,0.95)', border: '1px solid darkgray' },
+                },
+            }}>{comp}</Tooltip>
+        }
+        return comp;
+    }
+
+    
+
+
+    let dataTypeOpt = [
+        <FormLabel key={`enc-box-${channel}-data-type-label`} sx={{ fontSize: "inherit" }} id="data-type-option-radio-buttons-group" >{t('encoding.dataType')}</FormLabel>,
+        <FormControl
+            key={`enc-box-${channel}-data-type-form-control`}
+            sx={{
+                paddingBottom: "2px", '& .MuiTypography-root': { fontSize: "inherit" }, flexDirection: "row",
+                '& .MuiFormLabel-root': { fontSize: "inherit" }
+            }}>
+            <RadioGroup
+                row
+                aria-labelledby="data-type-option-radio-buttons-group"
+                name="data-type-option-radio-buttons-group"
+                value={encoding.dtype || "auto"}
+                sx={{ width: 160 }}
+                onChange={(event) => { 
+                    if (event.target.value == "auto") {
+                        updateEncProp("dtype", undefined);
+                    } else {
+                        updateEncProp("dtype", event.target.value as "quantitative" | "qualitative" | "temporal");
+                    }
+                }}
+            >
+                {radioLabel(getIconFromDtype("auto"), "auto", `dtype-auto`, 40, false, "auto")}
+                {radioLabel(getIconFromDtype("quantitative"), "quantitative", `dtype-quantitative`, 40, false, "quantitative")}
+                {radioLabel(getIconFromDtype("nominal"), "nominal", `dtype-nominal`, 40, false, "nominal")}
+                {radioLabel(getIconFromDtype("temporal"), "temporal", `dtype-temporal`, 40, false, "temporal")}
+            </RadioGroup>
+        </FormControl>
+    ];
+
+    let stackOpt: any[] = [];
+
+    let domainItems = (field && activeTable) ? activeTable.rows.map(row => row[field!.name]) : [];
+    domainItems = [...new Set(domainItems)];
+
+    let autoSortEnabled = field && fieldMetadata?.type == Type.String && domainItems.length < 200;
+
+    let autoSortFunction = () => {
+        setAutoSortInferRunning(true);
+        let message = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', },
+            body: JSON.stringify({
+                items: domainItems,
+                field: field?.name,
+                model: activeModel
+            }),
+        };
+
+        apiRequest<any>(getUrls().SORT_DATA_URL, message)
+            .then(({ data }) => {
+                setAutoSortInferRunning(false);
+
+                let candidate = data.result?.[0] ?? data[0];
+
+                if (candidate?.['status'] == 'ok') {
+                    let sortRes = {values: candidate['content']['sorted_values'], reason: candidate['content']['reason']}
+                    setAutoSortResult(sortRes.values);
+                }
+            }).catch((error) => {
+                setAutoSortInferRunning(false);
+                setAutoSortResult(undefined);
+               
+                dispatch(dfActions.addMessages({
+                    "timestamp": Date.now(),
+                    "component": "EncodingBox",
+                    "type": "error",
+                    "value": t('encoding.autoSortServerError')
+                }));
+            });
+    }
+
+    let sortByOptions = [
+        radioLabel("auto", "auto", `sort-by-auto`)
+    ]
+    // TODO: check sort options
+    if (channel == "x" && (fieldMetadata?.type == Type.String || fieldMetadata?.type == Type.Auto)) {
+        sortByOptions.push(radioLabel("x", "x", `sort-x-by-x-ascending`, 80));
+        sortByOptions.push(radioLabel("y", "y", `sort-x-by-y-ascending`, 80));
+        sortByOptions.push(radioLabel("color", "color", `sort-x-by-color-ascending`, 80));
+    }
+    if (channel == "y" && (fieldMetadata?.type == Type.String || fieldMetadata?.type == Type.Auto)) {
+        sortByOptions.push(radioLabel("x", "x", `sort-y-by-x-ascending`, 80));
+        sortByOptions.push(radioLabel("y", "y", `sort-y-by-y-ascending`, 80));
+        sortByOptions.push(radioLabel("color", "color", `sort-y-by-color-ascending`, 80));
+    }
+ 
+    if (autoSortEnabled) {
+        if (autoSortInferRunning) {
+            sortByOptions = [
+                ...sortByOptions,
+                <FormControlLabel sx={{ width: 180, margin: 0 }} key={"auto-btn"}
+                    disabled={autoSortInferRunning || !autoSortResult}
+                    value={JSON.stringify(autoSortResult)} control={<Radio size="small" sx={{ padding: "4px" }} />}
+                    label={<LinearProgress color="primary" sx={{ width: "120px", opacity: 0.4 }} />} />
+            ]
+        } else {
+            if (autoSortResult != undefined && autoSortResult.length > 0) {
+
+                let autoSortOptTitle = <Box>
+                        <Box>
+                            <Typography sx={{fontWeight: 'bold'}} component='span' fontSize='inherit'>{t('encoding.sortOrderLabel')} </Typography> 
+                             {autoSortResult.map(x => x ? x.toString() : 'null').join(", ")}
+                        </Box>
+                    </Box>
+
+                let autoSortOpt = 
+                    <Tooltip title={autoSortOptTitle} arrow componentsProps={{
+                        tooltip: {
+                          sx: {
+                            bgcolor: 'rgba(255, 255, 255, 0.95)',
+                            color: 'rgba(0,0,0,0.95)',
+                            border: '1px solid darkgray'
+                          },
+                        },
+                      }}>
+                        <Typography className="auto-sort-option-label">
+                            {autoSortResult.map(x => x ? x.toString() : 'null').join(", ")}
+                        </Typography>
+                    </Tooltip>;
+
+                sortByOptions = [
+                    ...sortByOptions,
+                    <FormControlLabel sx={{ width: 180, margin: 0 }} key={"auto"}
+                        disabled={autoSortInferRunning || !autoSortResult}
+                        value={JSON.stringify(autoSortResult)} control={<Radio size="small" sx={{ padding: "4px" }} />}
+                        label={<Box sx={{width: '100%', display:'flex'}}>
+                                    {autoSortOpt}
+                                    <Tooltip title={t('encoding.rerunSmartSort')}>
+                                        <IconButton onClick={autoSortFunction} size='small' color='primary'>
+                                            <RefreshIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                </Box>} />
+                ]
+            } else {
+                sortByOptions = [
+                    ...sortByOptions,
+                    <FormControlLabel sx={{ width: 180, margin: 0 }} key={"auto-btn"}
+                        disabled={autoSortInferRunning || !autoSortResult}
+                        value={JSON.stringify(autoSortResult)} control={<Radio size="small" sx={{ padding: "4px" }} />}
+                        label={<Button size="small" variant="text"
+                                    sx={{ textTransform: "none", padding: "2px 4px", marginLeft: "0px", minWidth: 0 }}
+                                    onClick={autoSortFunction}>{t('encoding.smartSort')}</Button>} />
+                ]
+            }
+        }
+    }
+
+    let sortByOpt = [
+        <FormLabel sx={{ fontSize: "inherit" }} key={`enc-box-${channel}-sort-label`} id="sort-option-radio-buttons-group" >{t('encoding.sortBy')}</FormLabel>,
+        <FormControl
+            key={`enc-box-${channel}-sort-form-control`}
+            sx={{
+                paddingBottom: "4px", '& .MuiTypography-root': { fontSize: "inherit" }, flexDirection: "row",
+                '& .MuiFormLabel-root': { fontSize: "inherit" }
+            }}>
+            <RadioGroup
+                row
+                aria-labelledby="sort-option-radio-buttons-group"
+                name="sort-option-radio-buttons-group"
+                value={encoding.sortBy ||  'auto'}
+                sx={{ width: 180 }}
+                onChange={(event) => { updateEncProp("sortBy", event.target.value) }}
+            >
+                {sortByOptions}
+            </RadioGroup>
+        </FormControl>
+    ]
+
+    let sortOrderOpt = [
+        <FormLabel sx={{ fontSize: "inherit" }} key={`enc-box-${channel}-sort-order-label`} 
+                   id="sort-option-radio-buttons-group" >{t('encoding.sortOrder')}</FormLabel>,
+        <FormControl
+            key={`enc-box-${channel}-sort-order-form-control`}
+            sx={{
+                paddingBottom: "2px", '& .MuiTypography-root': { fontSize: "inherit" }, flexDirection: "row",
+                '& .MuiFormLabel-root': { fontSize: "inherit" }
+            }}>
+            <RadioGroup
+                row
+                aria-labelledby="sort-option-radio-buttons-group"
+                name="sort-option-radio-buttons-group"
+                value={encoding.sortOrder || "auto"}
+                sx={{ width: 180 }}
+                onChange={(event) => { updateEncProp("sortOrder", event.target.value) }}
+            >
+                {radioLabel("auto", "auto", `sort-auto`, 60)}
+                {radioLabel(t('encoding.ascShort'), "ascending", `sort-ascending`, 60)}
+                {radioLabel(t('encoding.descShort'), "descending", `sort-descending`, 60)}
+            </RadioGroup>
+        </FormControl>
+    ]
+    
+    let colorSchemeList = [
+        "category10",
+        "category20",
+        "tableau10",
+        "blues",
+        "oranges",
+        "reds",
+        "greys",
+        "goldgreen",
+        "bluepurple",
+        "blueorange",
+        "redyellowblue",
+        "spectral"
+    ]
+    let colorSchemeOpt = channel == "color" ? [
+            <FormLabel sx={{ fontSize: "inherit" }} key={`enc-box-${channel}-color-scheme-label`} id="scheme-option-radio-buttons-group">{t('encoding.colorScheme')}</FormLabel>,
+            <FormControl key="color-sel-form" fullWidth size="small" sx={{textAlign: "initial", fontSize: "12px"}}>
+                <Select
+                    labelId="color-scheme-select-label"
+                    variant="standard"
+                    id="color-scheme-select"
+                    label=""
+                    sx={{'& .MuiSelect-select': {fontSize: "12px", paddingLeft: '6px'}}}
+                    value={encoding.scheme || "default"}
+                    onChange={(event)=>{ updateEncProp("scheme", event.target.value) }}
+                >
+                    <MenuItem value={"default"} key={"color-scheme--1"}><em>{t('encoding.default')}</em></MenuItem>
+                    {colorSchemeList.map((scheme, i) => (
+                        <MenuItem value={scheme} key={`color-scheme-${i}`}>{scheme}</MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+    ] : []
+
+    let encodingConfigCard = (
+        <CardContent sx={{
+            display: "flex", '& svg': { fontSize: "inherit" }, '&:last-child': { pb: "12px", pt: "12px" },
+            margin: '0px 12px', padding: "6px", fontSize: "12px"
+        }} >
+            <Box sx={{margin: 'auto', display: "flex",  width: "fit-content", textAlign: "center", flexDirection: "column", alignItems: "flex-start" }}>
+                {dataTypeOpt}
+                {stackOpt}
+                {sortByOpt}
+                {sortOrderOpt}
+                {colorSchemeOpt}
+            </Box>
+        </CardContent>
+    )
+
+    let optBackgroundColor = alpha(theme.palette.secondary.main, 0.07);
+
+    let aggregateDisplay = encoding.aggregate ? (<Chip key="aggr-display" className="encoding-prop-chip"  
+        sx={{  backgroundColor: optBackgroundColor, width: field == undefined ? "100%" : "auto" }}
+        onDelete={() => updateEncProp("aggregate", undefined)} color="default" //deleteIcon={<RemoveIcon />}
+        label={encoding.aggregate == "average" ? "avg" : encoding.aggregate} size="small" />) : "";
+    let normalizedDisplay = "";
+    
+    let handleSelectOption = (option: string) => {
+        // The encoding shelf only accepts fields that already exist in the
+        // current table. Selecting anything else (a stale concept from another
+        // table, or a typed-but-nonexistent name) is ignored — creating new
+        // fields here is not allowed, since that would require re-deriving data.
+        const fieldItem = conceptShelfItems.find(f => f.name == option);
+        const isAvailable = !!fieldItem && (!activeTable || activeTable.names.includes(option));
+        if (isAvailable) {
+            updateEncProp("fieldID", (fieldItem as FieldItem).id);
+        }
+    }
+
+
+    // Field names selectable in this encoding shelf, listed in the same order as
+    // the columns of the current table. Only fields that exist in the table can
+    // be assigned here, so the table's column list is the source of truth — no
+    // need to derive or group them from the concept shelf.
+    let availableFieldNames = (activeTable ? activeTable.names : conceptShelfItems.map(f => f.name))
+        .filter(name => name != "");
+
+    // Smart Popper component that switches between bottom-end and top-end
+    const CustomPopper = (props: any) => {
+        return (
+            <Popper 
+                {...props} 
+                placement="bottom-end"
+                modifiers={[
+                    {
+                        name: 'flip',
+                        enabled: true,
+                        options: {
+                            fallbackPlacements: ['top-end'], // Only flip to top-end
+                        },
+                    },
+                    {
+                        name: 'preventOverflow',
+                        enabled: true,
+                        options: {
+                            boundary: 'viewport',
+                            padding: 8,
+                        },
+                    },
+                    {
+                        name: 'offset',
+                        options: {
+                            offset: [0, 8], // [horizontal, vertical] offset
+                        },
+                    },
+                ]}
+                style={{
+                    zIndex: 1300, // Ensure it's above other elements
+                }}
+            />
+        );
+    };
+
+    let createConceptInputBox = <Autocomplete
+        key="concept-create-input-box"
+        slots={{
+            popper: CustomPopper // Try changing to: CustomPopperCSS
+        }}
+        onChange={(event, value) => {
+            if (value != null) {
+                handleSelectOption(value)
+            }
+        }}
+        // value={tempValue}
+        filterOptions={(options, params) => {
+            // The encoding shelf only accepts fields that already exist in the
+            // current table — creating brand-new fields (which would require
+            // re-deriving data) is not allowed here.
+            return filter(options, params);
+        }}
+        sx={{ 
+            flexGrow: 1, 
+            flexShrink: 1, 
+            "& .MuiInput-input": { padding: "0px 8px !important"},
+            "& .MuiAutocomplete-listbox": {
+                maxHeight: '600px !important'
+            }
+        }}
+        fullWidth
+        selectOnFocus
+        clearOnBlur
+        handleHomeEndKeys
+        autoHighlight
+        id={`autocomplete-${chartId}-${channel}`}
+        options={availableFieldNames}
+        getOptionLabel={(option) => {
+            // Value selected with enter, right from the input
+            return option;
+        }}
+        renderOption={(props, option) => {
+            const { key, ...liProps } = props as any;
+            const dtype = activeTable?.metadata[option]?.type || Type.Auto;
+            return (
+                <Box
+                    key={key}
+                    {...liProps}
+                    onClick={() => handleSelectOption(option)}
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: textVar.xs,
+                        padding: '4px 8px !important',
+                        cursor: 'pointer',
+                        '&:hover': { backgroundColor: 'rgba(0,0,0,0.05)' },
+                    }}
+                >
+                    {getIconFromType(dtype)}
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {option}
+                    </span>
+                </Box>
+            );
+        }}
+        renderInput={(params) => (
+            <TextField {...params} variant="standard" autoComplete='off' placeholder={t('encoding.fieldPlaceholder')}
+                onKeyDownCapture={(event) => {
+                    // The MUI Autocomplete handles Enter on the input itself,
+                    // and `autoHighlight` makes it auto-select the first option
+                    // even when the typed text doesn't match. Intercept Enter in
+                    // the capture phase: only let it through when the current
+                    // input is an exact available field; otherwise neutralize it
+                    // so a stray Enter never assigns a field or bubbles up to
+                    // trigger an unrelated refresh/formulate.
+                    if (event.key === 'Enter') {
+                        const value = (event.target as HTMLInputElement).value?.trim();
+                        if (!value || !availableFieldNames.includes(value)) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                    }
+                }}
+                sx={{height: "24px", "& .MuiInput-root": {height: "24px", fontSize: "small"}}} />
+        )}
+        slotProps={{
+            paper: { // Use paper instead of popper for styling
+                sx: {
+                    width: '300px',
+                    maxWidth: '300px',
+                    '& .MuiAutocomplete-listbox': {
+                        maxHeight: '600px !important'
+                    },
+                    '& .MuiAutocomplete-noOptions': {
+                        fontSize: textVar.xs,
+                        padding: '6px 12px',
+                    },
+                }
+            }
+        }}
+    />
+
+    const filter = createFilterOptions<string>();
+    // when there is no field added, allow users to directly type concepts here, and it will be created on the fly.
+    const encContent = field == undefined ? 
+        (encoding.aggregate == 'count' ? [ aggregateDisplay ] : [
+            normalizedDisplay,
+            aggregateDisplay,
+            createConceptInputBox
+        ]) 
+        : 
+        [
+            normalizedDisplay,
+            aggregateDisplay,
+            fieldComponent
+        ]
+
+    let encodingComp = (
+        <ClickAwayListener
+            mouseEvent="onMouseUp"
+            touchEvent="onTouchStart"
+            onClickAway={() => { setEditMode(false) }}
+        >
+            <Box sx={{ display: 'flex', flexDirection: "column", alignItems: 'flex-start', width: "100%", marginBottom: "4px" }}
+                component="form" className="channel-shelf-box encoding-item">
+                <Card sx={{ width: "100%" }} variant="outlined">
+                    <Box ref={drop} className="channel-encoded-field">
+                        <Tooltip title={channelTip} placement="left" arrow
+                            slotProps={{ tooltip: { sx: { bgcolor: 'rgba(97,97,97,0.92)' } } }}>
+                        <IconButton
+                            onClick={() => { setEditMode(!editMode) }} color="default"
+                            aria-label={t('encoding.axisSettings')} component="span"
+                            size="small" sx={{
+                                padding: "0px", borderRadius: 0, textAlign: "left", fontSize: "inherit", height: "auto",
+                                position: "relative", borderRight: "1px solid lightgray", width: '84px', 
+                                display: "flex", justifyContent: "space-between"
+                            }}>
+                            <Typography variant="caption" component="span" sx={{ padding: "0px 0px 0px 6px" }}>{channelDisplay}</Typography>
+                            <ArrowDropDownIcon sx={{ position: "absolute", right: "0", 
+                                paddingLeft: "2px", transform: editMode ? "rotate(180deg)" : "" }} fontSize="inherit" />
+                        </IconButton>
+                        </Tooltip>
+                        <Box sx={{
+                            backgroundColor: backgroundColor, width: "calc(100% - 84px)",
+                            display: "flex", borderBottom: (editMode ? "1px solid rgba(0, 0, 0, 0.12)" : undefined)
+                        }}>
+                            {encContent}
+                        </Box>
+                    </Box>
+                    <AnimateHeight
+                        duration={200}
+                        height={editMode ? "auto" : 0} // see props documentation below
+                    >
+                        {encodingConfigCard}
+                    </AnimateHeight>
+                </Card>
+            </Box>
+        </ClickAwayListener>
+    )
+
+    return encodingComp;
+}

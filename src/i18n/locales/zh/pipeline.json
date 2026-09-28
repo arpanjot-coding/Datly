@@ -1,0 +1,48 @@
+{
+  "health": {
+    "title": "数据健康",
+    "scanning": "正在扫描数据质量…",
+    "loadFailed": "无法加载数据健康概况",
+    "retry": "重试",
+    "rescan": "重新扫描",
+    "score": "评分 {{score}}",
+    "noIssues": "未发现质量问题",
+    "issueCount": "发现 {{count}} 个质量问题",
+    "schemaDrift": "自上次概况以来表结构已变化",
+    "showFixes": "建议修复",
+    "hideFixes": "隐藏修复"
+  },
+  "clean": {
+    "title": "建议清洗步骤",
+    "noSuggestions": "此表暂无清洗建议",
+    "apply": "应用",
+    "applySafe": "应用安全修复",
+    "safe": "安全"
+  },
+  "runs": {
+    "title": "自动流水线运行",
+    "refresh": "刷新运行记录",
+    "empty": "暂无流水线运行"
+  },
+  "dashboard": {
+    "title": "仪表盘",
+    "empty": "将当前会话中的图表固定到此处以构建仪表盘",
+    "pinCharts": "固定当前图表",
+    "addSchedule": "添加计划",
+    "defaultName": "我的仪表盘",
+    "chartPlaceholder": "图表预览",
+    "schedules": "计划任务",
+    "scheduleTitle": "计划自动运行",
+    "cron": "Cron 表达式",
+    "cronHint": "示例：0 8 * * * 表示每天 08:00 运行",
+    "cancel": "取消",
+    "saveSchedule": "保存计划",
+    "dailyRun": "每日自动运行"
+  },
+  "grid": {
+    "cleanColumn": "清洗列",
+    "trim": "去除首尾空格",
+    "fillNulls": "填充空值",
+    "dedupe": "去重"
+  }
+}
