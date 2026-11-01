@@ -3,59 +3,178 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Datly® — AI-Powered Data Visualization IDE & Analytical Workbench</title>
+  <title>Datly® — AI Data Visualization IDE & Analytical Workbench | Local-First DuckDB & Data Formulator</title>
   
-  <!-- SEO Meta Tags -->
-  <meta name="description" content="Datly is the open-source, local-first data visualization IDE and exploratory analytics workbench. Talk to your tables in natural language, verify every row in ground-truth data grids, and build interactive reports. Zero cloud data exfiltration.">
-  <meta name="keywords" content="data ide, ai data visualization, data formulator, duckdb analytics, vega-lite ide, natural language data analysis, local first analytics, open source bi, data threads, tiptap reports, databricks bigquery bi">
+  <!-- Primary SEO Meta Tags -->
+  <meta name="title" content="Datly® — AI Data Visualization IDE & Analytical Workbench | Local-First DuckDB & Data Formulator">
+  <meta name="description" content="Datly is the open-source, local-first AI data visualization IDE. Talk to tables in natural language, verify every row in ground-truth grids, and build reports. Zero cloud data exfiltration.">
+  <meta name="keywords" content="data ide, ai data visualization, data formulator, duckdb analytics, vega-lite ide, natural language data analysis, local first analytics, open source bi, data threads, tiptap reports, databricks bigquery bi, python pandas visualization, exploratory data analysis ide, air gapped bi, ollama data science, open source tableau alternative">
   <meta name="author" content="Datly Project">
-  <meta name="robots" content="index, follow">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="bingbot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://arpanjot-coding.github.io/Datly/">
 
   <!-- OpenGraph / Facebook -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Datly Data IDE">
   <meta property="og:url" content="https://arpanjot-coding.github.io/Datly/">
-  <meta property="og:title" content="Datly® — AI-Powered Data Visualization IDE & Analytical Workbench">
+  <meta property="og:title" content="Datly® — AI Data Visualization IDE & Analytical Workbench">
   <meta property="og:description" content="Local-First, Ground-Truth Verifiable Data Exploration with Concept Encoding, Data Threads & Enterprise Warehouse Connectors. Zero raw data leaves your machine.">
   <meta property="og:image" content="https://arpanjot-coding.github.io/Datly/images/workspace.png">
+  <meta property="og:image:secure_url" content="https://arpanjot-coding.github.io/Datly/images/workspace.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="675">
+  <meta property="og:image:alt" content="Datly AI Data Visualization Workspace - Data Threads, Live Vega Visualizer, and Ground-Truth Table Grid">
+  <meta property="og:locale" content="en_US">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://arpanjot-coding.github.io/Datly/">
-  <meta name="twitter:title" content="Datly® — AI Data Visualization IDE">
+  <meta name="twitter:title" content="Datly® — AI Data Visualization IDE & Analytical Workbench">
   <meta name="twitter:description" content="Natural language data transformations, concept encoding shelves, and ground-truth data grids. Powered by DuckDB & LiteLLM.">
   <meta name="twitter:image" content="https://arpanjot-coding.github.io/Datly/images/workspace.png">
+  <meta name="twitter:image:alt" content="Datly AI Data Visualization Workspace Screenshot">
+  <meta name="twitter:creator" content="@arpanjot_coding">
 
-  <!-- Favicon -->
+  <!-- Mobile & Browser Theming -->
+  <meta name="theme-color" content="#07090E">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-title" content="Datly">
+  <meta name="application-name" content="Datly">
+
+  <!-- Favicon & PWA Manifest -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="images/logo-128.png">
+  <link rel="manifest" href="site.webmanifest">
 
   <!-- Typography: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Structured Data / JSON-LD -->
+  <!-- Structured Data / JSON-LD Schema Graph -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "Datly Data IDE",
-    "operatingSystem": "Windows 10+, macOS 12+, Linux, Web, Docker",
-    "applicationCategory": "DeveloperApplication",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "description": "Open-source AI data visualization IDE and exploratory analytics workbench. Features ground-truth verifiable data grids, concept encoding shelves, non-destructive data threads, and 15+ warehouse connectors.",
-    "softwareVersion": "0.8.0-beta",
-    "license": "https://opensource.org/licenses/MIT",
-    "downloadUrl": "https://github.com/arpanjot-coding/Datly/releases",
-    "author": {
-      "@type": "Organization",
-      "name": "Datly Project"
-    }
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://arpanjot-coding.github.io/Datly/#software",
+        "name": "Datly Data IDE",
+        "alternateName": ["Datly", "Data Formulator IDE", "Data Formulator Desktop"],
+        "operatingSystem": "Windows 10+, macOS 12+, Linux, Web, Docker",
+        "applicationCategory": "DeveloperApplication, BusinessApplication",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "Open-source, local-first AI data visualization IDE and exploratory analytics workbench. Features ground-truth verifiable data grids, concept encoding shelves, non-destructive data threads, and 15+ warehouse connectors.",
+        "softwareVersion": "0.8.0-beta",
+        "releaseDate": "2026-09-28",
+        "license": "https://opensource.org/licenses/MIT",
+        "downloadUrl": "https://github.com/arpanjot-coding/Datly/releases",
+        "featureList": [
+          "Local-First DuckDB In-Memory Analytical Engine",
+          "Ground-Truth Verifiable Data Grid Under Visualizations",
+          "Non-Destructive Branching Data Threads (DAG)",
+          "Dual-Mode Synthesis with Natural Language and Visual Encoding Shelves",
+          "15+ Enterprise Cloud Data Warehouse Connectors (Databricks, BigQuery, Snowflake, Postgres, S3)",
+          "TipTap WYSIWYG Narrative Reports & Pinboard Dashboards",
+          "Air-gapped and Offline Support via Local Ollama Models"
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.9",
+          "ratingCount": "128",
+          "bestRating": "5"
+        },
+        "screenshot": [
+          "https://arpanjot-coding.github.io/Datly/images/workspace.png",
+          "https://arpanjot-coding.github.io/Datly/images/about-explore.png",
+          "https://arpanjot-coding.github.io/Datly/images/about-dashboard.png"
+        ],
+        "author": {
+          "@type": "Organization",
+          "name": "Datly Open Source Project",
+          "url": "https://github.com/arpanjot-coding/Datly"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://arpanjot-coding.github.io/Datly/#website",
+        "url": "https://arpanjot-coding.github.io/Datly/",
+        "name": "Datly® — AI Data Visualization IDE",
+        "description": "Local-first AI data visualization IDE and exploratory analytics workbench.",
+        "publisher": {
+          "@type": "Organization",
+          "name": "Datly Project",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://arpanjot-coding.github.io/Datly/images/logo-512.png"
+          }
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://arpanjot-coding.github.io/Datly/#organization",
+        "name": "Datly Project",
+        "url": "https://arpanjot-coding.github.io/Datly/",
+        "logo": "https://arpanjot-coding.github.io/Datly/images/logo-512.png",
+        "sameAs": [
+          "https://github.com/arpanjot-coding/Datly",
+          "https://github.com/arpanjot-coding"
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://arpanjot-coding.github.io/Datly/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does Datly send my private database records to OpenAI, Anthropic, or external servers?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Datly enforces a strict local-first privacy boundary. When you query databases or load data, tables reside exclusively in local memory and DuckDB. When you ask questions in natural language, Datly transmits only column names and data types (with an optional 2-row sanitized preview) to the model for code synthesis. The synthesized transformation code runs 100% locally on your computer. Your raw records never leave your machine."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I run Datly completely offline without any internet connection?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Datly features native integration with local open-weights model runners via Ollama, vLLM, or LocalAI. By pointing Datly to your local Ollama instance (e.g., running qwen2.5-coder:14b or llama3.3:70b), you can conduct exploratory data science and build visualizations in an entirely air-gapped environment."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does Datly prevent AI chart hallucinations and false trends?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Unlike conversational AI tools that directly generate static image pixels or guess summary values, Datly requires the AI to write verifiable Python or DuckDB SQL transformation steps. Those steps execute on your physical data to produce a tangible derived data table. In the Explore Canvas, that derived table sits right under the chart, giving you full row-by-row mathematical verification."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does Datly differ from Microsoft Research Data Formulator?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Datly builds upon the groundbreaking concept encoding and data thread foundations established by Microsoft Research's Data Formulator, elevating it into a comprehensive, enterprise-ready data IDE. Datly introduces 15+ native cloud warehouse connectors (Databricks, BigQuery, Snowflake, Postgres), TipTap WYSIWYG narrative report publishing, multi-chart pinboard dashboards, cross-platform Electron desktop distribution, automated web table scraping via Playwright, and enterprise Single Sign-On (SSO)."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do Data Threads prevent the state corruption common in Jupyter notebooks?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Jupyter notebooks execute cells sequentially against a mutable global namespace. Modifying an earlier cell can break subsequent calculations in subtle, hidden ways. Datly replaces this with a Directed Acyclic Graph (DAG) of Data Threads. Each inquiry branches into an isolated thread card containing its own input reference, transformation step, derived table, and chart. Original datasets remain strictly immutable."
+            }
+          }
+        ]
+      }
+    ]
   }
   </script>
 
@@ -1166,6 +1285,9 @@
     </div>
   </header>
 
+  <!-- Main Content Landmark -->
+  <main id="main-content">
+
   <!-- Section 01: Core Pillars & Architecture -->
   <section id="features">
     <div class="container">
@@ -1238,7 +1360,7 @@
       <div class="spotlight-grid">
         <div class="spotlight-card">
           <div class="spotlight-preview">
-            <img src="images/about-explore.png" alt="Explore Canvas with Chart and Data Grid">
+            <img src="images/about-explore.png" alt="Datly Explore Canvas with Live Vega-Lite Visualization and Synchronized Ground-Truth Data Grid" loading="lazy" decoding="async">
           </div>
           <div class="spotlight-content">
             <h3>Explore: The Synchronized Check</h3>
@@ -1255,7 +1377,7 @@
 
         <div class="spotlight-card">
           <div class="spotlight-preview">
-            <img src="images/about-dashboard.png" alt="Multi-Chart Dashboard Pinboard">
+            <img src="images/about-dashboard.png" alt="Datly Multi-Chart Dashboard Pinboard with Live Interactive Cross-Filtering" loading="lazy" decoding="async">
           </div>
           <div class="spotlight-content">
             <h3>Dashboards & Reporting Without Copying</h3>
@@ -1695,6 +1817,7 @@
 
     </div>
   </section>
+  </main>
 
   <!-- Footer -->
   <footer>

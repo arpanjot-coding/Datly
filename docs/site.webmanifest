@@ -1,0 +1,27 @@
+{
+  "name": "Datly — AI Data Visualization IDE",
+  "short_name": "Datly",
+  "description": "Local-first AI data visualization IDE and exploratory analytics workbench powered by DuckDB and Vega-Lite.",
+  "start_url": "/Datly/",
+  "display": "standalone",
+  "background_color": "#07090E",
+  "theme_color": "#3B82F6",
+  "icons": [
+    {
+      "src": "images/logo-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "images/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

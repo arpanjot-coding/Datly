@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Sitemap Index
+Sitemap: https://arpanjot-coding.github.io/Datly/sitemap.xml

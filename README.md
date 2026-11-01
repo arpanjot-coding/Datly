@@ -70,6 +70,7 @@
 - [Threat Model & Security Analysis](#-threat-model--security-analysis)
 - [Diagnostic & Troubleshooting Guide](#-diagnostic--troubleshooting-guide)
 - [Frequently Asked Questions (FAQ) & SEO Discoverability](#-frequently-asked-questions-faq--seo-discoverability)
+- [GitHub Repository SEO & Metadata Configuration](#-github-repository-seo--metadata-configuration)
 - [Roadmap & Community](#-roadmap--community)
 - [License](#-license)
 
@@ -517,6 +518,38 @@ Yes. Datly supports multi-format production exports:
 - **Data:** Export any derived table or transformed dataset to clean CSV with one click.
 - **Charts:** Export visualizations as publication-quality SVG vectors or high-resolution PNG images.
 - **Reports:** Export full TipTap narrative reports—complete with analysis text, embedded charts, and metrics—into standalone PDF documents or markdown.
+
+### How does Datly compare to Hex, JupyterLab, Tableau, and Power BI?
+- **vs JupyterLab / Hex:** Jupyter notebooks run in a sequential, linear, and mutable global namespace where re-running cells can create corrupt, irreproducible states. Datly uses non-destructive **Data Threads (DAG)**, so every question branches cleanly without overwriting upstream tables. Furthermore, Datly provides visual encoding shelves and an interactive data grid under every chart.
+- **vs Tableau / Power BI:** Traditional BI tools require rigid semantic data modeling upfront, expensive proprietary cloud licenses, and steep learning curves for ad-hoc transformation calculations. Datly gives analysts immediate, flexible, code-level control through ordinary natural language, executes everything locally with DuckDB, and remains 100% open-source under the MIT license.
+- **vs DBeaver / DataGrip:** While SQL IDEs excel at tabular queries, they lack visual narrative, exploratory AI reasoning, and integrated document synthesis. Datly combines the raw speed of a SQL IDE with the communication power of an executive analytics workbench.
+
+### Which LLM models and providers are supported?
+Datly utilizes **LiteLLM** as its universal model gateway, supporting over 100+ model configurations out of the box:
+- **Anthropic:** Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku
+- **OpenAI:** GPT-4o, GPT-4o-mini, o1, o3-mini
+- **Google:** Gemini 2.5 Pro, Gemini 2.0 Flash, Gemini 1.5 Pro
+- **Open Weights & Air-Gapped:** DeepSeek-R1, DeepSeek-V3, Qwen 2.5 Coder, Llama 3.3 (via Ollama, vLLM, or LocalAI)
+- **Enterprise Cloud:** Azure OpenAI Service, AWS Bedrock, Google Vertex AI, Groq, Mistral AI
+
+---
+
+## 🏷️ GitHub Repository SEO & Metadata Configuration
+
+To maximize visibility on GitHub Search, Google, and Bing, configure the following metadata in your GitHub repository settings (**Code** > ⚙️ **About**):
+
+- **Repository Description (158 chars):**
+  ```text
+  Open-source, local-first AI data visualization IDE & analytics workbench. Talk to tables, verify rows with DuckDB, and build reports. Zero data exfiltration.
+  ```
+- **Website URL:**
+  ```text
+  https://arpanjot-coding.github.io/Datly/
+  ```
+- **Topics / Tags (Recommended 20 tags):**
+  ```text
+  data-visualization, ai, duckdb, data-ide, llm, vega-lite, data-formulator, business-intelligence, python, analytics, data-science, electron, local-first, tiptap, exploratory-data-analysis, pandas, echarts, bi, ollama, sql-ide
+  ```
 
 ---
 
