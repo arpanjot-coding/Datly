@@ -3269,7 +3269,7 @@ export const DataThread: FC<{sx?: SxProps, centered?: boolean, denseColumns?: bo
     let renderThreadEntry = (entry: ThreadEntry) => {
         let usedTableIds = entry.usedTableIds || [];
 
-        const entrySx = {
+        const entrySx: SxProps = {
             backgroundColor: 'white',
             borderRadius: radius.md,
             ...ComponentBorderStyle,
@@ -3284,7 +3284,7 @@ export const DataThread: FC<{sx?: SxProps, centered?: boolean, denseColumns?: bo
             maxWidth: '100%',
             boxSizing: 'border-box',
             transition: transition.fast,
-        } as const;
+        };
 
         // The shelf packs like a thread but isn't one: it just lists the
         // workspace's source tables, which every thread grows out of.
