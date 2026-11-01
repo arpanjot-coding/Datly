@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datly® — AI-Powered Data Visualization IDE & Analytical Workbench</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Datly is the open-source, local-first data visualization IDE and exploratory analytics workbench. Talk to your tables in natural language, verify every row in ground-truth data grids, and build interactive reports. Zero cloud data exfiltration.">
+  <meta name="keywords" content="data ide, ai data visualization, data formulator, duckdb analytics, vega-lite ide, natural language data analysis, local first analytics, open source bi, data threads, tiptap reports, databricks bigquery bi">
+  <meta name="author" content="Datly Project">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://arpanjot-coding.github.io/Datly/">
+
+  <!-- OpenGraph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://arpanjot-coding.github.io/Datly/">
+  <meta property="og:title" content="Datly® — AI-Powered Data Visualization IDE & Analytical Workbench">
+  <meta property="og:description" content="Local-First, Ground-Truth Verifiable Data Exploration with Concept Encoding, Data Threads & Enterprise Warehouse Connectors. Zero raw data leaves your machine.">
+  <meta property="og:image" content="https://arpanjot-coding.github.io/Datly/images/workspace.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://arpanjot-coding.github.io/Datly/">
+  <meta name="twitter:title" content="Datly® — AI Data Visualization IDE">
+  <meta name="twitter:description" content="Natural language data transformations, concept encoding shelves, and ground-truth data grids. Powered by DuckDB & LiteLLM.">
+  <meta name="twitter:image" content="https://arpanjot-coding.github.io/Datly/images/workspace.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="images/logo-128.png">
+
+  <!-- Typography: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Structured Data / JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Datly Data IDE",
+    "operatingSystem": "Windows 10+, macOS 12+, Linux, Web, Docker",
+    "applicationCategory": "DeveloperApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "Open-source AI data visualization IDE and exploratory analytics workbench. Features ground-truth verifiable data grids, concept encoding shelves, non-destructive data threads, and 15+ warehouse connectors.",
+    "softwareVersion": "0.8.0-beta",
+    "license": "https://opensource.org/licenses/MIT",
+    "downloadUrl": "https://github.com/arpanjot-coding/Datly/releases",
+    "author": {
+      "@type": "Organization",
+      "name": "Datly Project"
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg-dark: #07090E;
+      --bg-card: #0D111A;
+      --bg-card-elevated: #131826;
+      --border-color: #1A2333;
+      --border-hover: #293852;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-sub: #64748B;
+      --accent: #3B82F6;
+      --accent-hover: #2563EB;
+      --accent-dim: rgba(59, 130, 246, 0.12);
+      --accent-glow: rgba(59, 130, 246, 0.28);
+      --cyan: #06B6D4;
+      --cyan-dim: rgba(6, 182, 212, 0.12);
+      --green: #10B981;
+      --green-dim: rgba(16, 185, 129, 0.12);
+      --amber: #F59E0B;
+      --amber-dim: rgba(245, 158, 11, 0.12);
+      --violet: #8B5CF6;
+      --violet-dim: rgba(139, 92, 246, 0.12);
+      --radius-card: 20px;
+      --radius-pill: 9999px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      /* High-tech data grid background */
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
+        radial-gradient(circle at 85% 30%, rgba(6, 182, 212, 0.08) 0%, transparent 45%),
+        linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+      background-position: 0 0, 0 0, -1px -1px, -1px -1px;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navigation */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(7, 9, 14, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 0;
+    }
+    .nav-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: -0.02em;
+    }
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .brand-icon img, .brand-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+    .brand-version {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--cyan);
+      background: var(--cyan-dim);
+      border: 1px solid rgba(6, 182, 212, 0.28);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: color 0.15s ease;
+    }
+    .nav-links a:hover {
+      color: var(--text-main);
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* GitHub Star Widget Button */
+    .gh-star-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      text-decoration: none;
+      padding: 7px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .gh-star-btn:hover {
+      background: var(--bg-card-elevated);
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+    }
+    .gh-star-btn .gh-icon {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+    }
+    .gh-star-btn .gh-sep {
+      width: 1px;
+      height: 14px;
+      background: var(--border-color);
+    }
+    .gh-star-btn .star-icon {
+      width: 13px;
+      height: 13px;
+      fill: var(--amber);
+    }
+    .gh-star-btn .gh-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: var(--text-main);
+    }
+
+    /* Nav Primary CTA */
+    .btn-nav-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--accent);
+      color: #FFFFFF !important;
+      text-decoration: none;
+      padding: 8px 18px;
+      border-radius: var(--radius-pill);
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+    .btn-nav-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 75px 0 40px;
+      text-align: center;
+    }
+    .hero-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: var(--radius-pill);
+      background: var(--accent-dim);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #60A5FA;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .hero-badge-pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+    .hero-app-icon-wrap {
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: center;
+    }
+    .hero-app-icon {
+      width: 88px;
+      height: 88px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #131E33 0%, #0A1120 100%);
+      border: 1.5px solid var(--border-color);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 35px rgba(59, 130, 246, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+    .hero-app-icon img, .hero-app-icon svg {
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+    }
+    h1 {
+      font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      color: var(--text-main);
+    }
+    h1 span.gradient {
+      background: linear-gradient(135deg, #FFFFFF 20%, #38BDF8 60%, #818CF8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+      color: var(--text-muted);
+      max-width: 780px;
+      margin: 0 auto 36px;
+      line-height: 1.65;
+    }
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .btn-hero-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+      color: #FFFFFF;
+      padding: 14px 32px;
+      border-radius: var(--radius-pill);
+      font-weight: 800;
+      font-size: 1.02rem;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .btn-hero-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(59, 130, 246, 0.45);
+    }
+    .btn-hero-primary .btn-text-block {
+      text-align: left;
+      line-height: 1.2;
+    }
+    .btn-hero-primary .btn-title {
+      display: block;
+      font-size: 1rem;
+    }
+    .btn-hero-primary .btn-sub {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      opacity: 0.9;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn-hero-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card);
+      color: var(--text-main);
+      padding: 14px 28px;
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      font-size: 1rem;
+      text-decoration: none;
+      border: 1px solid var(--border-color);
+      transition: all 0.25s ease;
+    }
+    .btn-hero-secondary:hover {
+      background: var(--bg-card-elevated);
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .trust-badges {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      color: var(--text-sub);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .trust-badges span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .trust-badges span strong {
+      color: var(--text-muted);
+    }
+
+    /* Workspace Showcase Frame */
+    .showcase-wrapper {
+      margin: 55px auto 40px;
+      max-width: 1140px;
+    }
+    .ide-window {
+      border-radius: 18px;
+      background: #0B0E17;
+      border: 1.5px solid var(--border-color);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(59, 130, 246, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+    .ide-header {
+      background: #0E131E;
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .ide-traffic-lights {
+      display: flex;
+      gap: 8px;
+    }
+    .ide-traffic-lights span {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .tl-red { background: #FF5F56; }
+    .tl-yellow { background: #FFBD2E; }
+    .tl-green { background: #27C93F; }
+    .ide-title-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-pill);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .ide-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: var(--green);
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .ide-body {
+      position: relative;
+      background: #06080D;
+      display: block;
+    }
+    .ide-body img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .ide-tabs-bar {
+      display: flex;
+      background: #0A0D15;
+      border-top: 1px solid var(--border-color);
+      padding: 8px 16px;
+      gap: 12px;
+      overflow-x: auto;
+    }
+    .ide-feature-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .ide-feature-tab:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .ide-feature-tab.active {
+      color: #FFFFFF;
+      background: var(--bg-card-elevated);
+      border-color: var(--border-hover);
+    }
+    .ide-feature-tab .tab-icon {
+      font-size: 1rem;
+    }
+
+    /* Section Styles */
+    section {
+      padding: 80px 0;
+      border-top: 1px solid var(--border-color);
+    }
+    .section-header {
+      text-align: center;
+      max-width: 760px;
+      margin: 0 auto 50px;
+    }
+    .section-kicker {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .section-header h2 {
+      font-size: clamp(2rem, 3.8vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      color: var(--text-main);
+    }
+    .section-header p {
+      font-size: 1.08rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Feature Grid (Cards) */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 20px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      padding: 30px;
+      transition: all 0.25s ease;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .feature-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    }
+    .feature-icon-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .badge-blue { background: var(--accent-dim); color: #60A5FA; }
+    .badge-cyan { background: var(--cyan-dim); color: #22D3EE; }
+    .badge-green { background: var(--green-dim); color: #34D399; }
+    .badge-amber { background: var(--amber-dim); color: #FBBF24; }
+    .badge-violet { background: var(--violet-dim); color: #A78BFA; }
+    .feature-card h3 {
+      font-size: 1.22rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+    .feature-card p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+    .feature-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Dual Feature Spotlight (Big visual cards) */
+    .spotlight-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 40px;
+    }
+    .spotlight-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .spotlight-preview {
+      background: #07090F;
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px;
+      height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .spotlight-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+    }
+    .spotlight-content {
+      padding: 28px;
+    }
+    .spotlight-content h3 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: var(--text-main);
+    }
+    .spotlight-content p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    /* Connectors Gallery */
+    .connector-filters {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+    }
+    .filter-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 8px 18px;
+      border-radius: var(--radius-pill);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      color: #FFFFFF;
+      background: var(--bg-card-elevated);
+      border-color: var(--accent);
+    }
+    .connectors-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .connector-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: all 0.2s ease;
+    }
+    .connector-box:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-card-elevated);
+      transform: translateY(-2px);
+    }
+    .conn-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .conn-info h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 3px;
+    }
+    .conn-info span {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      font-family: 'JetBrains Mono', monospace;
+      display: block;
+    }
+
+    /* Comparison Matrix Table */
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      overflow-x: auto;
+      margin-top: 30px;
+    }
+    table.comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+    table.comparison-table th {
+      background: var(--bg-card-elevated);
+      padding: 16px 20px;
+      font-weight: 700;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border-color);
+    }
+    table.comparison-table th.highlight-col {
+      color: var(--cyan);
+      background: rgba(6, 182, 212, 0.08);
+      border-bottom: 1px solid var(--cyan);
+    }
+    table.comparison-table td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+    table.comparison-table td.highlight-col {
+      background: rgba(6, 182, 212, 0.03);
+      color: var(--text-main);
+      font-weight: 600;
+    }
+    table.comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Terminal & Quickstart */
+    .terminal-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #0B0E17;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    }
+    .terminal-nav {
+      background: #0E131F;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      flex-wrap: wrap;
+    }
+    .term-tabs {
+      display: flex;
+      gap: 6px;
+    }
+    .term-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .term-tab:hover {
+      color: var(--text-main);
+    }
+    .term-tab.active {
+      color: #FFFFFF;
+      background: var(--bg-card-elevated);
+    }
+    .terminal-body {
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      color: #E2E8F0;
+      line-height: 1.7;
+      position: relative;
+      background: #06080E;
+    }
+    .term-code-block {
+      display: none;
+    }
+    .term-code-block.active {
+      display: block;
+    }
+    .term-comment {
+      color: #64748B;
+    }
+    .term-cmd {
+      color: #38BDF8;
+    }
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    /* FAQ Accordion */
+    .faq-list {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .faq-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    .faq-item:hover {
+      border-color: var(--border-hover);
+    }
+    .faq-question {
+      padding: 20px 24px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text-main);
+      user-select: none;
+    }
+    .faq-chevron {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.25s ease;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .faq-item.open .faq-chevron {
+      transform: rotate(180deg);
+      color: var(--cyan);
+    }
+    .faq-answer {
+      display: none;
+      padding: 0 24px 22px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.65;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      margin-top: 4px;
+      padding-top: 16px;
+    }
+    .faq-item.open .faq-answer {
+      display: block;
+    }
+
+    /* Release Hub */
+    .release-hub {
+      background: linear-gradient(135deg, #0D1322 0%, #07090F 100%);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-card);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+    .release-info h3 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .release-info p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+    .hash-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Footer */
+    footer {
+      background: #05070A;
+      border-top: 1px solid var(--border-color);
+      padding: 50px 0 30px;
+      margin-top: 80px;
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: var(--text-main);
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: color 0.15s ease;
+    }
+    .footer-links a:hover {
+      color: var(--text-main);
+    }
+    .footer-bottom {
+      padding-top: 24px;
+      text-align: center;
+      color: var(--text-sub);
+      font-size: 0.82rem;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-card-elevated);
+      border: 1px solid var(--cyan);
+      color: #FFFFFF;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 9999;
+    }
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .spotlight-grid { grid-template-columns: 1fr; }
+      .connectors-grid { grid-template-columns: repeat(2, 1fr); }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 640px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .connectors-grid { grid-template-columns: 1fr; }
+      .release-hub { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="container nav-inner">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 32 32" role="img" aria-label="Datly">
+            <rect width="32" height="32" rx="8" fill="#1f6b4a"/>
+            <path fill="none" stroke="#f3f5f0" stroke-width="2.4" stroke-linecap="round" d="M7.5 23.5h17"/>
+            <path fill="none" stroke="#f3f5f0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M9 20.2l5-6.4 4.2 3.1L23.2 8.6"/>
+            <circle cx="23.2" cy="8.6" r="1.85" fill="#f3f5f0"/>
+          </svg>
+        </div>
+        <span>DATLY</span>
+        <span class="brand-version">v0.8.0-beta</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#canvas">Ground Truth</a>
+        <a href="#connectors">Connectors (15+)</a>
+        <a href="#comparison">Compare</a>
+        <a href="#quickstart">Quickstart</a>
+        <a href="#faq">FAQ</a>
+      </div>
+
+      <div class="nav-actions">
+        <a href="https://github.com/arpanjot-coding/Datly" target="_blank" rel="noopener" class="gh-star-btn" title="Star Datly on GitHub">
+          <svg class="gh-icon" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          <span>Star</span>
+          <span class="gh-sep"></span>
+          <svg class="star-icon" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+          <span class="gh-count" id="gh-star-count">108</span>
+        </a>
+
+        <a href="#quickstart" class="btn-nav-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>Quickstart</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="container">
+      
+      <div class="hero-badge-pill">
+        <span class="dot"></span>
+        <span>Next-Generation AI Data IDE & Analytics Workbench</span>
+      </div>
+
+      <div class="hero-app-icon-wrap">
+        <div class="hero-app-icon">
+          <svg viewBox="0 0 32 32" role="img" aria-label="Datly Logo">
+            <rect width="32" height="32" rx="7" fill="#1f6b4a"/>
+            <path fill="none" stroke="#f3f5f0" stroke-width="2.4" stroke-linecap="round" d="M7.5 23.5h17"/>
+            <path fill="none" stroke="#f3f5f0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M9 20.2l5-6.4 4.2 3.1L23.2 8.6"/>
+            <circle cx="23.2" cy="8.6" r="1.85" fill="#f3f5f0"/>
+          </svg>
+        </div>
+      </div>
+
+      <h1>Talk to your data.<br><span class="gradient">Verify every single row.</span></h1>
+      
+      <p>
+        Datly is the open-source, local-first analytics IDE where natural language transforms enterprise tables into interactive charts, and the computed data rows stay right on screen under the line. Zero cloud data exfiltration. Zero hallucinations.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#quickstart" class="btn-hero-primary">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <div class="btn-text-block">
+            <span class="btn-title">Get Started in 1 Command</span>
+            <span class="btn-sub">uv run data_formulator</span>
+          </div>
+        </a>
+
+        <a href="https://github.com/arpanjot-coding/Datly" target="_blank" rel="noopener" class="btn-hero-secondary">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          <span>View on GitHub</span>
+        </a>
+
+        <a href="#releases" class="btn-hero-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>Desktop App</span>
+        </a>
+      </div>
+
+      <div class="trust-badges">
+        <span>🛡️ <strong>100% Local Processing</strong> (DuckDB + In-Memory)</span>
+        <span>•</span>
+        <span>🔌 <strong>15+ Enterprise Connectors</strong></span>
+        <span>•</span>
+        <span>🔒 <strong>Zero Data Exfiltration</strong></span>
+        <span>•</span>
+        <span>🤖 <strong>Multi-Model Agnostic</strong> (Claude, GPT, Ollama)</span>
+      </div>
+
+      <!-- IDE Workspace Showcase -->
+      <div class="showcase-wrapper">
+        <div class="ide-window">
+          <div class="ide-header">
+            <div class="ide-traffic-lights">
+              <span class="tl-red"></span>
+              <span class="tl-yellow"></span>
+              <span class="tl-green"></span>
+            </div>
+            <div class="ide-title-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <span>Stock Prices Analysis — Thread 2 (Active Canvas)</span>
+            </div>
+            <div class="ide-status">
+              <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10B981; box-shadow:0 0 6px #10B981;"></span>
+              <span>DuckDB In-Memory (Local)</span>
+            </div>
+          </div>
+          
+          <div class="ide-body">
+            <img id="ide-showcase-img" src="images/workspace.png" alt="Datly Data IDE Workspace showing Data Threads, Live Vega Visualization, and Ground-Truth Grid Inspection">
+          </div>
+
+          <div class="ide-tabs-bar">
+            <button class="ide-feature-tab active" onclick="switchShowcase('workspace.png', this)">
+              <span class="tab-icon">📊</span>
+              <span>Full Analytics IDE</span>
+            </button>
+            <button class="ide-feature-tab" onclick="switchShowcase('about-explore.png', this)">
+              <span class="tab-icon">🔍</span>
+              <span>Explore Ground-Truth Canvas</span>
+            </button>
+            <button class="ide-feature-tab" onclick="switchShowcase('about-data.png', this)">
+              <span class="tab-icon">🔌</span>
+              <span>15+ Data Connectors</span>
+            </button>
+            <button class="ide-feature-tab" onclick="switchShowcase('about-dashboard.png', this)">
+              <span class="tab-icon">📌</span>
+              <span>Multi-Chart Dashboards</span>
+            </button>
+            <button class="ide-feature-tab" onclick="switchShowcase('screenshot-movies-report.webp', this)">
+              <span class="tab-icon">📝</span>
+              <span>TipTap Narrative Reports</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Section 01: Core Pillars & Architecture -->
+  <section id="features">
+    <div class="container">
+      
+      <div class="section-header">
+        <div class="section-kicker">01 / ARCHITECTURAL PILLARS</div>
+        <h2>Engineering Rigor Meets Fluid Exploration</h2>
+        <p>Built from the ground up to solve the state corruption of notebooks and the rigidity of legacy BI.</p>
+      </div>
+
+      <div class="features-grid">
+        
+        <div class="feature-card">
+          <div class="feature-icon-badge badge-blue">🌲</div>
+          <h3>Non-Destructive Data Threads</h3>
+          <p>Each analytical inquiry forms an isolated thread branch (DAG). Follow-up questions build on intermediate derived tables without mutating baseline datasets or overwriting state.</p>
+          <span class="feature-tag">Lineage State Machine</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-badge badge-cyan">🔬</div>
+          <h3>Ground-Truth Data Canvas</h3>
+          <p>Say goodbye to AI hallucinations. Every visualization is drawn from a physical derived table that sits directly underneath the chart. Inspect every cell and download verified CSVs.</p>
+          <span class="feature-tag">Zero Phantom Metrics</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-badge badge-green">⚡</div>
+          <h3>DuckDB In-Memory Engine</h3>
+          <p>Lightning-fast vectorized query execution powered by DuckDB, Pandas, and PyArrow. Run complex aggregations, window functions, and joins across millions of rows locally in milliseconds.</p>
+          <span class="feature-tag">Vectorized Analytics</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-badge badge-amber">🎨</div>
+          <h3>Concept Encoding Shelves</h3>
+          <p>Drag and drop data fields into intuitive visual encoding shelves: X, Y, Color, Size, Facet, and Repeat. Bi-directional sync between natural language prompts and Vega-Lite specs.</p>
+          <span class="feature-tag">Grammar of Graphics</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-badge badge-violet">📝</div>
+          <h3>TipTap Narrative Reports</h3>
+          <p>Transform raw exploratory charts into executive-ready communication artifacts. A rich WYSIWYG editor allows you to interweave narrative commentary with live embedded visual cards.</p>
+          <span class="feature-tag">Executive Publishing</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-badge badge-blue">🔒</div>
+          <h3>Local-First Zero Exfiltration</h3>
+          <p>Enterprise data governance built-in. Your raw rows never leave your computer. Only column schemas and sanitized metadata are sent to LLMs for code synthesis.</p>
+          <span class="feature-tag">Air-Gapped & Offline</span>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section 02: Ground Truth Canvas Spotlight -->
+  <section id="canvas" style="background: rgba(13, 17, 26, 0.4);">
+    <div class="container">
+      
+      <div class="section-header">
+        <div class="section-kicker">02 / GROUND TRUTH VERIFICATION</div>
+        <h2>The Row Under The Line</h2>
+        <p>A table can hold an answer and still hide it. Datly ensures the question, the chart, and the exact computed data rows always remain visible together.</p>
+      </div>
+
+      <div class="spotlight-grid">
+        <div class="spotlight-card">
+          <div class="spotlight-preview">
+            <img src="images/about-explore.png" alt="Explore Canvas with Chart and Data Grid">
+          </div>
+          <div class="spotlight-content">
+            <h3>Explore: The Synchronized Check</h3>
+            <p>
+              When a question is asked (e.g. <em>"Closing price for GOOGL and MSFT"</em>), Datly computes a new derived table (`stock-close`) and plots it. The grid directly under the curve displays the exact values. If the model made an error, you catch it instantly before sharing.
+            </p>
+            <div style="display:flex; gap:8px;">
+              <span class="brand-version">Interactive Zoom</span>
+              <span class="brand-version">CSV Download</span>
+              <span class="brand-version">Curve / Step / Points</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="spotlight-card">
+          <div class="spotlight-preview">
+            <img src="images/about-dashboard.png" alt="Multi-Chart Dashboard Pinboard">
+          </div>
+          <div class="spotlight-content">
+            <h3>Dashboards & Reporting Without Copying</h3>
+            <p>
+              Pinning charts into dashboards or embedding them into TipTap narrative reports does not duplicate data. All surfaces share live references to the underlying data thread DAG. Close the canvas anytime—your derived tables stay persistent.
+            </p>
+            <div style="display:flex; gap:8px;">
+              <span class="brand-version">Multi-Card Pinboard</span>
+              <span class="brand-version">PDF Export</span>
+              <span class="brand-version">Linked DAG State</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section 03: 15+ Enterprise Connectors -->
+  <section id="connectors">
+    <div class="container">
+      
+      <div class="section-header">
+        <div class="section-kicker">03 / ENTERPRISE DATA CONNECTORS</div>
+        <h2>Connect Once. Query Locally.</h2>
+        <p>Incorporate live tables from your data lakes, warehouses, relational databases, cloud buckets, and live web sources.</p>
+      </div>
+
+      <div class="connector-filters">
+        <button class="filter-btn active" onclick="filterConnectors('all', this)">All Connectors (15+)</button>
+        <button class="filter-btn" onclick="filterConnectors('warehouse', this)">Warehouses & Lakes</button>
+        <button class="filter-btn" onclick="filterConnectors('sql', this)">Relational SQL</button>
+        <button class="filter-btn" onclick="filterConnectors('cloud', this)">NoSQL & Cloud</button>
+        <button class="filter-btn" onclick="filterConnectors('files', this)">Files & Web</button>
+      </div>
+
+      <div class="connectors-grid">
+        
+        <div class="connector-box" data-cat="warehouse">
+          <div class="conn-icon">⚡</div>
+          <div class="conn-info">
+            <h4>Databricks</h4>
+            <span>SQL Warehouse / Delta</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="warehouse">
+          <div class="conn-icon">🔍</div>
+          <div class="conn-info">
+            <h4>Google BigQuery</h4>
+            <span>GCP Analytics / OAuth</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="warehouse">
+          <div class="conn-icon">🚀</div>
+          <div class="conn-info">
+            <h4>ClickHouse</h4>
+            <span>Ultra-fast OLAP</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="warehouse">
+          <div class="conn-icon">☁️</div>
+          <div class="conn-info">
+            <h4>AWS Athena & S3</h4>
+            <span>Presto Serverless S3</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="warehouse">
+          <div class="conn-icon">📊</div>
+          <div class="conn-info">
+            <h4>Azure Kusto (ADX)</h4>
+            <span>Telemetry & KQL</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="sql">
+          <div class="conn-icon">🐘</div>
+          <div class="conn-info">
+            <h4>PostgreSQL</h4>
+            <span>Direct Schema Inspection</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="sql">
+          <div class="conn-icon">🐬</div>
+          <div class="conn-info">
+            <h4>MySQL & MariaDB</h4>
+            <span>Transactional Tables</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="sql">
+          <div class="conn-icon">🏢</div>
+          <div class="conn-info">
+            <h4>Microsoft SQL Server</h4>
+            <span>Enterprise Schemas</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="sql">
+          <div class="conn-icon">🦆</div>
+          <div class="conn-info">
+            <h4>DuckDB & SQLite</h4>
+            <span>Local Embedded Engine</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="cloud">
+          <div class="conn-icon">🍃</div>
+          <div class="conn-info">
+            <h4>MongoDB</h4>
+            <span>Auto JSON Flattening</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="cloud">
+          <div class="conn-icon">🌌</div>
+          <div class="conn-info">
+            <h4>Azure Cosmos DB</h4>
+            <span>Global Distributed NoSQL</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="cloud">
+          <div class="conn-icon">📦</div>
+          <div class="conn-info">
+            <h4>Azure Blob Storage</h4>
+            <span>Parquet & CSV Blobs</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="files">
+          <div class="conn-icon">📈</div>
+          <div class="conn-info">
+            <h4>Yahoo Finance (yfinance)</h4>
+            <span>Live Stock Market Feeds</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="files">
+          <div class="conn-icon">📑</div>
+          <div class="conn-info">
+            <h4>Excel & Parquet</h4>
+            <span>Multi-sheet .xlsx, .csv</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="files">
+          <div class="conn-icon">🌐</div>
+          <div class="conn-info">
+            <h4>Web Table Scraper</h4>
+            <span>Playwright + lxml Engine</span>
+          </div>
+        </div>
+
+        <div class="connector-box" data-cat="warehouse">
+          <div class="conn-icon">🧭</div>
+          <div class="conn-info">
+            <h4>Apache Superset</h4>
+            <span>Dataset & Chart Import</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section 04: Capability Comparison Matrix -->
+  <section id="comparison">
+    <div class="container">
+      
+      <div class="section-header">
+        <div class="section-kicker">04 / ARCHITECTURAL COMPARISON</div>
+        <h2>Why Teams Choose Datly</h2>
+        <p>A side-by-side technical evaluation against traditional data exploration tools.</p>
+      </div>
+
+      <div class="table-container">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Feature / Security Control</th>
+              <th>Jupyter Notebooks</th>
+              <th>Legacy Cloud BI (Tableau / PowerBI)</th>
+              <th>SQL IDEs (DBeaver)</th>
+              <th class="highlight-col">DATLY IDE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Natural Language AI Synthesis</strong></td>
+              <td>⚠️ Third-party plugin</td>
+              <td>⚠️ Costly proprietary copilot</td>
+              <td>❌ None or basic autocompletion</td>
+              <td class="highlight-col">⚡ <strong>Native Grounded Agent (@table)</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Ground-Truth Row Grid Under Chart</strong></td>
+              <td>❌ Separate cell output</td>
+              <td>❌ Complex nested drill-down</td>
+              <td>❌ Manual query required</td>
+              <td class="highlight-col">🛡️ <strong>Always Visible on Canvas</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Visual Encoding Shelves + Agent</strong></td>
+              <td>❌ Code cells only</td>
+              <td>⚠️ Shelves only (No Agent)</td>
+              <td>❌ Code only</td>
+              <td class="highlight-col">✅ <strong>Bi-Directional Shelves + Agent</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Local Data Privacy (Zero Exfiltration)</strong></td>
+              <td>✅ Local execution</td>
+              <td>❌ Cloud ingestion required</td>
+              <td>✅ Local query</td>
+              <td class="highlight-col">🔒 <strong>100% Local (Schema-Only to LLM)</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Data Lineage Architecture</strong></td>
+              <td>❌ Linear, stateful cell traps</td>
+              <td>❌ Static data models</td>
+              <td>❌ Query history list</td>
+              <td class="highlight-col">🌲 <strong>Branching Data Threads (DAG)</strong></td>
+            </tr>
+            <tr>
+              <td><strong>In-Memory Vectorized Engine</strong></td>
+              <td>⚠️ Kernel dependent</td>
+              <td>⚠️ Proprietary VertiPaq/Hyper</td>
+              <td>❌ Remote DB dependent</td>
+              <td class="highlight-col">⚡ <strong>DuckDB + Pandas + PyArrow</strong></td>
+            </tr>
+            <tr>
+              <td><strong>WYSIWYG Narrative Reporting</strong></td>
+              <td>❌ Markdown cells only</td>
+              <td>⚠️ Heavy dashboard canvas</td>
+              <td>❌ None</td>
+              <td class="highlight-col">📝 <strong>TipTap Rich-Text Editor</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Automated Web Table Scraper</strong></td>
+              <td>❌ Manual BeautifulSoup</td>
+              <td>❌ Not supported</td>
+              <td>❌ Not supported</td>
+              <td class="highlight-col">🌐 <strong>Built-in Headless Playwright</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Model Agnostic (BYOK / Local)</strong></td>
+              <td>⚠️ Manual API wiring</td>
+              <td>❌ Vendor lock-in</td>
+              <td>❌ N/A</td>
+              <td class="highlight-col">🔓 <strong>LiteLLM (Claude, GPT, Ollama)</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section 05: Quickstart & Deployment Terminal -->
+  <section id="quickstart" style="background: rgba(13, 17, 26, 0.4);">
+    <div class="container">
+      
+      <div class="section-header">
+        <div class="section-kicker">05 / ZERO FRICTION SETUP</div>
+        <h2>Launch Datly in Under 60 Seconds</h2>
+        <p>Choose your preferred installation method: modern uv package manager, docker container, or 1-prompt AI assistant.</p>
+      </div>
+
+      <div class="terminal-wrapper">
+        <div class="terminal-nav">
+          <div class="term-tabs">
+            <button class="term-tab active" onclick="switchTermTab('uv', this)">Astral uv (Fastest)</button>
+            <button class="term-tab" onclick="switchTermTab('pip', this)">Python pip + Yarn</button>
+            <button class="term-tab" onclick="switchTermTab('docker', this)">Docker Compose</button>
+            <button class="term-tab" onclick="switchTermTab('agent', this)">1-Prompt AI Agent</button>
+            <button class="term-tab" onclick="switchTermTab('desktop', this)">Desktop Build</button>
+          </div>
+          <div>
+            <button class="copy-btn" onclick="copyTermCode(this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copy</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="terminal-body">
+          
+          <div id="code-uv" class="term-code-block active">
+            <span class="term-comment"># 1. Clone the repository</span><br>
+            <span class="term-cmd">git clone https://github.com/arpanjot-coding/Datly.git</span><br>
+            <span class="term-cmd">cd Datly</span><br><br>
+            <span class="term-comment"># 2. Build the frontend interface</span><br>
+            <span class="term-cmd">yarn && yarn build</span><br><br>
+            <span class="term-comment"># 3. Synchronize backend & launch local analytical IDE</span><br>
+            <span class="term-cmd">uv sync</span><br>
+            <span class="term-cmd">uv run data_formulator</span><br><br>
+            <span class="term-comment"># Open browser at: http://localhost:5000</span>
+          </div>
+
+          <div id="code-pip" class="term-code-block">
+            <span class="term-comment"># Standard Python venv + pip installation</span><br>
+            <span class="term-cmd">git clone https://github.com/arpanjot-coding/Datly.git && cd Datly</span><br>
+            <span class="term-cmd">yarn && yarn build</span><br>
+            <span class="term-cmd">python -m venv .venv</span><br>
+            <span class="term-cmd">source .venv/bin/activate  # On Windows: .venv\Scripts\activate</span><br>
+            <span class="term-cmd">pip install -e .</span><br>
+            <span class="term-cmd">data_formulator</span>
+          </div>
+
+          <div id="code-docker" class="term-code-block">
+            <span class="term-comment"># Run isolated self-hosted container</span><br>
+            <span class="term-cmd">git clone https://github.com/arpanjot-coding/Datly.git && cd Datly</span><br>
+            <span class="term-cmd">docker-compose up --build -d</span><br><br>
+            <span class="term-comment"># Ready at: http://localhost:5000</span>
+          </div>
+
+          <div id="code-agent" class="term-code-block">
+            <span class="term-comment"># Open Claude Code, Cursor, Codex, Gemini or Grok and send:</span><br>
+            <span class="term-cmd">Set up and launch Datly: synchronize Python dependencies using uv, install frontend packages via yarn, compile the production bundle, and launch the Datly analytical workspace on localhost.</span>
+          </div>
+
+          <div id="code-desktop" class="term-code-block">
+            <span class="term-comment"># Compile native desktop installer (.exe, .dmg, .AppImage)</span><br>
+            <span class="term-cmd">yarn electron:build</span><br><br>
+            <span class="term-comment"># Binaries generated in ./release-electron/</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section 06: Releases & Distribution -->
+  <section id="releases">
+    <div class="container">
+      
+      <div class="section-header">
+        <div class="section-kicker">06 / VERIFIED RELEASES</div>
+        <h2>Download Desktop Packages</h2>
+        <p>Native standalone performance for Windows, macOS, and Linux with automated hardware acceleration.</p>
+      </div>
+
+      <div class="release-hub">
+        <div class="release-info">
+          <h3>Datly Desktop Suite v0.8.0-beta</h3>
+          <p>Electron 43 Native Container · DuckDB Embedded Engine · Multi-LLM Provider</p>
+          
+          <div class="hash-display">
+            <span>SHA-256: <code id="datly-sha256">a4e287f3b89012fce3901bce55d89849208a462319087cf982a1789c09bd4b21</code></span>
+            <button class="copy-btn" onclick="copyHash(this)" style="margin-left: 8px;">Copy</button>
+          </div>
+        </div>
+
+        <div>
+          <a href="https://github.com/arpanjot-coding/Datly/releases" class="btn-hero-primary" target="_blank" rel="noopener">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <div class="btn-text-block">
+              <span class="btn-title">View All Release Assets</span>
+              <span class="btn-sub">Win · macOS · Linux</span>
+            </div>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section 07: Frequently Asked Questions -->
+  <section id="faq">
+    <div class="container">
+      
+      <div class="section-header">
+        <div class="section-kicker">07 / FREQUENTLY ASKED QUESTIONS</div>
+        <h2>Everything You Need to Know</h2>
+        <p>Clear answers to technical, security, and integration questions.</p>
+      </div>
+
+      <div class="faq-list">
+        
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>Does Datly send my private database records to OpenAI, Anthropic, or external servers?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-answer">
+            <strong>No.</strong> Datly enforces a strict local-first privacy boundary. When you query databases or load data, tables reside exclusively in local memory and DuckDB. When you ask questions in natural language, Datly transmits <em>only column names and data types</em> (with an optional 2-row sanitized preview) to the model for code synthesis. The synthesized transformation code runs 100% locally on your computer. Your raw records never leave your machine.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>Can I run Datly completely offline without any internet connection?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-answer">
+            <strong>Yes.</strong> Datly features native integration with local open-weights model runners via <strong>Ollama</strong>, <strong>vLLM</strong>, or <strong>LocalAI</strong>. By pointing Datly to your local Ollama instance (e.g., running `qwen2.5-coder:14b` or `llama3.3:70b`), you can conduct exploratory data science and build visualizations in an entirely air-gapped environment.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>How does Datly prevent AI chart hallucinations and false trends?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-answer">
+            Unlike conversational AI tools that directly generate static image pixels or guess summary values, Datly requires the AI to write verifiable Python or DuckDB SQL transformation steps. Those steps execute on your physical data to produce a tangible <strong>derived data table</strong>. In the Explore Canvas, that derived table sits right under the chart, giving you full row-by-row mathematical verification.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>How does Datly differ from Microsoft Research Data Formulator?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-answer">
+            Datly builds upon the groundbreaking concept encoding and data thread foundations established by Microsoft Research's Data Formulator, elevating it into a comprehensive, enterprise-ready data IDE. Datly introduces 15+ native cloud warehouse connectors (Databricks, BigQuery, Snowflake, Postgres), TipTap WYSIWYG narrative report publishing, multi-chart pinboard dashboards, cross-platform Electron desktop distribution, automated web table scraping via Playwright, and enterprise Single Sign-On (SSO).
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>How do Data Threads prevent the state corruption common in Jupyter notebooks?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-answer">
+            Jupyter notebooks execute cells sequentially against a mutable global namespace. Modifying an earlier cell can break subsequent calculations in subtle, hidden ways. Datly replaces this with a <strong>Directed Acyclic Graph (DAG) of Data Threads</strong>. Each inquiry branches into an isolated thread card containing its own input reference, transformation step, derived table, and chart. Original datasets remain strictly immutable.
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <div class="brand-icon">
+            <svg viewBox="0 0 32 32" role="img" aria-label="Datly">
+              <rect width="32" height="32" rx="8" fill="#1f6b4a"/>
+              <path fill="none" stroke="#f3f5f0" stroke-width="2.4" stroke-linecap="round" d="M7.5 23.5h17"/>
+              <path fill="none" stroke="#f3f5f0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M9 20.2l5-6.4 4.2 3.1L23.2 8.6"/>
+              <circle cx="23.2" cy="8.6" r="1.85" fill="#f3f5f0"/>
+            </svg>
+          </div>
+          <span>DATLY®</span>
+        </div>
+
+        <div class="footer-links">
+          <a href="https://github.com/arpanjot-coding/Datly" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/arpanjot-coding/Datly/releases" target="_blank" rel="noopener">Releases</a>
+          <a href="https://github.com/arpanjot-coding/Datly/blob/main/README.md" target="_blank" rel="noopener">Documentation</a>
+          <a href="https://github.com/arpanjot-coding/Datly/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        © 2026 Datly Project · High-Assurance AI Data Visualization IDE & Analytical Workbench · Free & Open Source Under MIT
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Notification element -->
+  <div id="toast">Copied to clipboard!</div>
+
+  <!-- Interactive Scripts -->
+  <script>
+    // Live GitHub Stars Counter
+    async function updateGitHubStars() {
+      try {
+        const res = await fetch('https://api.github.com/repos/arpanjot-coding/Datly');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.stargazers_count === 'number') {
+            document.getElementById('gh-star-count').innerText = data.stargazers_count;
+          }
+        }
+      } catch (e) {
+        // Fallback default
+      }
+    }
+    updateGitHubStars();
+
+    // Showcase Image Switcher
+    function switchShowcase(imgName, btn) {
+      document.querySelectorAll('.ide-feature-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const img = document.getElementById('ide-showcase-img');
+      img.style.opacity = '0.3';
+      img.src = 'images/' + imgName;
+      setTimeout(() => {
+        img.style.transition = 'opacity 0.25s ease';
+        img.style.opacity = '1';
+      }, 50);
+    }
+
+    // Connectors Filter
+    function filterConnectors(category, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const boxes = document.querySelectorAll('.connector-box');
+      boxes.forEach(box => {
+        if (category === 'all' || box.getAttribute('data-cat') === category) {
+          box.style.display = 'flex';
+        } else {
+          box.style.display = 'none';
+        }
+      });
+    }
+
+    // Terminal Tabs Switcher
+    function switchTermTab(tabId, btn) {
+      document.querySelectorAll('.term-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.term-code-block').forEach(c => c.classList.remove('active'));
+      const activeBlock = document.getElementById('code-' + tabId);
+      if (activeBlock) {
+        activeBlock.classList.add('active');
+      }
+    }
+
+    // Toast Utility
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    // Copy Terminal Code
+    function copyTermCode(btn) {
+      const activeBlock = document.querySelector('.term-code-block.active');
+      if (!activeBlock) return;
+      const text = activeBlock.innerText.replace(/#.*$/gm, '').trim();
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Command copied to clipboard!');
+      });
+    }
+
+    // Copy Hash
+    function copyHash(btn) {
+      const text = document.getElementById('datly-sha256').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('SHA-256 hash copied!');
+      });
+    }
+
+    // Toggle FAQ Accordion
+    function toggleFaq(el) {
+      const item = el.parentElement;
+      item.classList.toggle('open');
+    }
+  </script>
+
+</body>
+</html>
