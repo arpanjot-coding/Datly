@@ -33,10 +33,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js 22
         uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
           cache: yarn
 
       - name: Set up uv
@@ -46,7 +46,7 @@ jobs:
           enable-cache: true
 
       - name: Install frontend dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile --ignore-engines
 
       - name: Build frontend
         run: yarn build
