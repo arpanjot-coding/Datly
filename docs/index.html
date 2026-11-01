@@ -1904,9 +1904,10 @@
           <h3 data-i18n="releases_box_title">Datly Desktop Suite v0.8.0-beta</h3>
           <p data-i18n="releases_box_desc">Electron 43 Native Container · DuckDB Embedded Engine · Multi-LLM Provider</p>
           
-          <div class="hash-display">
-            <span>SHA-256: <code id="datly-sha256">a4e287f3b89012fce3901bce55d89849208a462319087cf982a1789c09bd4b21</code></span>
-            <button class="copy-btn" onclick="copyHash(this)" style="margin-left: 8px;">Copy</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+            <span class="brand-version">Windows x64 (.exe / .zip)</span>
+            <span class="brand-version">macOS Universal (.dmg)</span>
+            <span class="brand-version">Linux (.AppImage / .deb)</span>
           </div>
         </div>
 
@@ -2268,13 +2269,7 @@
       });
     }
 
-    // Copy Hash
-    function copyHash(btn) {
-      const text = document.getElementById('datly-sha256').innerText;
-      navigator.clipboard.writeText(text).then(() => {
-        showToast('SHA-256 hash copied!');
-      });
-    }
+
 
     // Toggle FAQ Accordion
     function toggleFaq(el) {
