@@ -46,6 +46,8 @@ scripts/
 node_modules/
 .env
 .env.*
+!.env.template
+!.env.example
 .project_id
 .github_repo
 

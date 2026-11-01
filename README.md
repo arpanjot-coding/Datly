@@ -408,7 +408,7 @@ flowchart LR
      ```
 
 5. **Access the Workspace:**
-   Open your browser to: **`http://localhost:5000`** (or **`http://localhost:5173`** during development).
+   Open your browser to: **`http://localhost:5567`** (or **`http://localhost:5173`** during development).
 
 ---
 
@@ -438,7 +438,7 @@ Deploy Datly as an isolated, self-hosted container on local hardware or private 
 docker-compose up --build -d
 
 # Open workspace in your browser
-# URL: http://localhost:5000
+# URL: http://localhost:5567
 ```
 
 ---
@@ -457,20 +457,20 @@ Compiled installers will be placed in the `release-electron/` directory.
 
 ## ⚙️ Comprehensive Configuration & Environment Reference
 
-| Environment Variable | Description | Default | Example / Options |
+| Environment Variable / Flag | Description | Default | Example / Options |
 | :--- | :--- | :---: | :--- |
-| `DATLY_PORT` | Port for the local analytical API server | `5000` | `8080`, `5000` |
-| `DATLY_HOST` | Network interface binding | `127.0.0.1` | `0.0.0.0` (for container / LAN access) |
+| `PORT` / `-p, --port` | Port for the local analytical API server | `5567` | `5567`, `8080` |
+| `HOST` / `--host` | Network interface binding | `127.0.0.1` | `0.0.0.0` (for container / LAN access) |
+| `SANDBOX` / `--sandbox` | Code execution environment backend | `local` | `local` (subprocess), `docker` |
+| `DATA_FORMULATOR_HOME` / `--data-dir` | Workspace and persistent sessions root | `~/.data_formulator` | `/custom/path/to/data` |
+| `MAX_DISPLAY_ROWS` / `--max-display-rows` | Maximum rows sent to UI for table inspection | `10000` | `1000`, `5000`, `10000` |
+| `DISABLE_CUSTOM_MODELS` | Restrict LLMs to server-configured endpoints | `false` | `true`, `false` |
+| `DISABLE_DATA_CONNECTORS` | Disable external database connector tabs | `false` | `true`, `false` |
+| `FLASK_SECRET_KEY` | Session encryption entropy secret | *Auto-generated* | `hex-encoded-entropy-string` |
 | `ANTHROPIC_API_KEY` | Anthropic Claude API Key | *None* | `sk-ant-api03-...` |
 | `OPENAI_API_KEY` | OpenAI API Key | *None* | `sk-proj-...` |
 | `GEMINI_API_KEY` | Google Gemini API Key | *None* | `AIzaSy...` |
 | `OLLAMA_API_BASE` | Local Ollama endpoint for offline synthesis | `http://localhost:11434` | `http://127.0.0.1:11434` |
-| `AZURE_OPENAI_KEY` | Azure OpenAI Service Key | *None* | `your-azure-key` |
-| `AZURE_OPENAI_ENDPOINT`| Azure OpenAI Endpoint URL | *None* | `https://your-org.openai.azure.com/` |
-| `DEFAULT_LLM_MODEL` | Default model used for conversational synthesis | `claude-3-5-sonnet-latest`| `gpt-4o`, `gemini/gemini-2.0-flash` |
-| `ENABLE_WEB_SCRAPER` | Enable Playwright automated web table scraper | `true` | `true`, `false` |
-| `MAX_SAMPLE_ROWS` | Number of sample rows sent to LLM for schema context | `3` | `2`, `3`, `5` |
-| `SESSION_SECRET` | Secret key for local session encryption | *Auto-generated* | `hex-encoded-entropy-string` |
 
 ---
 
@@ -494,7 +494,7 @@ Compiled installers will be placed in the `release-electron/` directory.
 | **`Playwright browser executable missing`** | Headless browser dependencies not installed for Web Scraper. | Run `uv run python -m playwright install chromium` or `python -m playwright install chromium`. |
 | **`DuckDB native compilation error`** | C++ runtime or binary mismatch on legacy OS. | Ensure Python 3.11+ is running. DuckDB provides pre-compiled universal wheels; update pip with `python -m pip install --upgrade pip`. |
 | **`LLM Model Connection Timeout / 401`** | Expired, invalid, or missing API keys in `.env`. | Verify `.env` file exists in project root. Check that `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` has valid active quota. |
-| **`Port 5000 / 5173 already in use`** | Another background server instance is active. | Pass custom port flag: `uv run data_formulator --port 5050` or terminate conflicting process via `lsof -i :5000` / `netstat -ano`. |
+| **`Port 5567 / 5173 already in use`** | Another background server instance is active. | Pass custom port flag: `uv run data_formulator --port 5568` or terminate conflicting process via `lsof -i :5567` / `netstat -ano`. |
 | **Database Connection Refused** | Remote database firewall blocking local IP or missing SSL certificate. | Verify credentials and firewall whitelist. In connection configuration, toggle **SSL Mode** or verify tunnel settings. |
 
 ---
