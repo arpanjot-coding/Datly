@@ -49,6 +49,9 @@
   <link rel="apple-touch-icon" href="images/logo-128.png">
   <link rel="manifest" href="site.webmanifest">
 
+  <!-- Multi-Language Translations (24 Languages) -->
+  <script src="translations.js"></script>
+
   <!-- Typography: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1097,6 +1100,182 @@
       font-size: 0.82rem;
     }
 
+        /* Language Picker Dropdown */
+    .lang-dropdown-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .lang-picker-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 7px 13px;
+      border-radius: var(--radius-pill);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .lang-picker-btn:hover {
+      background: var(--bg-card-elevated);
+      border-color: var(--border-hover);
+    }
+    .lang-picker-btn .chevron-mini {
+      transition: transform 0.2s ease;
+      color: var(--text-muted);
+    }
+    .lang-dropdown-wrapper.open .chevron-mini {
+      transform: rotate(180deg);
+      color: var(--cyan);
+    }
+    .lang-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 420px;
+      max-height: 480px;
+      background: rgba(12, 16, 26, 0.98);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(59, 130, 246, 0.15);
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: fadeInDown 0.18s ease-out;
+    }
+    .lang-dropdown-wrapper.open .lang-dropdown-menu {
+      display: flex;
+    }
+    [dir="rtl"] .lang-dropdown-menu {
+      right: auto;
+      left: 0;
+      text-align: right;
+    }
+    .lang-dropdown-header {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .lang-auto-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--cyan-dim);
+      color: var(--cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 2px 7px;
+      border-radius: 99px;
+      font-size: 0.68rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .lang-options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 8px;
+      overflow-y: auto;
+      max-height: 400px;
+    }
+    .lang-option {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: left;
+      transition: all 0.15s ease;
+      width: 100%;
+    }
+    [dir="rtl"] .lang-option {
+      text-align: right;
+    }
+    .lang-option:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+    .lang-option.active {
+      background: var(--accent-dim);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: #60A5FA;
+    }
+    .lang-option .opt-flag {
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+    .lang-option .opt-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.25;
+    }
+    .lang-option .opt-native {
+      font-weight: 700;
+      color: var(--text-main);
+      font-size: 0.82rem;
+    }
+    .lang-option.active .opt-native {
+      color: #93C5FD;
+    }
+    .lang-option .opt-en {
+      font-size: 0.7rem;
+      color: var(--text-sub);
+    }
+
+    /* RTL Layout Fixes */
+    [dir="rtl"] body {
+      text-align: right;
+    }
+    [dir="rtl"] .nav-inner,
+    [dir="rtl"] .hero-actions,
+    [dir="rtl"] .trust-badges,
+    [dir="rtl"] .ide-tabs-bar,
+    [dir="rtl"] .connector-filters,
+    [dir="rtl"] .terminal-nav,
+    [dir="rtl"] .footer-inner {
+      direction: rtl;
+    }
+    [dir="rtl"] .faq-question {
+      text-align: right;
+    }
+    [dir="rtl"] .term-code-block {
+      direction: ltr;
+      text-align: left;
+    }
+    [dir="rtl"] table.comparison-table {
+      text-align: right;
+    }
+    [dir="rtl"] .brand-version {
+      direction: ltr;
+    }
+    [dir="rtl"] .btn-hero-primary .btn-text-block {
+      text-align: right;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     /* Toast Notification */
     #toast {
       position: fixed;
@@ -1153,18 +1332,18 @@
       </a>
 
       <div class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#canvas">Ground Truth</a>
-        <a href="#connectors">Connectors (15+)</a>
-        <a href="#comparison">Compare</a>
-        <a href="#quickstart">Quickstart</a>
-        <a href="#faq">FAQ</a>
+        <a href="#features" data-i18n="nav_features">Features</a>
+        <a href="#canvas" data-i18n="nav_canvas">Ground Truth</a>
+        <a href="#connectors" data-i18n="nav_connectors">Connectors (15+)</a>
+        <a href="#comparison" data-i18n="nav_comparison">Compare</a>
+        <a href="#quickstart" data-i18n="nav_quickstart">Quickstart</a>
+        <a href="#faq" data-i18n="nav_faq">FAQ</a>
       </div>
 
       <div class="nav-actions">
         <a href="https://github.com/arpanjot-coding/Datly" target="_blank" rel="noopener" class="gh-star-btn" title="Star Datly on GitHub">
           <svg class="gh-icon" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-          <span>Star</span>
+          <span data-i18n="nav_star">Star</span>
           <span class="gh-sep"></span>
           <svg class="star-icon" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
           <span class="gh-count" id="gh-star-count">108</span>
@@ -1172,7 +1351,7 @@
 
         <a href="#quickstart" class="btn-nav-primary">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          <span>Quickstart</span>
+          <span data-i18n="nav_quickstart_btn">Quickstart</span>
         </a>
       </div>
     </div>
@@ -1184,7 +1363,7 @@
       
       <div class="hero-badge-pill">
         <span class="dot"></span>
-        <span>Next-Generation AI Data IDE & Analytics Workbench</span>
+        <span data-i18n="hero_badge">Next-Generation AI Data IDE & Analytics Workbench</span>
       </div>
 
       <div class="hero-app-icon-wrap">
@@ -1198,40 +1377,38 @@
         </div>
       </div>
 
-      <h1>Talk to your data.<br><span class="gradient">Verify every single row.</span></h1>
+      <h1 class="hero-title"><span data-i18n="hero_title_1">Talk to your data.</span><br><span class="gradient" data-i18n="hero_title_2">Verify every single row.</span></h1>
       
-      <p>
-        Datly is the open-source, local-first analytics IDE where natural language transforms enterprise tables into interactive charts, and the computed data rows stay right on screen under the line. Zero cloud data exfiltration. Zero hallucinations.
-      </p>
+      <p class="hero-desc" data-i18n="hero_desc">Datly is the open-source, local-first analytics IDE where natural language transforms enterprise tables into interactive charts, and the computed data rows stay right on screen under the line. Zero cloud data exfiltration. Zero hallucinations.</p>
 
       <div class="hero-actions">
         <a href="#quickstart" class="btn-hero-primary">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           <div class="btn-text-block">
-            <span class="btn-title">Get Started in 1 Command</span>
-            <span class="btn-sub">uv run data_formulator</span>
+            <span class="btn-title" data-i18n="hero_btn_quickstart">Get Started in 1 Command</span>
+            <span class="btn-sub" data-i18n="hero_btn_sub">uv run data_formulator</span>
           </div>
         </a>
 
         <a href="https://github.com/arpanjot-coding/Datly" target="_blank" rel="noopener" class="btn-hero-secondary">
           <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-          <span>View on GitHub</span>
+          <span data-i18n="hero_btn_github">View on GitHub</span>
         </a>
 
         <a href="#releases" class="btn-hero-secondary">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          <span>Desktop App</span>
+          <span data-i18n="hero_btn_desktop">Desktop App</span>
         </a>
       </div>
 
       <div class="trust-badges">
-        <span>🛡️ <strong>100% Local Processing</strong> (DuckDB + In-Memory)</span>
+        <span data-i18n="trust_local">🛡️ <strong>100% Local Processing</strong> (DuckDB + In-Memory)</span>
         <span>•</span>
-        <span>🔌 <strong>15+ Enterprise Connectors</strong></span>
+        <span data-i18n="trust_connectors">🔌 <strong>15+ Enterprise Connectors</strong></span>
         <span>•</span>
-        <span>🔒 <strong>Zero Data Exfiltration</strong></span>
+        <span data-i18n="trust_privacy">🔒 <strong>Zero Data Exfiltration</strong></span>
         <span>•</span>
-        <span>🤖 <strong>Multi-Model Agnostic</strong> (Claude, GPT, Ollama)</span>
+        <span data-i18n="trust_models">🤖 <strong>Multi-Model Agnostic</strong> (Claude, GPT, Ollama)</span>
       </div>
 
       <!-- IDE Workspace Showcase -->
@@ -1249,7 +1426,7 @@
             </div>
             <div class="ide-status">
               <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10B981; box-shadow:0 0 6px #10B981;"></span>
-              <span>DuckDB In-Memory (Local)</span>
+              <span data-i18n="ide_status">DuckDB In-Memory (Local)</span>
             </div>
           </div>
           
@@ -1260,23 +1437,23 @@
           <div class="ide-tabs-bar">
             <button class="ide-feature-tab active" onclick="switchShowcase('workspace.png', this)">
               <span class="tab-icon">📊</span>
-              <span>Full Analytics IDE</span>
+              <span data-i18n="ide_tab_ide">Full Analytics IDE</span>
             </button>
             <button class="ide-feature-tab" onclick="switchShowcase('about-explore.png', this)">
               <span class="tab-icon">🔍</span>
-              <span>Explore Ground-Truth Canvas</span>
+              <span data-i18n="ide_tab_explore">Explore Ground-Truth Canvas</span>
             </button>
             <button class="ide-feature-tab" onclick="switchShowcase('about-data.png', this)">
               <span class="tab-icon">🔌</span>
-              <span>15+ Data Connectors</span>
+              <span data-i18n="ide_tab_connectors">15+ Data Connectors</span>
             </button>
             <button class="ide-feature-tab" onclick="switchShowcase('about-dashboard.png', this)">
               <span class="tab-icon">📌</span>
-              <span>Multi-Chart Dashboards</span>
+              <span data-i18n="ide_tab_dashboards">Multi-Chart Dashboards</span>
             </button>
             <button class="ide-feature-tab" onclick="switchShowcase('screenshot-movies-report.webp', this)">
               <span class="tab-icon">📝</span>
-              <span>TipTap Narrative Reports</span>
+              <span data-i18n="ide_tab_reports">TipTap Narrative Reports</span>
             </button>
           </div>
         </div>
@@ -1293,53 +1470,53 @@
     <div class="container">
       
       <div class="section-header">
-        <div class="section-kicker">01 / ARCHITECTURAL PILLARS</div>
-        <h2>Engineering Rigor Meets Fluid Exploration</h2>
-        <p>Built from the ground up to solve the state corruption of notebooks and the rigidity of legacy BI.</p>
+        <div class="section-kicker" data-i18n="pillars_kicker">01 / ARCHITECTURAL PILLARS</div>
+        <h2 data-i18n="pillars_title">Engineering Rigor Meets Fluid Exploration</h2>
+        <p data-i18n="pillars_desc">Built from the ground up to solve the state corruption of notebooks and the rigidity of legacy BI.</p>
       </div>
 
       <div class="features-grid">
         
         <div class="feature-card">
           <div class="feature-icon-badge badge-blue">🌲</div>
-          <h3>Non-Destructive Data Threads</h3>
-          <p>Each analytical inquiry forms an isolated thread branch (DAG). Follow-up questions build on intermediate derived tables without mutating baseline datasets or overwriting state.</p>
-          <span class="feature-tag">Lineage State Machine</span>
+          <h3 data-i18n="p1_title">Non-Destructive Data Threads</h3>
+          <p data-i18n="p1_desc">Each analytical inquiry forms an isolated thread branch (DAG). Follow-up questions build on intermediate derived tables without mutating baseline datasets or overwriting state.</p>
+          <span class="feature-tag" data-i18n="p1_tag">Lineage State Machine</span>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon-badge badge-cyan">🔬</div>
-          <h3>Ground-Truth Data Canvas</h3>
-          <p>Say goodbye to AI hallucinations. Every visualization is drawn from a physical derived table that sits directly underneath the chart. Inspect every cell and download verified CSVs.</p>
-          <span class="feature-tag">Zero Phantom Metrics</span>
+          <h3 data-i18n="p2_title">Ground-Truth Data Canvas</h3>
+          <p data-i18n="p2_desc">Say goodbye to AI hallucinations. Every visualization is drawn from a physical derived table that sits directly underneath the chart. Inspect every cell and download verified CSVs.</p>
+          <span class="feature-tag" data-i18n="p2_tag">Zero Phantom Metrics</span>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon-badge badge-green">⚡</div>
-          <h3>DuckDB In-Memory Engine</h3>
-          <p>Lightning-fast vectorized query execution powered by DuckDB, Pandas, and PyArrow. Run complex aggregations, window functions, and joins across millions of rows locally in milliseconds.</p>
-          <span class="feature-tag">Vectorized Analytics</span>
+          <h3 data-i18n="p3_title">DuckDB In-Memory Engine</h3>
+          <p data-i18n="p3_desc">Lightning-fast vectorized query execution powered by DuckDB, Pandas, and PyArrow. Run complex aggregations, window functions, and joins across millions of rows locally in milliseconds.</p>
+          <span class="feature-tag" data-i18n="p3_tag">Vectorized Analytics</span>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon-badge badge-amber">🎨</div>
-          <h3>Concept Encoding Shelves</h3>
-          <p>Drag and drop data fields into intuitive visual encoding shelves: X, Y, Color, Size, Facet, and Repeat. Bi-directional sync between natural language prompts and Vega-Lite specs.</p>
-          <span class="feature-tag">Grammar of Graphics</span>
+          <h3 data-i18n="p4_title">Concept Encoding Shelves</h3>
+          <p data-i18n="p4_desc">Drag and drop data fields into intuitive visual encoding shelves: X, Y, Color, Size, Facet, and Repeat. Bi-directional sync between natural language prompts and Vega-Lite specs.</p>
+          <span class="feature-tag" data-i18n="p4_tag">Grammar of Graphics</span>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon-badge badge-violet">📝</div>
-          <h3>TipTap Narrative Reports</h3>
-          <p>Transform raw exploratory charts into executive-ready communication artifacts. A rich WYSIWYG editor allows you to interweave narrative commentary with live embedded visual cards.</p>
-          <span class="feature-tag">Executive Publishing</span>
+          <h3 data-i18n="p5_title">TipTap Narrative Reports</h3>
+          <p data-i18n="p5_desc">Transform raw exploratory charts into executive-ready communication artifacts. A rich WYSIWYG editor allows you to interweave narrative commentary with live embedded visual cards.</p>
+          <span class="feature-tag" data-i18n="p5_tag">Executive Publishing</span>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon-badge badge-blue">🔒</div>
-          <h3>Local-First Zero Exfiltration</h3>
-          <p>Enterprise data governance built-in. Your raw rows never leave your computer. Only column schemas and sanitized metadata are sent to LLMs for code synthesis.</p>
-          <span class="feature-tag">Air-Gapped & Offline</span>
+          <h3 data-i18n="p6_title">Local-First Zero Exfiltration</h3>
+          <p data-i18n="p6_desc">Enterprise data governance built-in. Your raw rows never leave your computer. Only column schemas and sanitized metadata are sent to LLMs for code synthesis.</p>
+          <span class="feature-tag" data-i18n="p6_tag">Air-Gapped & Offline</span>
         </div>
 
       </div>
@@ -1352,9 +1529,9 @@
     <div class="container">
       
       <div class="section-header">
-        <div class="section-kicker">02 / GROUND TRUTH VERIFICATION</div>
-        <h2>The Row Under The Line</h2>
-        <p>A table can hold an answer and still hide it. Datly ensures the question, the chart, and the exact computed data rows always remain visible together.</p>
+        <div class="section-kicker" data-i18n="spotlight_kicker">02 / GROUND TRUTH VERIFICATION</div>
+        <h2 data-i18n="spotlight_title">The Row Under The Line</h2>
+        <p data-i18n="spotlight_desc">A table can hold an answer and still hide it. Datly ensures the question, the chart, and the exact computed data rows always remain visible together.</p>
       </div>
 
       <div class="spotlight-grid">
@@ -1363,14 +1540,12 @@
             <img src="images/about-explore.png" alt="Datly Explore Canvas with Live Vega-Lite Visualization and Synchronized Ground-Truth Data Grid" loading="lazy" decoding="async">
           </div>
           <div class="spotlight-content">
-            <h3>Explore: The Synchronized Check</h3>
-            <p>
-              When a question is asked (e.g. <em>"Closing price for GOOGL and MSFT"</em>), Datly computes a new derived table (`stock-close`) and plots it. The grid directly under the curve displays the exact values. If the model made an error, you catch it instantly before sharing.
-            </p>
+            <h3 data-i18n="s1_title">Explore: The Synchronized Check</h3>
+            <p data-i18n="s1_desc">When a question is asked (e.g. Closing price for GOOGL and MSFT), Datly computes a new derived table (stock-close) and plots it. The grid directly under the curve displays the exact values. If the model made an error, you catch it instantly before sharing.</p>
             <div style="display:flex; gap:8px;">
-              <span class="brand-version">Interactive Zoom</span>
-              <span class="brand-version">CSV Download</span>
-              <span class="brand-version">Curve / Step / Points</span>
+              <span class="brand-version" data-i18n="s1_tag1">Interactive Zoom</span>
+              <span class="brand-version" data-i18n="s1_tag2">CSV Download</span>
+              <span class="brand-version" data-i18n="s1_tag3">Curve / Step / Points</span>
             </div>
           </div>
         </div>
@@ -1380,14 +1555,12 @@
             <img src="images/about-dashboard.png" alt="Datly Multi-Chart Dashboard Pinboard with Live Interactive Cross-Filtering" loading="lazy" decoding="async">
           </div>
           <div class="spotlight-content">
-            <h3>Dashboards & Reporting Without Copying</h3>
-            <p>
-              Pinning charts into dashboards or embedding them into TipTap narrative reports does not duplicate data. All surfaces share live references to the underlying data thread DAG. Close the canvas anytime—your derived tables stay persistent.
-            </p>
+            <h3 data-i18n="s2_title">Dashboards & Reporting Without Copying</h3>
+            <p data-i18n="s2_desc">Pinning charts into dashboards or embedding them into TipTap narrative reports does not duplicate data. All surfaces share live references to the underlying data thread DAG. Close the canvas anytime—your derived tables stay persistent.</p>
             <div style="display:flex; gap:8px;">
-              <span class="brand-version">Multi-Card Pinboard</span>
-              <span class="brand-version">PDF Export</span>
-              <span class="brand-version">Linked DAG State</span>
+              <span class="brand-version" data-i18n="s2_tag1">Multi-Card Pinboard</span>
+              <span class="brand-version" data-i18n="s2_tag2">PDF Export</span>
+              <span class="brand-version" data-i18n="s2_tag3">Linked DAG State</span>
             </div>
           </div>
         </div>
@@ -1401,17 +1574,17 @@
     <div class="container">
       
       <div class="section-header">
-        <div class="section-kicker">03 / ENTERPRISE DATA CONNECTORS</div>
-        <h2>Connect Once. Query Locally.</h2>
-        <p>Incorporate live tables from your data lakes, warehouses, relational databases, cloud buckets, and live web sources.</p>
+        <div class="section-kicker" data-i18n="connectors_kicker">03 / ENTERPRISE DATA CONNECTORS</div>
+        <h2 data-i18n="connectors_title">Connect Once. Query Locally.</h2>
+        <p data-i18n="connectors_desc">Incorporate live tables from your data lakes, warehouses, relational databases, cloud buckets, and live web sources.</p>
       </div>
 
       <div class="connector-filters">
-        <button class="filter-btn active" onclick="filterConnectors('all', this)">All Connectors (15+)</button>
-        <button class="filter-btn" onclick="filterConnectors('warehouse', this)">Warehouses & Lakes</button>
-        <button class="filter-btn" onclick="filterConnectors('sql', this)">Relational SQL</button>
-        <button class="filter-btn" onclick="filterConnectors('cloud', this)">NoSQL & Cloud</button>
-        <button class="filter-btn" onclick="filterConnectors('files', this)">Files & Web</button>
+        <button class="filter-btn active" onclick="filterConnectors('all', this)" data-i18n="filter_all">All Connectors (15+)</button>
+        <button class="filter-btn" onclick="filterConnectors('warehouse', this)" data-i18n="filter_warehouse">Warehouses & Lakes</button>
+        <button class="filter-btn" onclick="filterConnectors('sql', this)" data-i18n="filter_sql">Relational SQL</button>
+        <button class="filter-btn" onclick="filterConnectors('cloud', this)" data-i18n="filter_cloud">NoSQL & Cloud</button>
+        <button class="filter-btn" onclick="filterConnectors('files', this)" data-i18n="filter_files">Files & Web</button>
       </div>
 
       <div class="connectors-grid">
@@ -1554,85 +1727,85 @@
     <div class="container">
       
       <div class="section-header">
-        <div class="section-kicker">04 / ARCHITECTURAL COMPARISON</div>
-        <h2>Why Teams Choose Datly</h2>
-        <p>A side-by-side technical evaluation against traditional data exploration tools.</p>
+        <div class="section-kicker" data-i18n="compare_kicker">04 / ARCHITECTURAL COMPARISON</div>
+        <h2 data-i18n="compare_title">Why Teams Choose Datly</h2>
+        <p data-i18n="compare_desc">A side-by-side technical evaluation against traditional data exploration tools.</p>
       </div>
 
       <div class="table-container">
         <table class="comparison-table">
           <thead>
             <tr>
-              <th>Feature / Security Control</th>
-              <th>Jupyter Notebooks</th>
-              <th>Legacy Cloud BI (Tableau / PowerBI)</th>
-              <th>SQL IDEs (DBeaver)</th>
-              <th class="highlight-col">DATLY IDE</th>
+              <th data-i18n="compare_th_feature">Feature / Security Control</th>
+              <th data-i18n="compare_th_jupyter">Jupyter Notebooks</th>
+              <th data-i18n="compare_th_bi">Legacy Cloud BI (Tableau / PowerBI)</th>
+              <th data-i18n="compare_th_dbeaver">SQL IDEs (DBeaver)</th>
+              <th class="highlight-col" data-i18n="compare_th_datly">DATLY IDE</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>Natural Language AI Synthesis</strong></td>
-              <td>⚠️ Third-party plugin</td>
-              <td>⚠️ Costly proprietary copilot</td>
-              <td>❌ None or basic autocompletion</td>
-              <td class="highlight-col">⚡ <strong>Native Grounded Agent (@table)</strong></td>
+              <td data-i18n="compare_r1_title"><strong>Natural Language AI Synthesis</strong></td>
+              <td data-i18n="compare_r1_jupyter">⚠️ Third-party plugin</td>
+              <td data-i18n="compare_r1_bi">⚠️ Costly proprietary copilot</td>
+              <td data-i18n="compare_r1_dbeaver">❌ None or basic autocompletion</td>
+              <td class="highlight-col" data-i18n="compare_r1_datly">⚡ <strong>Native Grounded Agent (@table)</strong></td>
             </tr>
             <tr>
-              <td><strong>Ground-Truth Row Grid Under Chart</strong></td>
-              <td>❌ Separate cell output</td>
-              <td>❌ Complex nested drill-down</td>
-              <td>❌ Manual query required</td>
-              <td class="highlight-col">🛡️ <strong>Always Visible on Canvas</strong></td>
+              <td data-i18n="compare_r2_title"><strong>Ground-Truth Row Grid Under Chart</strong></td>
+              <td data-i18n="compare_r2_jupyter">❌ Separate cell output</td>
+              <td data-i18n="compare_r2_bi">❌ Complex nested drill-down</td>
+              <td data-i18n="compare_r2_dbeaver">❌ Manual query required</td>
+              <td class="highlight-col" data-i18n="compare_r2_datly">🛡️ <strong>Always Visible on Canvas</strong></td>
             </tr>
             <tr>
-              <td><strong>Visual Encoding Shelves + Agent</strong></td>
-              <td>❌ Code cells only</td>
-              <td>⚠️ Shelves only (No Agent)</td>
-              <td>❌ Code only</td>
-              <td class="highlight-col">✅ <strong>Bi-Directional Shelves + Agent</strong></td>
+              <td data-i18n="compare_r3_title"><strong>Visual Encoding Shelves + Agent</strong></td>
+              <td data-i18n="compare_r3_jupyter">❌ Code cells only</td>
+              <td data-i18n="compare_r3_bi">⚠️ Shelves only (No Agent)</td>
+              <td data-i18n="compare_r3_dbeaver">❌ Code only</td>
+              <td class="highlight-col" data-i18n="compare_r3_datly">✅ <strong>Bi-Directional Shelves + Agent</strong></td>
             </tr>
             <tr>
-              <td><strong>Local Data Privacy (Zero Exfiltration)</strong></td>
-              <td>✅ Local execution</td>
-              <td>❌ Cloud ingestion required</td>
-              <td>✅ Local query</td>
-              <td class="highlight-col">🔒 <strong>100% Local (Schema-Only to LLM)</strong></td>
+              <td data-i18n="compare_r4_title"><strong>Local Data Privacy (Zero Exfiltration)</strong></td>
+              <td data-i18n="compare_r4_jupyter">✅ Local execution</td>
+              <td data-i18n="compare_r4_bi">❌ Cloud ingestion required</td>
+              <td data-i18n="compare_r4_dbeaver">✅ Local query</td>
+              <td class="highlight-col" data-i18n="compare_r4_datly">🔒 <strong>100% Local (Schema-Only to LLM)</strong></td>
             </tr>
             <tr>
-              <td><strong>Data Lineage Architecture</strong></td>
-              <td>❌ Linear, stateful cell traps</td>
-              <td>❌ Static data models</td>
-              <td>❌ Query history list</td>
-              <td class="highlight-col">🌲 <strong>Branching Data Threads (DAG)</strong></td>
+              <td data-i18n="compare_r5_title"><strong>Data Lineage Architecture</strong></td>
+              <td data-i18n="compare_r5_jupyter">❌ Linear, stateful cell traps</td>
+              <td data-i18n="compare_r5_bi">❌ Static data models</td>
+              <td data-i18n="compare_r5_dbeaver">❌ Query history list</td>
+              <td class="highlight-col" data-i18n="compare_r5_datly">🌲 <strong>Branching Data Threads (DAG)</strong></td>
             </tr>
             <tr>
-              <td><strong>In-Memory Vectorized Engine</strong></td>
-              <td>⚠️ Kernel dependent</td>
-              <td>⚠️ Proprietary VertiPaq/Hyper</td>
-              <td>❌ Remote DB dependent</td>
-              <td class="highlight-col">⚡ <strong>DuckDB + Pandas + PyArrow</strong></td>
+              <td data-i18n="compare_r6_title"><strong>In-Memory Vectorized Engine</strong></td>
+              <td data-i18n="compare_r6_jupyter">⚠️ Kernel dependent</td>
+              <td data-i18n="compare_r6_bi">⚠️ Proprietary VertiPaq/Hyper</td>
+              <td data-i18n="compare_r6_dbeaver">❌ Remote DB dependent</td>
+              <td class="highlight-col" data-i18n="compare_r6_datly">⚡ <strong>DuckDB + Pandas + PyArrow</strong></td>
             </tr>
             <tr>
-              <td><strong>WYSIWYG Narrative Reporting</strong></td>
-              <td>❌ Markdown cells only</td>
-              <td>⚠️ Heavy dashboard canvas</td>
-              <td>❌ None</td>
-              <td class="highlight-col">📝 <strong>TipTap Rich-Text Editor</strong></td>
+              <td data-i18n="compare_r7_title"><strong>WYSIWYG Narrative Reporting</strong></td>
+              <td data-i18n="compare_r7_jupyter">❌ Markdown cells only</td>
+              <td data-i18n="compare_r7_bi">⚠️ Heavy dashboard canvas</td>
+              <td data-i18n="compare_r7_dbeaver">❌ None</td>
+              <td class="highlight-col" data-i18n="compare_r7_datly">📝 <strong>TipTap Rich-Text Editor</strong></td>
             </tr>
             <tr>
-              <td><strong>Automated Web Table Scraper</strong></td>
-              <td>❌ Manual BeautifulSoup</td>
-              <td>❌ Not supported</td>
-              <td>❌ Not supported</td>
-              <td class="highlight-col">🌐 <strong>Built-in Headless Playwright</strong></td>
+              <td data-i18n="compare_r8_title"><strong>Automated Web Table Scraper</strong></td>
+              <td data-i18n="compare_r8_jupyter">❌ Manual BeautifulSoup</td>
+              <td data-i18n="compare_r8_bi">❌ Not supported</td>
+              <td data-i18n="compare_r8_dbeaver">❌ Not supported</td>
+              <td class="highlight-col" data-i18n="compare_r8_datly">🌐 <strong>Built-in Headless Playwright</strong></td>
             </tr>
             <tr>
-              <td><strong>Model Agnostic (BYOK / Local)</strong></td>
-              <td>⚠️ Manual API wiring</td>
-              <td>❌ Vendor lock-in</td>
-              <td>❌ N/A</td>
-              <td class="highlight-col">🔓 <strong>LiteLLM (Claude, GPT, Ollama)</strong></td>
+              <td data-i18n="compare_r9_title"><strong>Model Agnostic (BYOK / Local)</strong></td>
+              <td data-i18n="compare_r9_jupyter">⚠️ Manual API wiring</td>
+              <td data-i18n="compare_r9_bi">❌ Vendor lock-in</td>
+              <td data-i18n="compare_r9_dbeaver">❌ N/A</td>
+              <td class="highlight-col" data-i18n="compare_r9_datly">🔓 <strong>LiteLLM (Claude, GPT, Ollama)</strong></td>
             </tr>
           </tbody>
         </table>
@@ -1646,19 +1819,19 @@
     <div class="container">
       
       <div class="section-header">
-        <div class="section-kicker">05 / ZERO FRICTION SETUP</div>
-        <h2>Launch Datly in Under 60 Seconds</h2>
-        <p>Choose your preferred installation method: modern uv package manager, docker container, or 1-prompt AI assistant.</p>
+        <div class="section-kicker" data-i18n="quickstart_kicker">05 / ZERO FRICTION SETUP</div>
+        <h2 data-i18n="quickstart_title">Launch Datly in Under 60 Seconds</h2>
+        <p data-i18n="quickstart_desc">Choose your preferred installation method: modern uv package manager, docker container, or 1-prompt AI assistant.</p>
       </div>
 
       <div class="terminal-wrapper">
         <div class="terminal-nav">
           <div class="term-tabs">
-            <button class="term-tab active" onclick="switchTermTab('uv', this)">Astral uv (Fastest)</button>
-            <button class="term-tab" onclick="switchTermTab('pip', this)">Python pip + Yarn</button>
-            <button class="term-tab" onclick="switchTermTab('docker', this)">Docker Compose</button>
-            <button class="term-tab" onclick="switchTermTab('agent', this)">1-Prompt AI Agent</button>
-            <button class="term-tab" onclick="switchTermTab('desktop', this)">Desktop Build</button>
+            <button class="term-tab active" onclick="switchTermTab('uv', this)"><span data-i18n="term_tab_uv">Astral uv (Fastest)</span></button>
+            <button class="term-tab" onclick="switchTermTab('pip', this)"><span data-i18n="term_tab_pip">Python pip + Yarn</span></button>
+            <button class="term-tab" onclick="switchTermTab('docker', this)"><span data-i18n="term_tab_docker">Docker Compose</span></button>
+            <button class="term-tab" onclick="switchTermTab('agent', this)"><span data-i18n="term_tab_agent">1-Prompt AI Agent</span></button>
+            <button class="term-tab" onclick="switchTermTab('desktop', this)"><span data-i18n="term_tab_desktop">Desktop Build</span></button>
           </div>
           <div>
             <button class="copy-btn" onclick="copyTermCode(this)">
@@ -1721,15 +1894,15 @@
     <div class="container">
       
       <div class="section-header">
-        <div class="section-kicker">06 / VERIFIED RELEASES</div>
-        <h2>Download Desktop Packages</h2>
-        <p>Native standalone performance for Windows, macOS, and Linux with automated hardware acceleration.</p>
+        <div class="section-kicker" data-i18n="releases_kicker">06 / VERIFIED RELEASES</div>
+        <h2 data-i18n="releases_title">Download Desktop Packages</h2>
+        <p data-i18n="releases_desc">Native standalone performance for Windows, macOS, and Linux with automated hardware acceleration.</p>
       </div>
 
       <div class="release-hub">
         <div class="release-info">
-          <h3>Datly Desktop Suite v0.8.0-beta</h3>
-          <p>Electron 43 Native Container · DuckDB Embedded Engine · Multi-LLM Provider</p>
+          <h3 data-i18n="releases_box_title">Datly Desktop Suite v0.8.0-beta</h3>
+          <p data-i18n="releases_box_desc">Electron 43 Native Container · DuckDB Embedded Engine · Multi-LLM Provider</p>
           
           <div class="hash-display">
             <span>SHA-256: <code id="datly-sha256">a4e287f3b89012fce3901bce55d89849208a462319087cf982a1789c09bd4b21</code></span>
@@ -1741,8 +1914,8 @@
           <a href="https://github.com/arpanjot-coding/Datly/releases" class="btn-hero-primary" target="_blank" rel="noopener">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <div class="btn-text-block">
-              <span class="btn-title">View All Release Assets</span>
-              <span class="btn-sub">Win · macOS · Linux</span>
+              <span class="btn-title" data-i18n="releases_btn_title">View All Release Assets</span>
+              <span class="btn-sub" data-i18n="releases_btn_sub">Win · macOS · Linux</span>
             </div>
           </a>
         </div>
@@ -1756,61 +1929,59 @@
     <div class="container">
       
       <div class="section-header">
-        <div class="section-kicker">07 / FREQUENTLY ASKED QUESTIONS</div>
-        <h2>Everything You Need to Know</h2>
-        <p>Clear answers to technical, security, and integration questions.</p>
+        <div class="section-kicker" data-i18n="faq_kicker">07 / FREQUENTLY ASKED QUESTIONS</div>
+        <h2 data-i18n="faq_title">Everything You Need to Know</h2>
+        <p data-i18n="faq_desc">Clear answers to technical, security, and integration questions.</p>
       </div>
 
       <div class="faq-list">
         
         <div class="faq-item">
           <div class="faq-question" onclick="toggleFaq(this)">
-            <span>Does Datly send my private database records to OpenAI, Anthropic, or external servers?</span>
+            <span data-i18n="faq_q1">Does Datly send my private database records to OpenAI, Anthropic, or external servers?</span>
             <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="faq-answer">
-            <strong>No.</strong> Datly enforces a strict local-first privacy boundary. When you query databases or load data, tables reside exclusively in local memory and DuckDB. When you ask questions in natural language, Datly transmits <em>only column names and data types</em> (with an optional 2-row sanitized preview) to the model for code synthesis. The synthesized transformation code runs 100% locally on your computer. Your raw records never leave your machine.
+          <div class="faq-answer" data-i18n="faq_a1">
+            No. Datly enforces a strict local-first privacy boundary. When you query databases or load data, tables reside exclusively in local memory and DuckDB. When you ask questions in natural language, Datly transmits only column names and data types (with an optional 2-row sanitized preview) to the model for code synthesis. The synthesized transformation code runs 100% locally on your computer. Your raw records never leave your machine.
           </div>
         </div>
 
         <div class="faq-item">
           <div class="faq-question" onclick="toggleFaq(this)">
-            <span>Can I run Datly completely offline without any internet connection?</span>
+            <span data-i18n="faq_q2">Can I run Datly completely offline without any internet connection?</span>
             <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="faq-answer">
-            <strong>Yes.</strong> Datly features native integration with local open-weights model runners via <strong>Ollama</strong>, <strong>vLLM</strong>, or <strong>LocalAI</strong>. By pointing Datly to your local Ollama instance (e.g., running `qwen2.5-coder:14b` or `llama3.3:70b`), you can conduct exploratory data science and build visualizations in an entirely air-gapped environment.
+          <div class="faq-answer" data-i18n="faq_a2">
+            Yes. Datly features native integration with local open-weights model runners via Ollama, vLLM, or LocalAI. By pointing Datly to your local Ollama instance (e.g., running qwen2.5-coder:14b or llama3.3:70b), you can conduct exploratory data science and build visualizations in an entirely air-gapped environment.
           </div>
         </div>
 
         <div class="faq-item">
           <div class="faq-question" onclick="toggleFaq(this)">
-            <span>How does Datly prevent AI chart hallucinations and false trends?</span>
+            <span data-i18n="faq_q3">How does Datly prevent AI chart hallucinations and false trends?</span>
             <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="faq-answer">
-            Unlike conversational AI tools that directly generate static image pixels or guess summary values, Datly requires the AI to write verifiable Python or DuckDB SQL transformation steps. Those steps execute on your physical data to produce a tangible <strong>derived data table</strong>. In the Explore Canvas, that derived table sits right under the chart, giving you full row-by-row mathematical verification.
+          <div class="faq-answer" data-i18n="faq_a3">
+            Unlike conversational AI tools that directly generate static image pixels or guess summary values, Datly requires the AI to write verifiable Python or DuckDB SQL transformation steps. Those steps execute on your physical data to produce a tangible derived data table. In the Explore Canvas, that derived table sits right under the chart, giving you full row-by-row mathematical verification.
           </div>
         </div>
 
         <div class="faq-item">
           <div class="faq-question" onclick="toggleFaq(this)">
-            <span>How does Datly differ from Microsoft Research Data Formulator?</span>
+            <span data-i18n="faq_q4">How does Datly differ from Microsoft Research Data Formulator?</span>
             <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="faq-answer">
+          <div class="faq-answer" data-i18n="faq_a4">
             Datly builds upon the groundbreaking concept encoding and data thread foundations established by Microsoft Research's Data Formulator, elevating it into a comprehensive, enterprise-ready data IDE. Datly introduces 15+ native cloud warehouse connectors (Databricks, BigQuery, Snowflake, Postgres), TipTap WYSIWYG narrative report publishing, multi-chart pinboard dashboards, cross-platform Electron desktop distribution, automated web table scraping via Playwright, and enterprise Single Sign-On (SSO).
           </div>
         </div>
 
         <div class="faq-item">
           <div class="faq-question" onclick="toggleFaq(this)">
-            <span>How do Data Threads prevent the state corruption common in Jupyter notebooks?</span>
+            <span data-i18n="faq_q5">How do Data Threads prevent the state corruption common in Jupyter notebooks?</span>
             <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="faq-answer">
-            Jupyter notebooks execute cells sequentially against a mutable global namespace. Modifying an earlier cell can break subsequent calculations in subtle, hidden ways. Datly replaces this with a <strong>Directed Acyclic Graph (DAG) of Data Threads</strong>. Each inquiry branches into an isolated thread card containing its own input reference, transformation step, derived table, and chart. Original datasets remain strictly immutable.
-          </div>
+          <div class="faq-answer" data-i18n="faq_a5">Jupyter notebooks execute cells sequentially against a mutable global namespace. Modifying an earlier cell can break subsequent calculations in subtle, hidden ways. Datly replaces this with a Directed Acyclic Graph (DAG) of Data Threads. Each inquiry branches into an isolated thread card containing its own input reference, transformation step, derived table, and chart. Original datasets remain strictly immutable.</div>
         </div>
 
       </div>
@@ -1832,28 +2003,199 @@
               <circle cx="23.2" cy="8.6" r="1.85" fill="#f3f5f0"/>
             </svg>
           </div>
-          <span>DATLY®</span>
+          <div>
+            <span style="font-weight:800; font-size:1.1rem; letter-spacing:-0.02em;">DATLY®</span>
+            <div style="font-size:0.75rem; color:var(--text-sub); margin-top:2px;" data-i18n="footer_tagline">High-Assurance AI Data Visualization IDE & Analytical Workbench · Free & Open Source Under MIT</div>
+          </div>
         </div>
 
         <div class="footer-links">
           <a href="https://github.com/arpanjot-coding/Datly" target="_blank" rel="noopener">GitHub</a>
           <a href="https://github.com/arpanjot-coding/Datly/releases" target="_blank" rel="noopener">Releases</a>
-          <a href="https://github.com/arpanjot-coding/Datly/blob/main/README.md" target="_blank" rel="noopener">Documentation</a>
-          <a href="https://github.com/arpanjot-coding/Datly/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+          <a href="https://github.com/arpanjot-coding/Datly/blob/main/README.md" target="_blank" rel="noopener" data-i18n="footer_docs">Documentation</a>
+          <a href="https://github.com/arpanjot-coding/Datly/blob/main/LICENSE" target="_blank" rel="noopener" data-i18n="footer_license">MIT License</a>
         </div>
       </div>
 
-      <div class="footer-bottom">
+      <div class="footer-bottom" data-i18n="footer_bottom">
         © 2026 Datly Project · High-Assurance AI Data Visualization IDE & Analytical Workbench · Free & Open Source Under MIT
       </div>
     </div>
   </footer>
 
   <!-- Toast Notification element -->
-  <div id="toast">Copied to clipboard!</div>
+  <div id="toast" data-i18n="toast_copy">Copied to clipboard!</div>
 
   <!-- Interactive Scripts -->
   <script>
+    
+    // ==========================================
+    // 24-Language i18n & Auto IP Country Engine
+    // ==========================================
+    let currentLang = 'en';
+
+    function initLanguageDropdown() {
+      const grid = document.getElementById('lang-options-grid');
+      if (!grid || !window.DATLY_LANGUAGES) return;
+      grid.innerHTML = '';
+      
+      Object.entries(window.DATLY_LANGUAGES).forEach(([code, info]) => {
+        const btn = document.createElement('button');
+        btn.className = 'lang-option' + (code === currentLang ? ' active' : '');
+        btn.id = 'lang-opt-' + code;
+        btn.onclick = () => applyLanguage(code, true);
+        btn.innerHTML = `
+          <span class="opt-flag">${info.flag}</span>
+          <span class="opt-text">
+            <span class="opt-native">${info.native}</span>
+            <span class="opt-en">${info.name}</span>
+          </span>
+        `;
+        grid.appendChild(btn);
+      });
+    }
+
+    function toggleLangDropdown(e) {
+      if (e) e.stopPropagation();
+      const wrap = document.getElementById('lang-dropdown-wrapper');
+      if (wrap) wrap.classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const wrap = document.getElementById('lang-dropdown-wrapper');
+      if (wrap && !wrap.contains(e.target)) {
+        wrap.classList.remove('open');
+      }
+    });
+
+    function applyLanguage(langCode, isManual = false) {
+      if (!window.DATLY_TRANSLATIONS || !window.DATLY_TRANSLATIONS[langCode]) {
+        langCode = 'en';
+      }
+      currentLang = langCode;
+      const langInfo = window.DATLY_LANGUAGES[langCode] || { name: 'English', native: 'English', flag: '🇺🇸', dir: 'ltr' };
+      const trans = window.DATLY_TRANSLATIONS[langCode];
+
+      // Update HTML lang & dir
+      document.documentElement.lang = langCode;
+      document.documentElement.dir = langInfo.dir || 'ltr';
+
+      // Update navbar button label
+      const btnLabel = document.getElementById('lang-btn-label');
+      if (btnLabel) {
+        btnLabel.innerHTML = `${langInfo.flag} <span>${langInfo.native}</span>`;
+      }
+
+      // Update active highlight in dropdown
+      document.querySelectorAll('.lang-option').forEach(el => el.classList.remove('active'));
+      const activeOpt = document.getElementById('lang-opt-' + langCode);
+      if (activeOpt) activeOpt.classList.add('active');
+
+      // Apply translations to all tagged elements
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (trans && trans[key]) {
+          const val = trans[key];
+          if (/<[a-z][\s\S]*>/i.test(val)) {
+            el.innerHTML = val;
+          } else {
+            el.innerText = val;
+          }
+        }
+      });
+
+      // Save preference if manual
+      if (isManual) {
+        try {
+          localStorage.setItem('datly_user_lang', langCode);
+        } catch (e) {}
+        const wrap = document.getElementById('lang-dropdown-wrapper');
+        if (wrap) wrap.classList.remove('open');
+        showToast(langInfo.flag + ' ' + (trans['toast_copy'] ? langInfo.native : 'Language changed'));
+      }
+    }
+
+    async function detectCountryAndLanguage() {
+      // 1. Check saved manual user preference
+      let saved = null;
+      try {
+        saved = localStorage.getItem('datly_user_lang');
+      } catch (e) {}
+      if (saved && window.DATLY_TRANSLATIONS && window.DATLY_TRANSLATIONS[saved]) {
+        applyLanguage(saved, false);
+        return;
+      }
+
+      // 2. Query Geolocation via IP (Country detection)
+      let detectedLang = null;
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.country_code && window.DATLY_COUNTRY_MAP) {
+            const mapped = window.DATLY_COUNTRY_MAP[data.country_code.toUpperCase()];
+            if (mapped && window.DATLY_TRANSLATIONS[mapped]) {
+              detectedLang = mapped;
+            }
+          }
+        }
+      } catch (e) {
+        // Fallback to secondary geo service
+        try {
+          const controller2 = new AbortController();
+          const timeout2 = setTimeout(() => controller2.abort(), 1500);
+          const res2 = await fetch('https://api.country.is/', { signal: controller2.signal });
+          clearTimeout(timeout2);
+          if (res2.ok) {
+            const data2 = await res2.json();
+            if (data2 && data2.country && window.DATLY_COUNTRY_MAP) {
+              const mapped2 = window.DATLY_COUNTRY_MAP[data2.country.toUpperCase()];
+              if (mapped2 && window.DATLY_TRANSLATIONS[mapped2]) {
+                detectedLang = mapped2;
+              }
+            }
+          }
+        } catch (e2) {}
+      }
+
+      // 3. Fallback to browser languages if IP check failed or returned unmapped
+      if (!detectedLang) {
+        const browserLangs = navigator.languages || [navigator.language || 'en'];
+        for (const bl of browserLangs) {
+          const code2 = bl.slice(0, 2).toLowerCase();
+          const full = bl.toLowerCase();
+          if (full === 'zh-tw' || full === 'zh-hk' || full === 'zh-mo') {
+            detectedLang = 'zh-TW';
+            break;
+          } else if (full.startsWith('zh')) {
+            detectedLang = 'zh';
+            break;
+          } else if (window.DATLY_TRANSLATIONS && window.DATLY_TRANSLATIONS[full]) {
+            detectedLang = full;
+            break;
+          } else if (window.DATLY_TRANSLATIONS && window.DATLY_TRANSLATIONS[code2]) {
+            detectedLang = code2;
+            break;
+          }
+        }
+      }
+
+      if (detectedLang && window.DATLY_TRANSLATIONS[detectedLang]) {
+        applyLanguage(detectedLang, false);
+      } else {
+        applyLanguage('en', false);
+      }
+    }
+
+    // Initialize Language picker and auto-detect on startup
+    window.addEventListener('DOMContentLoaded', () => {
+      initLanguageDropdown();
+      detectCountryAndLanguage();
+    });
+
     // Live GitHub Stars Counter
     async function updateGitHubStars() {
       try {
