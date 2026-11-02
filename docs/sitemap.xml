@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-  <url>
-    <loc>https://arpanjot-coding.github.io/Datly/</loc>
-    <lastmod>2026-11-01T07:44:00+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://arpanjot-coding.github.io/Datly/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://arpanjot-coding.github.io/Datly/ru/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://arpanjot-coding.github.io/Datly/zh/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://arpanjot-coding.github.io/Datly/ja/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://arpanjot-coding.github.io/Datly/vi/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://arpanjot-coding.github.io/Datly/th/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://arpanjot-coding.github.io/Datly/hi/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://arpanjot-coding.github.io/Datly/ar/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://arpanjot-coding.github.io/Datly/fr/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://arpanjot-coding.github.io/Datly/de/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://arpanjot-coding.github.io/Datly/es/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://arpanjot-coding.github.io/Datly/it/</loc><lastmod>2026-11-02</lastmod></url>
 </urlset>

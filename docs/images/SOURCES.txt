@@ -1,0 +1,26 @@
+Datly product image provenance
+
+All five compositions use unmodified pixels from application captures already in
+the repository at commit 8a9d5af825ab746c0eec87ef8437b747592af9e8. Framing,
+cropping, scaling, typography, and explanatory labels are new. These are not
+fresh runtime captures or AI-generated interfaces. Example data is illustrative.
+
+product-workspace: workspace.png. Full workspace showing example stock analysis.
+product-explore: workspace.png. Two separate crops of the chart and computed rows;
+the side-by-side composition is a presentation layout, not a new app layout.
+product-threads: about-explore.png. Crop focused on data threads.
+product-data: about-surfaces.png. Crop focused on data-quality signals and rows.
+product-reports: screenshot-movies-report.webp. Archived Data Formulator report
+example. The current report editor uses TipTap; this is not a current-editor
+screenshot. Chart embeds are images.
+
+Source graphics: SVG, 1600 x 1100. Web variants: WebP and JPG, 1600 x 1100.
+High-resolution exports: PNG, 3200 x 2200. Social card: JPG, 1600 x 900.
+SVG compositions can be regenerated with:
+  node docs/assets/build-product-images.mjs
+Raster exports can be regenerated with the sibling export-product-images.mjs
+script after installing Sharp in an external workspace (see its usage comment).
+
+Existing source images retain the repository's licensing and original attribution.
+Microsoft Data Formulator: https://github.com/microsoft/data-formulator
+Datly source: https://github.com/arpanjot-coding/Datly
