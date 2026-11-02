@@ -63,6 +63,7 @@ dialog.addEventListener('click',event=>{if(event.target===dialog){const bounds=d
 
 
 const languageMenu=document.querySelector('.language-menu');
+document.querySelectorAll('[data-open-languages]').forEach(link=>link.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();languageMenu.open=true;languageMenu.querySelector('summary').focus();}));
 document.addEventListener('click',event=>{if(languageMenu&&!languageMenu.contains(event.target))languageMenu.open=false;});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&languageMenu?.open){languageMenu.open=false;languageMenu.querySelector('summary').focus();}});
 document.querySelectorAll('[data-github-stars]').forEach(node=>{node.title=t('GitHub stars; verified 2 November 2026');});

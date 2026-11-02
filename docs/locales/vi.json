@@ -218,6 +218,10 @@
     "Add the reasoning around the result": "Bổ sung lý giải cho kết quả",
     "Save an image or print to PDF": "Lưu ảnh hoặc in thành PDF",
     "An archived Data Formulator report example showing written findings and a chart.": "Ví dụ báo cáo Data Formulator lưu trữ, hiển thị phát hiện bằng văn bản và biểu đồ.",
-    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "Ví dụ báo cáo lưu trữ từ kho mã, hiển thị giao diện Data Formulator trước đây. Trình chỉnh sửa báo cáo hiện tại dùng TipTap. Biểu đồ nhúng là hình ảnh."
+    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "Ví dụ báo cáo lưu trữ từ kho mã, hiển thị giao diện Data Formulator trước đây. Trình chỉnh sửa báo cáo hiện tại dùng TipTap. Biểu đồ nhúng là hình ảnh.",
+    "Project at a glance": "Tổng quan dự án",
+    "Data source options": "Lựa chọn nguồn dữ liệu",
+    "Website languages": "Ngôn ngữ website",
+    "Open-source licence": "Giấy phép mã nguồn mở"
   }
 }

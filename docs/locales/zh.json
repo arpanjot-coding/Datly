@@ -218,6 +218,10 @@
     "Add the reasoning around the result": "补充结果背后的推理",
     "Save an image or print to PDF": "保存为图片或打印为 PDF",
     "An archived Data Formulator report example showing written findings and a chart.": "存档的 Data Formulator 报告示例，展示文字结论和图表。",
-    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "仓库中存档的报告示例，展示早期的 Data Formulator 界面。当前报告编辑使用 TipTap。嵌入的图表为图片。"
+    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "仓库中存档的报告示例，展示早期的 Data Formulator 界面。当前报告编辑使用 TipTap。嵌入的图表为图片。",
+    "Project at a glance": "项目概览",
+    "Data source options": "数据源选项",
+    "Website languages": "网站语言",
+    "Open-source licence": "开源许可证"
   }
 }

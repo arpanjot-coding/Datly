@@ -218,6 +218,10 @@
     "Add the reasoning around the result": "أضف تفسيرًا للنتيجة",
     "Save an image or print to PDF": "احفظ صورة أو اطبع بصيغة PDF",
     "An archived Data Formulator report example showing written findings and a chart.": "مثال مؤرشف لتقرير Data Formulator يعرض نتائج مكتوبة ورسمًا بيانيًا.",
-    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "مثال تقرير مؤرشف من المستودع يعرض واجهة Data Formulator السابقة. يستخدم تحرير التقارير الحالي TipTap. الرسوم المضمّنة صور."
+    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "مثال تقرير مؤرشف من المستودع يعرض واجهة Data Formulator السابقة. يستخدم تحرير التقارير الحالي TipTap. الرسوم المضمّنة صور.",
+    "Project at a glance": "لمحة عن المشروع",
+    "Data source options": "خيارات مصادر البيانات",
+    "Website languages": "لغات الموقع",
+    "Open-source licence": "ترخيص مفتوح المصدر"
   }
 }

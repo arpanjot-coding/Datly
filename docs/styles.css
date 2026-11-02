@@ -34,3 +34,36 @@ html:lang(zh-Hans) h1,html:lang(ja) h1,html:lang(th) h1,html:lang(hi) h1,html:la
 html:not([lang=en]) .hero-copy{grid-template-columns:1.5fr 1fr;gap:45px}html:not([lang=en]) h1{font-size:clamp(44px,4.8vw,66px);line-height:1.15}.hero-actions{flex-wrap:wrap;gap:16px}.hero-actions .button,.hero-actions .text-link{flex-shrink:0;white-space:nowrap}
 @media(max-width:800px){html:not([lang=en]) .hero-copy{grid-template-columns:1fr;gap:24px}}
 @media(max-width:520px){html:not([lang=en]) h1{font-size:clamp(32px,9.5vw,45px)}}
+
+/* Put verified project achievements in the first screen, before app imagery. */
+.hero-copy { padding-bottom: 30px; }
+.hero-stats { margin-bottom: 30px; border-block: 1px solid #d3dfca; }
+.hero-stats-heading { display: flex; justify-content: space-between; gap: 20px; padding-top: 15px; color: #456241; font-size: 11px; }
+.stat-verification { font-size: 9px; color: #66765c; }
+.hero-stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-block: 18px 24px; }
+.hero-stat { display: flex; flex-direction: column; gap: 5px; padding-inline: 30px; border-inline-start: 1px solid #d3dfca; }
+.hero-stat:first-child { padding-inline-start: 0; border: 0; }
+.hero-stat strong { display: flex; align-items: center; gap: 13px; font-size: 48px; line-height: 1.15; font-weight: 550; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
+.hero-stat-stars strong { color: #206b4e; }
+.hero-stat .stat-star { color: #8d7a36; font-size: 23px; }
+.hero-stat .stat-label { font-size: 12px; color: #53674b; line-height: 1.5; }
+.hero-stat:hover .stat-label { color: #206b4e; text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 800px) {
+  .hero-stats-heading { font-size: 10px; }
+  .stat-verification { max-width: 210px; text-align: end; font-size: 8px; }
+  .hero-stat { padding-inline: 18px; }
+  .hero-stat strong { font-size: 39px; }
+  .hero-stat .stat-label { font-size: 10px; }
+}
+@media (max-width: 520px) {
+  .hero-copy { padding-bottom: 25px; }
+  .hero-stats { margin-bottom: 24px; }
+  .hero-stats-heading { padding-top: 13px; gap: 16px; }
+  .hero-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 0; padding-block: 16px 20px; }
+  .hero-stat { padding-inline: 20px 8px; }
+  .hero-stat:nth-child(odd) { padding-inline-start: 0; border: 0; }
+  .hero-stat strong { font-size: 35px; }
+  .hero-stat .stat-label { font-size: 11px; }
+  .hero-stat .stat-star { font-size: 18px; }
+  .stat-verification { max-width: 168px; font-size: 7px; line-height: 1.6; }
+}

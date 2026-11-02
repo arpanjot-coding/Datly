@@ -218,6 +218,10 @@
     "Add the reasoning around the result": "เพิ่มเหตุผลประกอบผลลัพธ์",
     "Save an image or print to PDF": "บันทึกภาพหรือพิมพ์เป็น PDF",
     "An archived Data Formulator report example showing written findings and a chart.": "ตัวอย่างรายงาน Data Formulator ที่เก็บไว้ แสดงข้อค้นพบเป็นข้อความและแผนภูมิ",
-    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "ตัวอย่างรายงานเก่าจากคลังโค้ด แสดงอินเทอร์เฟซ Data Formulator รุ่นก่อน การแก้ไขรายงานปัจจุบันใช้ TipTap แผนภูมิที่ฝังเป็นภาพ"
+    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "ตัวอย่างรายงานเก่าจากคลังโค้ด แสดงอินเทอร์เฟซ Data Formulator รุ่นก่อน การแก้ไขรายงานปัจจุบันใช้ TipTap แผนภูมิที่ฝังเป็นภาพ",
+    "Project at a glance": "ภาพรวมโครงการ",
+    "Data source options": "ตัวเลือกแหล่งข้อมูล",
+    "Website languages": "ภาษาของเว็บไซต์",
+    "Open-source licence": "สัญญาอนุญาตโอเพนซอร์ส"
   }
 }

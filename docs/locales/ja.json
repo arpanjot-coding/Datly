@@ -218,6 +218,10 @@
     "Add the reasoning around the result": "結果に至った理由を添える",
     "Save an image or print to PDF": "画像で保存、またはPDFに印刷",
     "An archived Data Formulator report example showing written findings and a chart.": "文章による発見とグラフを示した、Data Formulatorのアーカイブ済みレポート例。",
-    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "リポジトリに保存された過去のレポート例で、以前のData Formulatorの画面です。現在のレポート編集にはTipTapを使用しています。埋め込みグラフは画像です。"
+    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "リポジトリに保存された過去のレポート例で、以前のData Formulatorの画面です。現在のレポート編集にはTipTapを使用しています。埋め込みグラフは画像です。",
+    "Project at a glance": "プロジェクトの概要",
+    "Data source options": "データソースの選択肢",
+    "Website languages": "ウェブサイトの言語",
+    "Open-source licence": "オープンソースライセンス"
   }
 }

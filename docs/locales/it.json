@@ -218,6 +218,10 @@
     "Add the reasoning around the result": "Aggiungi il ragionamento che porta al risultato",
     "Save an image or print to PDF": "Salva un’immagine o stampa in PDF",
     "An archived Data Formulator report example showing written findings and a chart.": "Esempio archiviato di report Data Formulator con risultati scritti e un grafico.",
-    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "Esempio di report archiviato nel repository; mostra la precedente interfaccia di Data Formulator. L’editor attuale usa TipTap. I grafici incorporati sono immagini."
+    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "Esempio di report archiviato nel repository; mostra la precedente interfaccia di Data Formulator. L’editor attuale usa TipTap. I grafici incorporati sono immagini.",
+    "Project at a glance": "Il progetto in cifre",
+    "Data source options": "Opzioni per le fonti dati",
+    "Website languages": "Lingue del sito",
+    "Open-source licence": "Licenza open source"
   }
 }

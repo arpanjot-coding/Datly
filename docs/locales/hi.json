@@ -218,6 +218,10 @@
     "Add the reasoning around the result": "परिणाम के पीछे का तर्क जोड़ें",
     "Save an image or print to PDF": "छवि सहेजें या PDF में प्रिंट करें",
     "An archived Data Formulator report example showing written findings and a chart.": "Data Formulator की संग्रहित रिपोर्ट का उदाहरण, जिसमें लिखित निष्कर्ष और चार्ट दिखाई गए हैं।",
-    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "रिपॉज़िटरी से संग्रहित रिपोर्ट का उदाहरण; इसमें Data Formulator का पुराना इंटरफ़ेस दिखता है। मौजूदा रिपोर्ट संपादन TipTap का उपयोग करता है। एम्बेड किए गए चार्ट छवियाँ हैं।"
+    "Archived report example from the repository; it shows the earlier Data Formulator interface. Current report editing uses TipTap. Chart embeds are images.": "रिपॉज़िटरी से संग्रहित रिपोर्ट का उदाहरण; इसमें Data Formulator का पुराना इंटरफ़ेस दिखता है। मौजूदा रिपोर्ट संपादन TipTap का उपयोग करता है। एम्बेड किए गए चार्ट छवियाँ हैं।",
+    "Project at a glance": "परियोजना एक नज़र में",
+    "Data source options": "डेटा स्रोत विकल्प",
+    "Website languages": "वेबसाइट की भाषाएँ",
+    "Open-source licence": "ओपन-सोर्स लाइसेंस"
   }
 }
